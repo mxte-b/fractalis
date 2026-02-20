@@ -5,12 +5,12 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace fractalis
+namespace fractalis.Components
 {
-    internal class BigFixed
+    internal struct BigFixed
     {
         // Number of fractional bits
-        private static readonly int Precision = 500;
+        private static readonly int Precision = 260;
         private static readonly BigInteger Scale = BigInteger.Pow(10, Precision);
         private readonly BigInteger Value;
 
@@ -66,7 +66,7 @@ namespace fractalis
 
         public static bool operator <(BigFixed left, BigFixed right)
         {
-            return left.Value > right.Value;
+            return left.Value < right.Value;
         }
 
         public static implicit operator BigFixed(double value)
@@ -74,12 +74,24 @@ namespace fractalis
             return new BigFixed(value.ToString("0." + new string('#', 339)));
         }
 
+        public static implicit operator double(BigFixed x)
+        {
+            return double.Parse(x.ToString(), System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         public override string ToString()
         {
-            BigInteger intPart = Value / Scale;
-            BigInteger decimalPart = BigInteger.Abs(Value % Scale);
+            if (Value.IsZero) return "0." + new string('0', Precision);
 
-            return intPart.ToString() + "." + decimalPart.ToString().PadLeft(Precision, '0');
+            bool negative = Value.Sign < 0;
+            BigInteger absValue = BigInteger.Abs(Value);
+
+            BigInteger intPart = absValue / Scale;
+            BigInteger decimalPart = absValue % Scale;
+
+            string result = intPart.ToString() + "." + decimalPart.ToString().PadLeft(Precision, '0');
+
+            return negative ? "-" + result : result;
         }
     }
 }
