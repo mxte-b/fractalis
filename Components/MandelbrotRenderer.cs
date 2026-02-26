@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp;
+﻿using fractalis.Components;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -13,37 +14,65 @@ namespace fractalis.Components
     public enum RenderMode
     {
         Default,
-        HighPrecision
+        HighPrecision,
+        HighPrecisionWithFloatExp
     }
 
     internal struct ReferenceOrbit
     {
-        public List<Complex> Points;
+        public Complex[] Points;
         public int EscapeIteration;
 
-        public ReferenceOrbit()
+        public ReferenceOrbit(int maxIterations)
         {
-            Points = new List<Complex>();
+            Points = new Complex[maxIterations];
             EscapeIteration = 0;
         }
     }
 
     internal class MandelbrotRenderer
     {
+
         public int Iterations, Width, Height;
-        public RenderMode RenderMode;
         public double Zoom { get; set; }
         public Complex Center { get; set; }
         public BigFixed ZoomHigh { get; set; }
         public BigComplex CenterHigh { get; set; }
-        private ReferenceOrbit ReferenceOrbit = new ReferenceOrbit();
+        public static ColorPalette ColorPalette { get; set; }
+        
+        private static double ILOG2 = 1 / Math.Log(2);
 
-        private int Iteration(Complex c)
+        private double PixelSpacing {
+            get
+            {
+                return 1 / (Width * Zoom);
+            }
+        }
+
+        public RenderMode RenderMode
+        {
+            get
+            {
+                if (PixelSpacing < 1e-300)
+                {
+                    return RenderMode.HighPrecisionWithFloatExp;
+                }
+                else if (PixelSpacing < 1e-15)
+                {
+                    return RenderMode.HighPrecision;
+                }
+                else return RenderMode.Default;
+            }
+        }
+
+        private ReferenceOrbit ReferenceOrbit;
+        private double Iteration(Complex c)
         {
             Complex z = new Complex(0, 0);
             int i = 0;
+            int max = Iterations;
 
-            for (; i < Iterations; i++)
+            for (; i < max; i++)
             {
                 double zrTemp = z.Real;
 
@@ -53,23 +82,31 @@ namespace fractalis.Components
                 if (z.MagnitudeSquared > 100) break;
             }
 
-            return i;
+            if (i == max) return max;
+
+            return i + 1 - Math.Log(Math.Log(z.Magnitude)) * ILOG2;
         }
 
-        private int IterationPerturbed(Complex dc)
+        private double IterationPerturbed(Complex dc)
         {
             int i = 0;
             int refIteration = 0;
+            int max = Iterations;
             Complex dz = new Complex(0, 0);
+            Complex lastZ = new Complex(0, 0);
 
-            for (; i < Iterations; i++)
+            for (; i < max; i++)
             {
                 dz = (2 * ReferenceOrbit.Points[refIteration++] + dz) * dz + dc;
 
                 Complex z = ReferenceOrbit.Points[refIteration] + dz;
 
                 // Bailout
-                if (z.MagnitudeSquared > 100) break;
+                if (z.MagnitudeSquared > 100)
+                {
+                    lastZ = z;
+                    break;
+                }
 
                 // Prevent delta from straying off and causing visual glitches
                 if (z.MagnitudeSquared < dz.MagnitudeSquared || refIteration == ReferenceOrbit.EscapeIteration - 1)
@@ -79,7 +116,8 @@ namespace fractalis.Components
                 }
             }
 
-            return i;
+            if (i == max) return max;
+            return i + 1 - Math.Log(Math.Log(lastZ.Magnitude)) * ILOG2;
         }
 
         private void CalculateCenterOrbit()
@@ -89,7 +127,7 @@ namespace fractalis.Components
 
             for (; i < Iterations; i++)
             {
-                ReferenceOrbit.Points.Add(z.ToComplex());
+                ReferenceOrbit.Points[i] = z.ToComplex();
 
                 BigFixed zrTemp = z.Real;
 
@@ -108,7 +146,7 @@ namespace fractalis.Components
             double ndcY = -((double)y / Height - 0.5);
             ndcX *= (double)Width / Height;
 
-            int iterations;
+            double iterations;
 
             if (RenderMode == RenderMode.HighPrecision)
             {
@@ -118,12 +156,8 @@ namespace fractalis.Components
                     iterations = ReferenceOrbit.EscapeIteration;
                 }
                 else
-                {
-                    BigFixed pixelX = ndcX / ZoomHigh;
-                    BigFixed pixelY = ndcY / ZoomHigh;
-
-                    BigComplex dc = new BigComplex(pixelX, pixelY);
-
+                { 
+                    BigComplex dc = new BigComplex(ndcX / ZoomHigh, ndcY / ZoomHigh);
                     iterations = IterationPerturbed(dc.ToComplex());
                 }
             }
@@ -133,17 +167,15 @@ namespace fractalis.Components
                 iterations = Iteration(c);
             }
 
-            byte norm = (byte)Math.Round(iterations * 255d / Iterations);
-
-            if (norm == 255) norm = 0;
-
-            return new Rgb24(norm, norm, norm);
+            return ColorPalette.Sample(iterations).ToPixel<Rgb24>();
         }
 
         public Image<Rgb24> Render()
         {
             Image<Rgb24> image = new Image<Rgb24>(Width, Height);
             int yCompleted = 0;
+
+            Console.WriteLine($"Rendering with: {RenderMode}");
 
             // High Precision - using Perturbation Theory
             if (RenderMode == RenderMode.HighPrecision)
@@ -152,15 +184,19 @@ namespace fractalis.Components
             }
 
             // Main render loop
-            Parallel.For(0, Height, y =>
-            {
+            Parallel.For(0, Height, y => {
                 for (int x = 0; x < Width; x++)
                 {
+
                     image[x, y] = ComputePixel(x, y);
                 }
 
                 Interlocked.Increment(ref yCompleted);
-                Console.WriteLine($"{(double)yCompleted / Height:p}");
+
+                if (y % Math.Round(Height * 0.005) == 0)
+                {
+                    Console.WriteLine($"{(double)yCompleted / Height:p}");
+                }
             });
 
             return image;
@@ -171,19 +207,14 @@ namespace fractalis.Components
             Iterations = i;
             Width = w;
             Height = h;
+
             ZoomHigh = z;
             CenterHigh = c;
-            RenderMode = RenderMode.HighPrecision;
-        }
 
-        public MandelbrotRenderer(int i, int w, int h, double z, Complex c)
-        {
-            Iterations = i;
-            Width = w;
-            Height = h;
-            Zoom = z;
-            Center = c;
-            RenderMode = RenderMode.Default;
+            Zoom = (double)z;
+            Center = c.ToComplex();
+
+            ReferenceOrbit = new ReferenceOrbit(i);
         }
     }
 }

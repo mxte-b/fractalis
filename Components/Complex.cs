@@ -18,6 +18,18 @@ namespace fractalis.Components
                 return Real * Real + Imaginary * Imaginary;
             }
         }
+        public double Magnitude
+        {
+            get
+            {
+                return Math.Sqrt(Real * Real + Imaginary * Imaginary);
+            }
+        }
+
+        public static Complex operator *(Complex a, double b)
+        {
+            return new Complex(a.Real * b, a.Imaginary * b);
+        }
 
         public static Complex operator *(Complex a, Complex b)
         {
