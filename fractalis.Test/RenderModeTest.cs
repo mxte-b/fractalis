@@ -1,13 +1,14 @@
 using fractalis.Core;
+using fractalis.Core.Fractals;
 using Microsoft.VisualStudio.TestPlatform.Common.DataCollection;
 
 namespace fractalis.Test
 {
     public class RenderModeTest
     {
-        private static MandelbrotRenderer CreateRenderer(BigFixed zoom, int width, int height)
+        private static FractalRenderer<Mandelbrot> CreateRenderer(BigFixed zoom, int width, int height)
         {
-            return new MandelbrotRenderer(150, width, height, zoom, new BigComplex(0, 0));
+            return new FractalRenderer<Mandelbrot>(150, width, height, zoom, new BigComplex(0, 0));
         }
 
         [Theory]

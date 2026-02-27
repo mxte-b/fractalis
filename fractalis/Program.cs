@@ -2,6 +2,7 @@
 using SixLabors.ImageSharp;
 using System.Diagnostics;
 using fractalis.Core;
+using fractalis.Core.Fractals;
 
 namespace fractalis
 {
@@ -9,29 +10,30 @@ namespace fractalis
     {
         static void Main(string[] args)
         {
+            Console.WriteLine(Banner.V1);
+            int w = 3840;
+            int h = 2160;
 
-            int w = 800;
-            int h = 600;
+            BigComplex center = new(-.5,0);
 
-            BigComplex center = Sights.HardestTrip;
+            BigFixed zoom = new BigFixed("0.5");
 
-            BigFixed zoom = new BigFixed("1e150");
-
-            int iterations = 100000;
+            int iterations = 100;
 
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;
             palette.MaxIterations = iterations;
             palette.Frequency = 200;
 
-            palette.AddStop(new(0, Color.Navy));
-            palette.AddStop(new(0.3f, Color.DarkSlateBlue));
-            palette.AddStop(new(0.6f, Color.PapayaWhip));
-            palette.AddStop(new(0.8f, Color.PaleVioletRed));
-            palette.AddStop(new(1, Color.Navy));
+            palette.AddStop(new(0f, Color.FromRgb(0, 7, 100)));
+            palette.AddStop(new(0.2f, Color.FromRgb(32, 107, 203)));
+            palette.AddStop(new(0.4f, Color.FromRgb(237, 255, 255)));
+            palette.AddStop(new(0.6f, Color.FromRgb(255, 170, 0)));
+            palette.AddStop(new(0.8f, Color.FromRgb(0, 2, 0)));
+            palette.AddStop(new(1f, Color.FromRgb(0, 7, 100)));
 
-            MandelbrotRenderer renderer = new MandelbrotRenderer(iterations, w, h, zoom, center);
-            MandelbrotRenderer.ColorPalette = palette;
+            var renderer = new FractalRenderer<Mandelbrot>(iterations, w, h, zoom, center);
+            renderer.ColorPalette = palette;
 
             Image<Rgb24> image = renderer.Render();
             image.Save("render.png");
