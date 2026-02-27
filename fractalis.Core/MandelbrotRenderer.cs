@@ -1,5 +1,4 @@
-﻿using fractalis.Components;
-using SixLabors.ImageSharp;
+﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -9,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace fractalis.Components
+namespace fractalis.Core
 {
     public enum RenderMode
     {
@@ -30,7 +29,7 @@ namespace fractalis.Components
         }
     }
 
-    internal class MandelbrotRenderer
+    public class MandelbrotRenderer
     {
 
         public int Iterations, Width, Height;

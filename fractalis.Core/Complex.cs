@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace fractalis.Components
+namespace fractalis.Core
 {
-    internal struct Complex(double r, double i)
+    public struct Complex(double r, double i)
     {
         public double Real = r;
         public double Imaginary = i;
@@ -57,7 +57,7 @@ namespace fractalis.Components
         }
     }
 
-    internal struct BigComplex
+    public struct BigComplex
     {
         public BigFixed Real { get; set; }
         public BigFixed Imaginary { get; set; }

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace fractalis.Components
+namespace fractalis.Core
 {
-    internal static class Sights
+    public static class Sights
     {
         // https://www.youtube.com/watch?v=LhOSM6uCWxk
         public static BigComplex HardestTrip = new BigComplex(

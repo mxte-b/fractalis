@@ -12,4 +12,8 @@
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\fractalis.Core\fractalis.Core.csproj" />
+  </ItemGroup>
+
 </Project>

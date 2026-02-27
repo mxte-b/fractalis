@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35707.178 d17.12
+VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis", "fractalis.csproj", "{47A50D46-3EAD-4E67-A632-615C9F411912}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis", "fractalis\fractalis.csproj", "{94979790-68FB-4CB6-801E-F4849952DF5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Test", "fractalis.Test\fractalis.Test.csproj", "{D482FF35-DD07-4590-A7C5-A3CD636D2F53}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Core", "fractalis.Core\fractalis.Core.csproj", "{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +15,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{47A50D46-3EAD-4E67-A632-615C9F411912}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{47A50D46-3EAD-4E67-A632-615C9F411912}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{47A50D46-3EAD-4E67-A632-615C9F411912}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{47A50D46-3EAD-4E67-A632-615C9F411912}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94979790-68FB-4CB6-801E-F4849952DF5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94979790-68FB-4CB6-801E-F4849952DF5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94979790-68FB-4CB6-801E-F4849952DF5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94979790-68FB-4CB6-801E-F4849952DF5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D482FF35-DD07-4590-A7C5-A3CD636D2F53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D482FF35-DD07-4590-A7C5-A3CD636D2F53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D482FF35-DD07-4590-A7C5-A3CD636D2F53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D482FF35-DD07-4590-A7C5-A3CD636D2F53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

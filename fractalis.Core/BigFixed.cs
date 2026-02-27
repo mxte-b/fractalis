@@ -5,9 +5,9 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace fractalis.Components
+namespace fractalis.Core
 {
-    internal struct BigFixed
+    public struct BigFixed
     {
         // Number of fractional bits
         private static readonly int Precision = 350;

@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Schema;
 
-namespace fractalis.Components
+namespace fractalis.Core
 {
     public enum PalettePreset { Grayscale, Fire, Ocean, Electric, Rainbow }
 

@@ -1,7 +1,8 @@
 ﻿using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp;
 using System.Diagnostics;
-using fractalis.Components;
+using fractalis.Core;
+
 namespace fractalis
 {
     internal class Program
@@ -14,9 +15,9 @@ namespace fractalis
 
             BigComplex center = Sights.HardestTrip;
 
-            BigFixed zoom = new BigFixed("1e200");
+            BigFixed zoom = new BigFixed("1e150");
 
-            int iterations = 150000;
+            int iterations = 100000;
 
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;
