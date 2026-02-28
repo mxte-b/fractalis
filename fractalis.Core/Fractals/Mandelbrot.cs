@@ -26,7 +26,7 @@ namespace fractalis.Core.Fractals
                 if (z.MagnitudeSquared > 100) break;
             }
 
-            if (i == maxIterations) return new IterationResult(i, double.NaN, true);
+            if (i == maxIterations) return new IterationResult(i, double.NaN, false);
 
             return new IterationResult(i, z.Magnitude);
         }

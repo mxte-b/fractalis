@@ -11,14 +11,14 @@ namespace fractalis
         static void Main(string[] args)
         {
             Console.WriteLine(Banner.V1);
-            int w = 3840;
-            int h = 2160;
+            int w = 800;
+            int h = 600;
 
-            BigComplex center = new(-.5,0);
+            BigComplex center = Sights.RetroDays;
 
-            BigFixed zoom = new BigFixed("0.5");
+            BigFixed zoom = new BigFixed("1e322");
 
-            int iterations = 100;
+            int iterations = 150000;
 
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;

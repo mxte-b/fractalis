@@ -33,9 +33,6 @@ namespace fractalis.Core
 
     public class FractalRenderer<TFractal> where TFractal : IFractal, new()
     {
-        // --- Static properties ---
-        private static double       ILOG2 = 1 / Math.Log(2);
-
         // --- Public properties ---
         public int          Iterations, Width, Height;
         public double       Zoom        { get; set; }
@@ -93,12 +90,31 @@ namespace fractalis.Core
             BigComplex dc = new BigComplex(ndcX / ZoomHigh, ndcY / ZoomHigh);
 
             var result = perturbable.IterationPerturbed(dc.ToComplex(), Iterations, in ReferenceOrbit);
+            return Fractal.GetContinousValue(result);
+        }
 
+        private double EvaluateFloatExp(double ndcX, double ndcY, int x, int y)
+        {
+            if (x == Width / 2 && y == Height / 2)
+                return ReferenceOrbit.EscapeIteration;
+
+            if (Fractal is not IPerturbableFractal perturbable)
+                throw new InvalidOperationException("Fractal does not support perturbation.");
+
+            BigComplex dc = new BigComplex(ndcX / ZoomHigh, ndcY / ZoomHigh);
+
+            var result = perturbable.IterationPerturbed(dc.ToComplex(), Iterations, in ReferenceOrbit);
             return Fractal.GetContinousValue(result);
         }
         private double Evaluate(double ndcX, double ndcY, int x, int y)
         {
-            return RenderMode == RenderMode.HighPrecision ? EvaluateHighPrecision(ndcX, ndcY, x, y) : EvaluateNormal(ndcX, ndcY);
+            return RenderMode switch
+            {
+                RenderMode.Default => EvaluateNormal(ndcX, ndcY),
+                RenderMode.HighPrecision => EvaluateHighPrecision(ndcX, ndcY, x, y),
+                RenderMode.HighPrecisionWithFloatExp => EvaluateFloatExp(ndcX, ndcY, x, y),
+                _ => throw new InvalidOperationException("Unknown render mode."),
+            };
         }
 
         private Rgb24 ComputePixel(int x, int y)
@@ -119,7 +135,10 @@ namespace fractalis.Core
             Console.WriteLine($"<#> Current render mode: {RenderMode}");
 
             // High Precision - using Perturbation Theory
-            if (RenderMode == RenderMode.HighPrecision && Fractal is IPerturbableFractal perturbable)
+            if (
+                (RenderMode == RenderMode.HighPrecision || RenderMode == RenderMode.HighPrecisionWithFloatExp) && 
+                Fractal is IPerturbableFractal perturbable
+            )
             {
                 perturbable.CalculateReferenceOrbit(CenterHigh, Iterations, out ReferenceOrbit);
                 Console.WriteLine($"    - Done!");

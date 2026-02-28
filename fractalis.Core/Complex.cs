@@ -56,7 +56,6 @@ namespace fractalis.Core
             return Real.ToString() + "+" + Imaginary.ToString() + "i";
         }
     }
-
     public struct BigComplex
     {
         public BigFixed Real { get; set; }
@@ -95,6 +94,57 @@ namespace fractalis.Core
         public override string ToString()
         {
             return Real.ToString() + "+" + Imaginary.ToString() + "i";
+        }
+    }
+    internal struct ScaledComplex
+    {
+        public FloatExp Real;
+        public FloatExp Imaginary;
+
+        public ScaledComplex(FloatExp real, FloatExp imaginary)
+        {
+            Real = real;
+            Imaginary = imaginary;
+        }
+
+        public ScaledComplex(double real, double imaginary)
+        {
+            Real = new FloatExp(real, 0);
+            Imaginary = new FloatExp(imaginary, 0);
+        }
+
+        public static ScaledComplex operator +(ScaledComplex a, ScaledComplex b)
+        {
+            return new ScaledComplex(a.Real + b.Real, a.Imaginary + b.Imaginary);
+        }
+
+        public static ScaledComplex operator -(ScaledComplex a, ScaledComplex b)
+        {
+            return new ScaledComplex(a.Real - b.Real, a.Imaginary - b.Imaginary);
+        }
+
+        public static ScaledComplex operator *(ScaledComplex a, ScaledComplex b)
+        {
+            return new ScaledComplex(a.Real * b.Real - a.Imaginary * b.Imaginary, a.Real * b.Imaginary + a.Imaginary * b.Real);
+        }
+
+        public ScaledComplex Squared()
+        {
+            FloatExp x2 = Real * Real;
+            FloatExp y2 = Imaginary * Imaginary;
+            FloatExp xy2 = Real * Imaginary * new FloatExp(2.0, 0);
+
+            return new ScaledComplex(x2 - y2, xy2);
+        }
+
+        public FloatExp MagnitudeSquared()
+        {
+            return Real * Real + Imaginary * Imaginary;
+        }
+
+        public override string ToString()
+        {
+            return $"({Real} + {Imaginary}i)";
         }
     }
 }
