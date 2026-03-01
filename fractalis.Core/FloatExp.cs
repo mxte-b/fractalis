@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fractalis.Core
 {
-    internal struct FloatExp
+    public struct FloatExp
     {
         public double Mantissa;
         public int Exponent;
@@ -26,8 +22,8 @@ namespace fractalis.Core
                 return;
             }
 
-            int shift = Math.ILogB(Mantissa);
-            Mantissa = Math.ScaleB(Mantissa, -shift);
+            int shift = (int)Math.Floor(Math.Log10(Math.Abs(Mantissa)));
+            Mantissa /= Math.Pow(10, shift);
             Exponent += shift;
         }
 
@@ -45,25 +41,22 @@ namespace fractalis.Core
         {
             int exponentDiff = left.Exponent - right.Exponent;
 
-            // Optimization: If the difference in magnitude is bigger than
-            // what doubles can handle, just return the bigger one.
-            if (Math.Abs(exponentDiff) > 54)
-            {
-                return exponentDiff > 0 ? left : right;
-            }
+            //if (Math.Abs(exponentDiff) > 16)
+            //    return exponentDiff > 0 ? left : right;
 
-            // Aligning exponents
-            // Left number is bigger
+            // Align exponents
             if (exponentDiff > 0)
             {
-                return new FloatExp(left.Mantissa + Math.ScaleB(right.Mantissa, -exponentDiff), left.Exponent);
+                double scaled = right.Mantissa * Math.Pow(10, -exponentDiff);
+                return new FloatExp(left.Mantissa + scaled, left.Exponent);
             }
-            // Right number is bigger
             else
             {
-                return new FloatExp(right.Mantissa + Math.ScaleB(left.Mantissa, exponentDiff), right.Exponent);
+                double scaled = left.Mantissa * Math.Pow(10, exponentDiff);
+                return new FloatExp(right.Mantissa + scaled, right.Exponent);
             }
         }
+
         public static FloatExp operator -(FloatExp x)
         {
             return new FloatExp(-x.Mantissa, x.Exponent);
@@ -76,7 +69,7 @@ namespace fractalis.Core
 
         public override string ToString()
         {
-            return $"{Mantissa:0.00} * 2^{Exponent}";
+            return $"{Mantissa:0.00}e{Exponent}";
         }
     }
 }

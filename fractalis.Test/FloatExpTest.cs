@@ -12,10 +12,10 @@ namespace fractalis.Test
         [Fact]
         public void Normalization()
         {
-            FloatExp x = new FloatExp(4d, 2);
+            FloatExp x = new FloatExp(14, 2);
 
-            Assert.Equal(1, x.Mantissa);
-            Assert.Equal(4, x.Exponent);
+            Assert.Equal(1.4, x.Mantissa);
+            Assert.Equal(3, x.Exponent);
         }
 
         [Fact]
@@ -26,8 +26,8 @@ namespace fractalis.Test
 
             FloatExp result = a * b;
 
-            Assert.Equal(1.5, result.Mantissa);
-            Assert.Equal(3, result.Exponent);
+            Assert.Equal(6, result.Mantissa);
+            Assert.Equal(1, result.Exponent);
         }
 
         [Fact]
@@ -45,13 +45,13 @@ namespace fractalis.Test
         [Fact]
         public void Addition()
         {
-            FloatExp a = new FloatExp(1, 4);
-            FloatExp b = new FloatExp(1, 2);
+            FloatExp a = new FloatExp(1.5, 1);
+            FloatExp b = new FloatExp(1, 1);
 
             FloatExp result = a + b;
 
-            Assert.Equal(1.25, result.Mantissa);
-            Assert.Equal(4, result.Exponent);
+            Assert.Equal(2.5, result.Mantissa);
+            Assert.Equal(1, result.Exponent);
         }
 
         [Fact]
@@ -68,21 +68,21 @@ namespace fractalis.Test
         [Fact]
         public void Subtraction()
         {
-            FloatExp a = new FloatExp(1, 4);
-            FloatExp b = new FloatExp(1, 2);
+            FloatExp a = new FloatExp(1, 1);
+            FloatExp b = new FloatExp(1, 0);
 
             FloatExp result = a - b;
 
-            Assert.Equal(1.5, result.Mantissa);
-            Assert.Equal(3, result.Exponent);
+            Assert.Equal(9, result.Mantissa);
+            Assert.Equal(0, result.Exponent);
         }
 
         [Fact]
         public void StringConversion()
         {
-            FloatExp x = new FloatExp(4d, 2);
+            FloatExp x = new FloatExp(4, 2);
 
-            Assert.Equal("1.00 * 2^4", x.ToString());
+            Assert.Equal("4.00e2", x.ToString());
         }
     }
 }
