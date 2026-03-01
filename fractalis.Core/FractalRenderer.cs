@@ -48,7 +48,7 @@ namespace fractalis.Core
                     return RenderMode.Default;
                 }
 
-                if (PixelSpacing < 1e-300)
+                if (PixelSpacing < 1e-320)
                 {
                     return RenderMode.HighPrecisionWithFloatExp;
                 }

@@ -4,6 +4,9 @@ namespace fractalis.Core
 {
     public struct FloatExp
     {
+        public static FloatExp Zero = new(0, 0);
+        public static FloatExp One = new(1, 0);
+
         public double Mantissa;
         public int Exponent;
 
