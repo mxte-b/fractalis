@@ -64,7 +64,7 @@ namespace fractalis.Core.Numbers
         }
         public override string ToString()
         {
-            return $"{Real} + {Imaginary}i";
+            return $"{(double)Real} {(Imaginary >= 0 ? "+" : "-")} {Math.Abs(Imaginary)}i";
         }
     }
 }
