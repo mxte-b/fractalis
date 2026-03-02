@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace fractalis.Core
+namespace fractalis.Core.Numbers
 {
     public struct FloatExp
     {
@@ -28,6 +28,26 @@ namespace fractalis.Core
             int shift = (int)Math.Floor(Math.Log10(Math.Abs(Mantissa)));
             Mantissa /= Math.Pow(10, shift);
             Exponent += shift;
+        }
+
+        public FloatExp Sqrt()
+        {
+            if (Mantissa < 0)
+                throw new InvalidOperationException("Cannot sqrt negative FloatExp");
+
+            if (Mantissa == 0)
+                return new FloatExp(0, 0);
+
+            double m = Mantissa;
+            int e = Exponent;
+
+            if ((e & 1) != 0) // exponent is odd
+            {
+                m *= 10;
+                e -= 1;
+            }
+
+            return new FloatExp(Math.Sqrt(m), e / 2);
         }
 
         public static FloatExp operator *(FloatExp left, FloatExp right)
@@ -67,9 +87,13 @@ namespace fractalis.Core
 
         public static FloatExp operator -(FloatExp left, FloatExp right)
         {
-            return left + (-right);
+            return left + -right;
         }
 
+        public static implicit operator double(FloatExp x) 
+        {
+            return x.Mantissa * Math.Pow(10, x.Exponent);
+        }
         public override string ToString()
         {
             return $"{Mantissa:0.00}e{Exponent}";

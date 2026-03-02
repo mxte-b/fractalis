@@ -1,5 +1,6 @@
 using fractalis.Core;
 using fractalis.Core.Fractals;
+using fractalis.Core.Numbers;
 using Microsoft.VisualStudio.TestPlatform.Common.DataCollection;
 
 namespace fractalis.Test

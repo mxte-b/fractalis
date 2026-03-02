@@ -3,6 +3,7 @@ using SixLabors.ImageSharp;
 using System.Diagnostics;
 using fractalis.Core;
 using fractalis.Core.Fractals;
+using fractalis.Core.Numbers;
 
 namespace fractalis
 {
@@ -11,14 +12,14 @@ namespace fractalis
         static void Main(string[] args)
         {
             Console.WriteLine(Banner.V1);
-            int w = 800;
-            int h = 600;
+            int w = 2;
+            int h = 2;
 
             BigComplex center = Sights.RetroDays;
 
-            BigFixed zoom = new BigFixed("1e322");
+            BigFixed zoom = new BigFixed("1e310");
 
-            int iterations = 150000;
+            int iterations = 100;
 
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;

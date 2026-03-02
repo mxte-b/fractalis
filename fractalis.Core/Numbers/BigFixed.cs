@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace fractalis.Core
+namespace fractalis.Core.Numbers
 {
     public struct BigFixed
     {

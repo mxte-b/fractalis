@@ -1,4 +1,5 @@
-﻿using Spectre.Console;
+﻿using fractalis.Core.Numbers;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +33,8 @@ namespace fractalis.Core.Fractals
         }
         public IterationResult IterationPerturbed(Complex delta, int maxIterations, in ReferenceOrbit referenceOrbit)
         {
+            Console.WriteLine("--- PERTURBATION ---");
+            Console.WriteLine($"Delta: {delta}");
             int i = 0;
             int refIteration = 0;
             Complex dz = new Complex(0, 0);
@@ -39,9 +42,54 @@ namespace fractalis.Core.Fractals
 
             for (; i < maxIterations; i++)
             {
+                Console.WriteLine("\n--- NEW ITERATION ---");
+                Console.WriteLine($"   i: {i}, refIteration: {refIteration}");
+                Console.WriteLine($"   reference: {referenceOrbit.Points[refIteration]}");
+                Console.WriteLine($"   dz: {dz}");
                 dz = (2 * referenceOrbit.Points[refIteration++] + dz) * dz + delta;
 
                 Complex z = referenceOrbit.Points[refIteration] + dz;
+
+                // Bailout
+                if (z.MagnitudeSquared > 100)
+                {
+                    lastZ = z;
+                    break;
+                }
+
+                // Prevent delta from straying off and causing visual glitches
+                if (z.MagnitudeSquared < dz.MagnitudeSquared || refIteration == referenceOrbit.EscapeIteration - 1)
+                {
+                    dz = z;
+                    refIteration = 0;
+                }
+            }
+
+            if (i == maxIterations) return new IterationResult(i, double.NaN, false);
+
+            return new IterationResult(i, lastZ.Magnitude);
+        }
+        public IterationResult IterationFloatExp(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit)
+        {
+            Console.WriteLine("--- PERTURBATION ---");
+            Console.WriteLine($"Delta: {delta}");
+            int i = 0;
+            int refIteration = 0;
+            ScaledComplex dz = new ScaledComplex(0, 0);
+            ScaledComplex lastZ = new ScaledComplex(0, 0);
+
+            for (; i < maxIterations; i++)
+            {
+                Console.WriteLine("\n--- NEW ITERATION ---");
+                Console.WriteLine($"   i: {i}, refIteration: {refIteration}");
+                Console.WriteLine($"   reference: {referenceOrbit.ScaledPoints[refIteration]}");
+                Console.WriteLine($"   dz: {dz}");
+
+                // We don't collect the common dz term here, because that would involve
+                // adding the reference (~1e0 scale) to dz (~1e-300+ scale), which would be catastrophic.
+                dz = 2 * referenceOrbit.ScaledPoints[refIteration++] * dz + dz * dz + delta;
+
+                ScaledComplex z = referenceOrbit.ScaledPoints[refIteration] + dz;
 
                 // Bailout
                 if (z.MagnitudeSquared > 100)
@@ -84,10 +132,14 @@ namespace fractalis.Core.Fractals
                     for (; i < maxIterations; i++)
                     {
                         o.Points[i] = z.ToComplex();
+                        o.ScaledPoints[i] = z.ToScaledComplex();
+
                         BigFixed zrTemp = z.Real;
                         z.Real = z.Real * z.Real - z.Imaginary * z.Imaginary + center.Real;
                         z.Imaginary = 2 * zrTemp * z.Imaginary + center.Imaginary;
+
                         if (z.MagnitudeSquared > 100) break;
+
                         task.Increment(1);
                     }
                 });

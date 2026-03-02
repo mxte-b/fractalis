@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using fractalis.Core;
+using fractalis.Core.Numbers;
 
 namespace fractalis.Test
 {
@@ -75,6 +75,47 @@ namespace fractalis.Test
 
             Assert.Equal(9, result.Mantissa);
             Assert.Equal(0, result.Exponent);
+        }
+
+        [Fact]
+        public void Sqrt_OddExponent()
+        {
+            FloatExp a = new FloatExp(2.5, 1);
+
+            FloatExp result = a.Sqrt();
+
+            Assert.Equal(5, result.Mantissa);
+            Assert.Equal(0, result.Exponent);
+        }
+
+        [Fact]
+        public void Sqrt_EvenExponent()
+        {
+            FloatExp a = new FloatExp(1.44, 2);
+
+            FloatExp result = a.Sqrt();
+
+            Assert.Equal(1.2, result.Mantissa);
+            Assert.Equal(1, result.Exponent);
+        }
+
+        [Fact]
+        public void Sqrt_Zero()
+        {
+            FloatExp a = FloatExp.Zero;
+
+            FloatExp result = a.Sqrt();
+
+            Assert.Equal(0, result.Mantissa);
+            Assert.Equal(0, result.Exponent);
+        }
+
+        [Fact]
+        public void Sqrt_Negative_Throws()
+        {
+            FloatExp a = new FloatExp(-1, 4);
+
+            Assert.Throws<InvalidOperationException>(() => a.Sqrt());
         }
 
         [Fact]

@@ -1,4 +1,5 @@
 ﻿using fractalis.Core.Fractals;
+using fractalis.Core.Numbers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
@@ -22,11 +23,13 @@ namespace fractalis.Core
     public struct ReferenceOrbit
     {
         public Complex[] Points;
+        public ScaledComplex[] ScaledPoints;
         public int EscapeIteration;
 
         public ReferenceOrbit(int maxIterations)
         {
             Points = new Complex[maxIterations];
+            ScaledPoints = new ScaledComplex[maxIterations];
             EscapeIteration = 0;
         }
     }
@@ -50,7 +53,7 @@ namespace fractalis.Core
 
                 if (PixelSpacing < 1e-320)
                 {
-                    return RenderMode.HighPrecisionWithFloatExp;
+                    return RenderMode.HighPrecision;
                 }
                 else if (PixelSpacing < 1e-15)
                 {
@@ -159,11 +162,12 @@ namespace fractalis.Core
             {
                 var task = ctx.AddTask($"<#> Rendering", maxValue: Height);
 
-                Parallel.For(0, Height, y =>
+                //Parallel.For(0, Height, y =>
+                for (int y = 0; y < Height; y++)
                 {
                     for (int x = 0; x < Width; x++) image[x, y] = ComputePixel(x, y);
                     task.Increment(1);
-                });
+                };
             });
 
             Console.WriteLine($"    - Done!");

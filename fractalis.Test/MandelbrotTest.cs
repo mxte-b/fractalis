@@ -1,5 +1,6 @@
 ﻿using fractalis.Core;
 using fractalis.Core.Fractals;
+using fractalis.Core.Numbers;
 using System;
 using System.Collections.Generic;
 using System.Linq;

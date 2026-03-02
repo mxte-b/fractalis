@@ -1,4 +1,5 @@
-﻿using System;
+﻿using fractalis.Core.Numbers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,5 +17,6 @@ namespace fractalis.Core.Fractals
     {
         void CalculateReferenceOrbit(BigComplex center, int maxIterations, out ReferenceOrbit referenceOrbit);
         IterationResult IterationPerturbed(Complex delta, int maxIterations, in ReferenceOrbit referenceOrbit);
+        IterationResult IterationFloatExp(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit);
     }
 }
