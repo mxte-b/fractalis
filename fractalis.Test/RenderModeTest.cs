@@ -14,11 +14,17 @@ namespace fractalis.Test
         [Theory]
         [InlineData(1d, 800, 600, RenderMode.Default)]
         [InlineData(1e20, 800, 600, RenderMode.HighPrecision)]
-        [InlineData(1e300, 800, 600, RenderMode.HighPrecisionWithFloatExp)]
         public void RenderMode_SwitchesCorrectly(double zoom, int w, int h, RenderMode expected)
         {
             var renderer = CreateRenderer(zoom, w, h);
             Assert.Equal(expected, renderer.RenderMode);
+        }
+
+        [Fact]
+        public void RenderMode_SwitchesCorrectly_Extreme()
+        {
+            var renderer = CreateRenderer(new BigFixed("1e330"), 800, 600);
+            Assert.Equal(RenderMode.HighPrecisionWithFloatExp, renderer.RenderMode);
         }
     }
 }

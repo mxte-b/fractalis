@@ -47,14 +47,14 @@ namespace fractalis.Test
         [Fact]
         public void Cast_FloatExp_Extreme()
         {
-            BigFixed a = new BigFixed("25e-370");
+            BigFixed a = new BigFixed("25e-380");
 
             FloatExp result = (FloatExp)a;
 
             Console.WriteLine(result);
 
             Assert.Equal(2.5, result.Mantissa);
-            Assert.Equal(-369, result.Exponent);
+            Assert.Equal(-379, result.Exponent);
         }
     }
 }
