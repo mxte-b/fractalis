@@ -51,9 +51,9 @@ namespace fractalis.Core
                     return RenderMode.Default;
                 }
 
-                if (PixelSpacing < 1e-320)
+                if (PixelSpacing < 1e-322)
                 {
-                    return RenderMode.HighPrecision;
+                    return RenderMode.HighPrecisionWithFloatExp;
                 }
                 else if (PixelSpacing < 1e-15)
                 {
@@ -67,7 +67,8 @@ namespace fractalis.Core
         // --- Private properties ---
         private ReferenceOrbit      ReferenceOrbit;
         private readonly TFractal   Fractal = new();
-        private double              PixelSpacing {
+        private double              PixelSpacing 
+        {
             get
             {
                 return 1 / (Width * Zoom);
@@ -106,7 +107,7 @@ namespace fractalis.Core
 
             BigComplex dc = new BigComplex(ndcX / ZoomHigh, ndcY / ZoomHigh);
 
-            var result = perturbable.IterationPerturbed(dc.ToComplex(), Iterations, in ReferenceOrbit);
+            var result = perturbable.IterationFloatExp(dc.ToScaledComplex(), Iterations, in ReferenceOrbit);
             return Fractal.GetContinousValue(result);
         }
         private double Evaluate(double ndcX, double ndcY, int x, int y)
@@ -162,12 +163,12 @@ namespace fractalis.Core
             {
                 var task = ctx.AddTask($"<#> Rendering", maxValue: Height);
 
-                //Parallel.For(0, Height, y =>
-                for (int y = 0; y < Height; y++)
+                Parallel.For(0, Height, y =>
+                //for (int y = 0; y < Height; y++)
                 {
                     for (int x = 0; x < Width; x++) image[x, y] = ComputePixel(x, y);
                     task.Increment(1);
-                };
+                });
             });
 
             Console.WriteLine($"    - Done!");

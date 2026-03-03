@@ -36,9 +36,9 @@ namespace fractalis.Core.Numbers
                     int shift = -exponent;
 
                     string whole = mantissaParts[0];
-                    string frac = mantissaParts.Length > 1 ? mantissaParts[1] : "";
+                    string fracPart = mantissaParts.Length > 1 ? mantissaParts[1] : "";
 
-                    string digits = whole + frac;
+                    string digits = whole + fracPart;
 
                     if (shift >= whole.Length)
                     {
@@ -58,7 +58,7 @@ namespace fractalis.Core.Numbers
                         int splitIndex = whole.Length - shift;
 
                         string intDigits = whole.Substring(0, splitIndex);
-                        string fracDigits = whole.Substring(splitIndex) + frac;
+                        string fracDigits = whole.Substring(splitIndex) + fracPart;
 
                         string fractionalPart = fracDigits.Substring(0, Math.Min(Precision, fracDigits.Length));
 
@@ -154,49 +154,68 @@ namespace fractalis.Core.Numbers
             return new BigFixed(value.ToString("0." + new string('#', 339)));
         }
 
-        public static implicit operator double(BigFixed x)
+        public static explicit operator double(BigFixed x)
         {
             return double.Parse(x.ToString(), System.Globalization.CultureInfo.InvariantCulture);
         }
 
         public static implicit operator FloatExp(BigFixed x)
         {
-            string[] parts = x.ToString().Split(".");
-            int intPart = int.Parse(parts[0]);
+            string[] parts = x.ToString().Split('.');
 
-            bool hasFractionalPart = false;
+            bool negative = parts[0].StartsWith('-');
+            string intPart = negative ? parts[0][1..] : parts[0];
+            string fracPart = parts.Length > 1 ? parts[1] : "";
+
+            // Find first non-zero digit in fractional part
             int fractionStartIdx = -1;
-
-            // Check if the fractional part contains any meaningful data
-            for (int i = 0; i < parts[1].Length; i++)
+            for (int i = 0; i < fracPart.Length; i++)
             {
-                char c = parts[1][i];
-                if ((uint)(c - '1') <= 8)
-                {
-                    hasFractionalPart = true;
-                    fractionStartIdx = i;
-                    break;
-                }
+                if (fracPart[i] != '0') { fractionStartIdx = i; break; }
             }
 
-            if (!hasFractionalPart) return new FloatExp(intPart, 0);
-
-            int exponent;
             double mantissa;
+            int exponentBase10;
 
-            if (intPart == 0)
+            // If the number has an integer part, we parse the value by
+            // just trimming the end of trailing zeros.
+            if (intPart[0] != '0')
             {
-                exponent = -fractionStartIdx - 1;
-                mantissa = double.Parse(parts[1].Substring(fractionStartIdx).TrimEnd('0').Insert(1, "."));
+                string digits = parts[0] + fracPart.TrimEnd('0');
+                digits = digits[..Math.Min(17, digits.Length)];
+
+                // Inserts a radix point at position 1 for parsing to work correctly.
+                mantissa = double.Parse(digits[0] + "." + digits[1..], System.Globalization.CultureInfo.InvariantCulture);
+                exponentBase10 = parts[0].Length - 1;
+            }
+            // Else we have a number in [0, 1) range.
+            else if (fractionStartIdx >= 0)
+            {
+                string digits = fracPart.Substring(fractionStartIdx, Math.Min(17, fracPart.Length - fractionStartIdx)).TrimEnd('0');
+
+                if (digits.Length == 0) return FloatExp.Zero;
+
+                mantissa = double.Parse(digits[0] + "." + (digits.Length > 1 ? digits[1..] : "0"), System.Globalization.CultureInfo.InvariantCulture);
+                exponentBase10 = -(fractionStartIdx + 1);
             }
             else
             {
-                exponent = 0;
-                mantissa = intPart + double.Parse("0." + parts[1].TrimEnd('0'));
+                return FloatExp.Zero;
             }
 
+            if (negative) mantissa = -mantissa;
 
-            return new FloatExp(mantissa, exponent);
+            // Convert exponent to base-2
+            double binaryExp = exponentBase10 * Math.Log2(10);
+            int binaryExpInt = (int)Math.Floor(binaryExp);
+            double binaryExpFrac = binaryExp - binaryExpInt;
+
+            // Since the conversion from base-10 to base-2 does not guarantee
+            // that the exponent will be an integer, we will make it one and
+            // correct the value by adjusting the mantissa.
+            mantissa *= Math.Pow(2, binaryExpFrac);
+
+            return new FloatExp(mantissa, binaryExpInt);
         }
 
         public override string ToString()

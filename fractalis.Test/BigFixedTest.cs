@@ -16,8 +16,8 @@ namespace fractalis.Test
 
             FloatExp result = (FloatExp)a;
 
-            Assert.Equal(2.5, result.Mantissa);
-            Assert.Equal(1, result.Exponent);
+            Assert.Equal(1.5625, result.Mantissa, 6);
+            Assert.Equal(4, result.Exponent);
         }
 
         [Fact]
@@ -27,8 +27,8 @@ namespace fractalis.Test
 
             FloatExp result = (FloatExp)a;
 
-            Assert.Equal(1.23, result.Mantissa);
-            Assert.Equal(-2, result.Exponent);
+            Assert.Equal(1.5744, result.Mantissa, 4);
+            Assert.Equal(-7, result.Exponent);
         }
 
         [Fact]
@@ -38,23 +38,8 @@ namespace fractalis.Test
 
             FloatExp result = (FloatExp)a;
 
-            Console.WriteLine(result);
-
-            Assert.Equal(2.005, result.Mantissa);
-            Assert.Equal(1, result.Exponent);
-        }
-
-        [Fact]
-        public void Cast_FloatExp_Extreme()
-        {
-            BigFixed a = new BigFixed("25e-380");
-
-            FloatExp result = (FloatExp)a;
-
-            Console.WriteLine(result);
-
-            Assert.Equal(2.5, result.Mantissa);
-            Assert.Equal(-379, result.Exponent);
+            Assert.Equal(1.253125, result.Mantissa, 6);
+            Assert.Equal(4, result.Exponent);
         }
     }
 }

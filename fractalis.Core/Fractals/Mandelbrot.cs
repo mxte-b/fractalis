@@ -11,6 +11,7 @@ namespace fractalis.Core.Fractals
     public class Mandelbrot : IPerturbableFractal
     {
         private const double ILOG2 = 1.4426950408889634;
+        private static readonly FloatExp BAILOUT = new FloatExp(1, 7);
 
         public IterationResult Iteration(Complex c, int maxIterations)
         {
@@ -33,8 +34,6 @@ namespace fractalis.Core.Fractals
         }
         public IterationResult IterationPerturbed(Complex delta, int maxIterations, in ReferenceOrbit referenceOrbit)
         {
-            Console.WriteLine("--- PERTURBATION ---");
-            Console.WriteLine($"Delta: {delta}");
             int i = 0;
             int refIteration = 0;
             Complex dz = new Complex(0, 0);
@@ -42,23 +41,20 @@ namespace fractalis.Core.Fractals
 
             for (; i < maxIterations; i++)
             {
-                Console.WriteLine("\n--- NEW ITERATION ---");
-                Console.WriteLine($"   i: {i}, refIteration: {refIteration}");
-                Console.WriteLine($"   reference: {referenceOrbit.Points[refIteration]}");
-                Console.WriteLine($"   dz: {dz}");
                 dz = (2 * referenceOrbit.Points[refIteration++] + dz) * dz + delta;
 
                 Complex z = referenceOrbit.Points[refIteration] + dz;
+                double zMag = z.MagnitudeSquared;
 
                 // Bailout
-                if (z.MagnitudeSquared > 100)
+                if (zMag > 100)
                 {
                     lastZ = z;
                     break;
                 }
 
                 // Prevent delta from straying off and causing visual glitches
-                if (z.MagnitudeSquared < dz.MagnitudeSquared || refIteration == referenceOrbit.EscapeIteration - 1)
+                if (zMag < dz.MagnitudeSquared || refIteration == referenceOrbit.EscapeIteration - 1)
                 {
                     dz = z;
                     refIteration = 0;
@@ -71,8 +67,6 @@ namespace fractalis.Core.Fractals
         }
         public IterationResult IterationFloatExp(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit)
         {
-            Console.WriteLine("--- PERTURBATION ---");
-            Console.WriteLine($"Delta: {delta}");
             int i = 0;
             int refIteration = 0;
             ScaledComplex dz = new ScaledComplex(0, 0);
@@ -80,26 +74,22 @@ namespace fractalis.Core.Fractals
 
             for (; i < maxIterations; i++)
             {
-                Console.WriteLine("\n--- NEW ITERATION ---");
-                Console.WriteLine($"   i: {i}, refIteration: {refIteration}");
-                Console.WriteLine($"   reference: {referenceOrbit.ScaledPoints[refIteration]}");
-                Console.WriteLine($"   dz: {dz}");
-
                 // We don't collect the common dz term here, because that would involve
                 // adding the reference (~1e0 scale) to dz (~1e-300+ scale), which would be catastrophic.
                 dz = 2 * referenceOrbit.ScaledPoints[refIteration++] * dz + dz * dz + delta;
 
                 ScaledComplex z = referenceOrbit.ScaledPoints[refIteration] + dz;
+                FloatExp zMag = z.MagnitudeSquared;
 
                 // Bailout
-                if (z.MagnitudeSquared > 100)
+                if (zMag > BAILOUT)
                 {
                     lastZ = z;
                     break;
                 }
 
                 // Prevent delta from straying off and causing visual glitches
-                if (z.MagnitudeSquared < dz.MagnitudeSquared || refIteration == referenceOrbit.EscapeIteration - 1)
+                if (zMag < dz.MagnitudeSquared || refIteration == referenceOrbit.EscapeIteration - 1)
                 {
                     dz = z;
                     refIteration = 0;
@@ -108,7 +98,7 @@ namespace fractalis.Core.Fractals
 
             if (i == maxIterations) return new IterationResult(i, double.NaN, false);
 
-            return new IterationResult(i, lastZ.Magnitude);
+            return new IterationResult(i, (double)lastZ.Magnitude);
         }
         public void CalculateReferenceOrbit(BigComplex center, int maxIterations, out ReferenceOrbit orbit)
         {

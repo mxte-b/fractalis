@@ -17,7 +17,7 @@ namespace fractalis.Test
         {
             ScaledComplex a = new ScaledComplex(r, i);
 
-            Assert.Equal(expected, a.MagnitudeSquared);
+            Assert.Equal(expected, (double)a.MagnitudeSquared);
         }
 
         [Theory]
@@ -37,7 +37,7 @@ namespace fractalis.Test
         {
             ScaledComplex a = new ScaledComplex(r, i);
 
-            Assert.Equal(expected, a.Magnitude, 1e-5);
+            Assert.Equal(expected, (double)a.Magnitude, 1e-5);
         }
 
         [Theory]
@@ -58,8 +58,8 @@ namespace fractalis.Test
 
             var result = a + b;
 
-            Assert.Equal(expectedR, result.Real, 10);
-            Assert.Equal(expectedI, result.Imaginary, 10);
+            Assert.Equal(expectedR, (double)result.Real, 10);
+            Assert.Equal(expectedI, (double)result.Imaginary, 10);
         }
 
         [Theory]
@@ -80,8 +80,8 @@ namespace fractalis.Test
 
             var result = a - b;
 
-            Assert.Equal(expectedR, result.Real, 10);
-            Assert.Equal(expectedI, result.Imaginary, 10);
+            Assert.Equal(expectedR, (double)result.Real, 10);
+            Assert.Equal(expectedI, (double)result.Imaginary, 10);
         }
 
         [Theory]
@@ -102,8 +102,8 @@ namespace fractalis.Test
 
             var result = a * b;
 
-            Assert.Equal(expectedR, result.Real, 10);
-            Assert.Equal(expectedI, result.Imaginary, 10);
+            Assert.Equal(expectedR, (double)result.Real, 10);
+            Assert.Equal(expectedI, (double)result.Imaginary, 10);
         }
 
         [Theory]
@@ -122,18 +122,18 @@ namespace fractalis.Test
 
             var result = z * scalar;
 
-            Assert.Equal(expectedR, result.Real, 10);
-            Assert.Equal(expectedI, result.Imaginary, 10);
+            Assert.Equal(expectedR, (double)result.Real, 10);
+            Assert.Equal(expectedI, (double)result.Imaginary, 10);
         }
 
         [Theory]
-        [InlineData(1.0, 1.0, "1 + 1i")]
-        [InlineData(0.0, 0.0, "0 + 0i")]
-        [InlineData(-3.5, 2.1, "-3.5 + 2.1i")]
-        [InlineData(2.5, -1.5, "2.5 - 1.5i")]
-        [InlineData(-7.2, -3.3, "-7.2 - 3.3i")]
-        [InlineData(0, -5, "0 - 5i")]
-        [InlineData(0, 7, "0 + 7i")]
+        [InlineData(1.0, 1.0, "1E0 + 1E0i")]
+        [InlineData(0.0, 0.0, "0E0 + 0E0i")]
+        [InlineData(-3.5, 2.1, "-3.5E0 + 2.1E0i")]
+        [InlineData(2.5, -1.5, "2.5E0 - 1.5E0i")]
+        [InlineData(-7.2, -3.3, "-7.2E0 - 3.3E0i")]
+        [InlineData(0, -5, "0E0 - 5E0i")]
+        [InlineData(0, 7, "0E0 + 7E0i")]
         public void StringConversion(double r, double i, string expected)
         {
             var z = new ScaledComplex(r, i);
