@@ -10,7 +10,7 @@ namespace fractalis.Core.Numbers
     public struct BigFixed
     {
         // Number of fractional bits
-        private static readonly int Precision = 400;
+        private static readonly int Precision = 550;
         private static readonly BigInteger Scale = BigInteger.Pow(10, Precision);
         private readonly BigInteger Value;
 

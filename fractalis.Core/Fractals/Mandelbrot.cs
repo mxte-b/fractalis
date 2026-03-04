@@ -12,6 +12,7 @@ namespace fractalis.Core.Fractals
     {
         private const double ILOG2 = 1.4426950408889634;
         private static readonly FloatExp BAILOUT = new FloatExp(1, 7);
+        private static readonly double BAILOUT_DOUBLE = Math.Pow(2, 7);
 
         public IterationResult Iteration(Complex c, int maxIterations)
         {
@@ -47,7 +48,7 @@ namespace fractalis.Core.Fractals
                 double zMag = z.MagnitudeSquared;
 
                 // Bailout
-                if (zMag > 100)
+                if (zMag > BAILOUT_DOUBLE)
                 {
                     lastZ = z;
                     break;
@@ -128,7 +129,7 @@ namespace fractalis.Core.Fractals
                         z.Real = z.Real * z.Real - z.Imaginary * z.Imaginary + center.Real;
                         z.Imaginary = 2 * zrTemp * z.Imaginary + center.Imaginary;
 
-                        if (z.MagnitudeSquared > 100) break;
+                        if (z.MagnitudeSquared > BAILOUT_DOUBLE) break;
 
                         task.Increment(1);
                     }

@@ -84,7 +84,9 @@ namespace fractalis.Core.Numbers
             if (exponentDiff > 53) return left;
             if (exponentDiff < -53) return right;
 
-            if (exponentDiff >= 0)
+            if (exponentDiff == 0) return new FloatExp(left.Mantissa + right.Mantissa, left.Exponent);
+
+            if (exponentDiff > 0)
             {
                 return new FloatExp(left.Mantissa + Math.ScaleB(right.Mantissa, -exponentDiff), left.Exponent);
             }
@@ -129,7 +131,7 @@ namespace fractalis.Core.Numbers
         public static bool operator <(FloatExp left, FloatExp right) => right > left;
         public static bool operator >=(FloatExp left, FloatExp right) => !(left < right);
         public static bool operator <=(FloatExp left, FloatExp right) => !(left > right);
-        public static implicit operator double(FloatExp x) => Math.ScaleB(x.Mantissa, x.Exponent);
+        public static explicit operator double(FloatExp x) => Math.ScaleB(x.Mantissa, x.Exponent);
         public readonly override string ToString() => $"{Mantissa}*2^{Exponent}";
     }
 }

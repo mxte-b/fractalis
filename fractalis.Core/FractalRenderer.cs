@@ -125,7 +125,8 @@ namespace fractalis.Core
         {
             double ndcX = (double)x / Width - 0.5;
             double ndcY = -((double)y / Height - 0.5);
-            ndcX *= (double)Width / Height;
+            ndcY *= 2;
+            ndcX *= (double)2 * Width / Height;
 
             double value = Evaluate(ndcX, ndcY, x, y);
 
