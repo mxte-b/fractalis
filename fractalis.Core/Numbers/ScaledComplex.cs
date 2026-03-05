@@ -62,6 +62,12 @@ namespace fractalis.Core.Numbers
         {
             return new ScaledComplex(b.Real * a, b.Imaginary * a);
         }
+
+        public readonly string ToDoubleString()
+        {
+            return $"{(double)Real} {((double)Imaginary >= 0 ? "+" : "-")} {(double)(Imaginary.Abs())}i";
+        }
+
         public readonly override string ToString()
         {
             return $"{Real.ToString()} {((double)Imaginary >= 0 ? "+" : "-")} {Imaginary.Abs().ToString()}i";

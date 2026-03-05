@@ -10,7 +10,7 @@ namespace fractalis.Core.Numbers
     public struct BigFixed
     {
         // Number of fractional bits
-        private static readonly int Precision = 550;
+        private static readonly int Precision = 860;
         private static readonly BigInteger Scale = BigInteger.Pow(10, Precision);
         private readonly BigInteger Value;
 
@@ -181,12 +181,12 @@ namespace fractalis.Core.Numbers
             // just trimming the end of trailing zeros.
             if (intPart[0] != '0')
             {
-                string digits = parts[0] + fracPart.TrimEnd('0');
+                string digits = intPart + fracPart.TrimEnd('0');
                 digits = digits[..Math.Min(17, digits.Length)];
 
                 // Inserts a radix point at position 1 for parsing to work correctly.
                 mantissa = double.Parse(digits[0] + "." + digits[1..], System.Globalization.CultureInfo.InvariantCulture);
-                exponentBase10 = parts[0].Length - 1;
+                exponentBase10 = intPart.Length - 1;
             }
             // Else we have a number in [0, 1) range.
             else if (fractionStartIdx >= 0)

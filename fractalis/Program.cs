@@ -15,16 +15,16 @@ namespace fractalis
             int w = 400;
             int h = 400;
 
-            BigComplex center = Sights.MagnumOpusEx;
+            BigComplex center = Sights.TripToInfinity;
 
-            BigFixed zoom = new BigFixed("1e311");
+            BigFixed zoom = new BigFixed("1e720");
 
-            int iterations = 100000;
+            int iterations = 250000;
 
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;
             palette.MaxIterations = iterations;
-            palette.Frequency = 200;
+            palette.Frequency = 1000;
 
             palette.AddStop(new(0f, Color.FromRgb(0, 7, 100)));
             palette.AddStop(new(0.2f, Color.FromRgb(32, 107, 203)));

@@ -32,6 +32,16 @@ namespace fractalis.Test
         }
 
         [Fact]
+        public void Cast_FloatExp_Negative()
+        {
+            BigFixed a = new BigFixed("-1.05");
+
+            FloatExp result = (FloatExp)a;
+
+            Assert.Equal(-1.05, (double)result, 2);
+        }
+
+        [Fact]
         public void Cast_FloatExp_WithFractionalDigits()
         {
             BigFixed a = new BigFixed("2005e-2");
