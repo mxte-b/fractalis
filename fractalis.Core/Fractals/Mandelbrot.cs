@@ -126,10 +126,13 @@ namespace fractalis.Core.Fractals
                         o.ScaledPoints[i] = z.ToScaledComplex();
 
                         BigFixed zrTemp = z.Real;
-                        z.Real = z.Real * z.Real - z.Imaginary * z.Imaginary + center.Real;
+                        BigFixed zr2 = z.Real * z.Real;
+                        BigFixed zi2 = z.Imaginary * z.Imaginary;
+
+                        z.Real = zr2 - zi2 + center.Real;
                         z.Imaginary = 2 * zrTemp * z.Imaginary + center.Imaginary;
 
-                        if (z.MagnitudeSquared > BAILOUT_DOUBLE) break;
+                        if (zr2 + zi2 > BAILOUT_DOUBLE) break;
 
                         task.Increment(1);
                     }

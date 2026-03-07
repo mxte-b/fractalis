@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Numbers
 {
-    public struct BigFixed
+    public struct BigFixedBinary
     {
-        // Number of fractional bits
-        private static readonly int Precision = 630;
-        private static readonly BigInteger Scale = BigInteger.Pow(10, Precision);
+        private static readonly int         Precision   = 1163; // In bits
+        private static readonly BigInteger  Scale       = BigInteger.One << Precision;
+
         private readonly BigInteger Value;
 
-        public BigFixed(string value)
+        public BigFixedBinary(string value)
         {
             bool negative = value.StartsWith('-');
             string abs = negative ? value.Substring(1) : value;
@@ -114,113 +114,44 @@ namespace fractalis.Core.Numbers
             if (negative) Value = -Value;
         }
 
-        private BigFixed(BigInteger raw)
+        private BigFixedBinary(BigInteger raw)
         {
             Value = raw;
         }
 
-        public static BigFixed Pow(BigFixed a, int exponent)
+        public static BigFixedBinary operator +(BigFixedBinary left, BigFixedBinary right) => new(left.Value + right.Value);
+
+        public static BigFixedBinary operator -(BigFixedBinary left, BigFixedBinary right) => new(left.Value - right.Value);
+
+        public static BigFixedBinary operator *(BigFixedBinary left, BigFixedBinary right) => new((left.Value * right.Value) >> Precision);
+
+        public static BigFixedBinary operator /(BigFixedBinary left, BigFixedBinary right) => new((left.Value >> Precision) / right.Value);
+
+        public static bool operator >(BigFixedBinary left, BigFixedBinary right) => left.Value > right.Value;
+
+        public static bool operator <(BigFixedBinary left, BigFixedBinary right) => left.Value < right.Value;
+
+        public static implicit operator BigFixedBinary(double value)
         {
-            return new BigFixed(BigInteger.Pow(a.Value, exponent));
+            return new BigFixedBinary(value.ToString("0." + new string('#', 339)));
         }
 
-        public static BigFixed operator +(BigFixed left, BigFixed right)
-        {
-            return new BigFixed(left.Value + right.Value);
-        }
-
-        public static BigFixed operator -(BigFixed left, BigFixed right)
-        {
-            return new BigFixed(left.Value - right.Value);
-        }
-
-        public static BigFixed operator *(BigFixed left, BigFixed right)
-        {
-            return new BigFixed(left.Value * right.Value / Scale);
-        }
-
-        public static BigFixed operator /(BigFixed left, BigFixed right)
-        {
-            return new BigFixed(left.Value * Scale / right.Value);
-        }
-
-        public static bool operator >(BigFixed left, BigFixed right)
-        {
-            return left.Value > right.Value;
-        }
-
-        public static bool operator <(BigFixed left, BigFixed right)
-        {
-            return left.Value < right.Value;
-        }
-
-        public static implicit operator BigFixed(double value)
-        {
-            return new BigFixed(value.ToString("0." + new string('#', 339)));
-        }
-
-        public static explicit operator double(BigFixed x)
+        public static explicit operator double(BigFixedBinary x)
         {
             return double.Parse(x.ToString(), System.Globalization.CultureInfo.InvariantCulture);
         }
 
-        public static implicit operator FloatExp(BigFixed x)
+        public static implicit operator FloatExp(BigFixedBinary x)
         {
-            string[] parts = x.ToString().Split('.');
+            if (x.Value.IsZero) return FloatExp.Zero;
 
-            bool negative = parts[0].StartsWith('-');
-            string intPart = negative ? parts[0][1..] : parts[0];
-            string fracPart = parts.Length > 1 ? parts[1] : "";
+            bool negative = x.Value.Sign == -1;
+            BigInteger abs = BigInteger.Abs(x.Value);
 
-            // Find first non-zero digit in fractional part
-            int fractionStartIdx = -1;
-            for (int i = 0; i < fracPart.Length; i++)
-            {
-                if (fracPart[i] != '0') { fractionStartIdx = i; break; }
-            }
-
+            int exp;
             double mantissa;
-            int exponentBase10;
 
-            // If the number has an integer part, we parse the value by
-            // just trimming the end of trailing zeros.
-            if (intPart[0] != '0')
-            {
-                string digits = intPart + fracPart.TrimEnd('0');
-                digits = digits[..Math.Min(17, digits.Length)];
-
-                // Inserts a radix point at position 1 for parsing to work correctly.
-                mantissa = double.Parse(digits[0] + "." + digits[1..], System.Globalization.CultureInfo.InvariantCulture);
-                exponentBase10 = intPart.Length - 1;
-            }
-            // Else we have a number in [0, 1) range.
-            else if (fractionStartIdx >= 0)
-            {
-                string digits = fracPart.Substring(fractionStartIdx, Math.Min(17, fracPart.Length - fractionStartIdx)).TrimEnd('0');
-
-                if (digits.Length == 0) return FloatExp.Zero;
-
-                mantissa = double.Parse(digits[0] + "." + (digits.Length > 1 ? digits[1..] : "0"), System.Globalization.CultureInfo.InvariantCulture);
-                exponentBase10 = -(fractionStartIdx + 1);
-            }
-            else
-            {
-                return FloatExp.Zero;
-            }
-
-            if (negative) mantissa = -mantissa;
-
-            // Convert exponent to base-2
-            double binaryExp = exponentBase10 * Math.Log2(10);
-            int binaryExpInt = (int)Math.Floor(binaryExp);
-            double binaryExpFrac = binaryExp - binaryExpInt;
-
-            // Since the conversion from base-10 to base-2 does not guarantee
-            // that the exponent will be an integer, we will make it one and
-            // correct the value by adjusting the mantissa.
-            mantissa *= Math.Pow(2, binaryExpFrac);
-
-            return new FloatExp(mantissa, binaryExpInt);
+            return FloatExp.One;
         }
 
         public override string ToString()

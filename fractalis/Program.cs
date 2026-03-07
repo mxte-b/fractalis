@@ -12,19 +12,19 @@ namespace fractalis
         static void Main(string[] args)
         {
             Console.WriteLine(Banner.V1);
-            int w = 400;
-            int h = 400;
+            int w = 140;
+            int h = 140;
 
-            BigComplex center = Sights.TripToInfinity;
+            BigComplex center = Sights.Test;
 
-            BigFixed zoom = new BigFixed("1e720");
+            BigFixed zoom = new BigFixed("3.08e618");
 
-            int iterations = 250000;
+            int iterations = 200000;
 
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;
             palette.MaxIterations = iterations;
-            palette.Frequency = 1000;
+            palette.Frequency = 250;
 
             palette.AddStop(new(0f, Color.FromRgb(0, 7, 100)));
             palette.AddStop(new(0.2f, Color.FromRgb(32, 107, 203)));

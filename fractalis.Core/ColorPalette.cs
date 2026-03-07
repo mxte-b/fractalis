@@ -56,8 +56,6 @@ namespace fractalis.Core
             double idx = iteration % Frequency;
             float normalized = (float)idx / Frequency;
 
-            //Console.WriteLine(normalized);
-
             // Selecting the stops that bracket the value
             ColorStop left = Stops.LastOrDefault(x => x.Position <= normalized);
             ColorStop right = Stops.FirstOrDefault(x => x.Position >= normalized);
