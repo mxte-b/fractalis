@@ -10,40 +10,30 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Video
 {
-    public class VideoConfig
+    public record VideoConfig()
     {
-        public double   Duration                { get; set; }
-        public int      FPS                     { get; set; }
-        public int      FrameCount 
-        { 
-            get
-            {
-                return (int)Math.Floor(Duration * FPS);
-            }
-        }
-        public BigFixed ZoomStart               { get; set; }
-        public BigFixed ZoomEnd                 { get; set; }
-        public double   StopAnimationDuration   { get; set; }
+        public required double      Duration                { get; init; }
+        public int                  FPS                     { get; init; } = 30;
+        public required BigFixed    ZoomStart               { get; init; }
+        public required BigFixed    ZoomEnd                 { get; init; }
+        public double               StartAnimationDuration  { get; init; } = 0;
+        public double               StopAnimationDuration   { get; init; } = 0;
+
+        public int                  FrameCount              => (int)Math.Floor(Duration * FPS);
     }
 
     public class VideoRenderer<TFractal> where TFractal : IFractal, new()
     {
-        private readonly string RenderId = Guid.NewGuid().ToString();
-        private string ImageSequencePath
-        {
-            get
-            {
-                return $"render-{RenderId}";
-            }
-        }
+        private VideoConfig                 Config              { get; set; }
+        private VideoEncoder                Encoder             { get; set; }
+        private FractalRenderer<TFractal>   Renderer            { get; set; }
+        private readonly string             RenderId            = Guid.NewGuid().ToString();
+        private string                      ImageSequencePath   => $"render-{RenderId}";
 
-        private VideoConfig Config { get; set; }
-        private VideoEncoder Encoder { get; set; }
-        private FractalRenderer<TFractal> Renderer { get; set; }
-
-        public VideoRenderer(FractalRenderer<TFractal> r)
+        public VideoRenderer(FractalRenderer<TFractal> r, VideoConfig c)
         {
             Renderer = r;
+            Config = c;
         }
 
         public void Start()

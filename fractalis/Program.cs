@@ -4,6 +4,7 @@ using System.Diagnostics;
 using fractalis.Core;
 using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
+using fractalis.Core.Video;
 
 namespace fractalis
 {
@@ -12,19 +13,19 @@ namespace fractalis
         static void Main(string[] args)
         {
             Console.WriteLine(Banner.V1);
-            int w = 140;
-            int h = 140;
+            int w = 400;
+            int h = 400;
 
             BigComplex center = Sights.Test;
 
-            BigFixed zoom = new BigFixed("3.08e618");
+            BigFixed zoom = new BigFixed("1e530");
 
-            int iterations = 200000;
+            int iterations = 80000;
 
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;
             palette.MaxIterations = iterations;
-            palette.Frequency = 250;
+            palette.Frequency = 500;
 
             palette.AddStop(new(0f, Color.FromRgb(0, 7, 100)));
             palette.AddStop(new(0.2f, Color.FromRgb(32, 107, 203)));
@@ -36,10 +37,21 @@ namespace fractalis
             var renderer = new FractalRenderer<Mandelbrot>(iterations, w, h, zoom, center);
             renderer.ColorPalette = palette;
 
-            Image<Rgb24> image = renderer.Render();
-            image.Save("render.png");
+            //Image<Rgb24> image = renderer.Render();
+            //image.Save("render.png");
 
-            Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
+            VideoConfig config = new VideoConfig()
+            {
+                Duration = 2,
+                FPS = 60,
+                ZoomStart = new BigFixed("0.5"),
+                ZoomEnd = new BigFixed("1e300")
+            };
+            VideoRenderer<Mandelbrot> videoRenderer = new VideoRenderer<Mandelbrot>(renderer, config);
+            
+            videoRenderer.Start();
+
+            //Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
         }
     }
 }
