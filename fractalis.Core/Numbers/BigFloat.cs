@@ -11,7 +11,7 @@ namespace fractalis.Core.Numbers
     internal class BigFloat
     {
         private readonly MpfrFloat          _value;
-        private static int                  _precision  = 1500;
+        private static int                  _precision  = 2048;
         private static readonly double      LOG2_10     = Math.Log2(10);
         private static readonly double      LOG10_2     = Math.Log10(2);
         public static int                   Precision
@@ -28,6 +28,8 @@ namespace fractalis.Core.Numbers
         public void SubtractInPlace(BigFloat value) => MpfrFloat.SubtractInplace(_value, _value, value._value, MpfrRounding.ToEven);
         public void MultiplyInPlace(BigFloat value) => MpfrFloat.MultiplyInplace(_value, _value, value._value, MpfrRounding.ToEven);
         public void DivideInPlace(BigFloat value) => MpfrFloat.DivideInplace(_value, _value, value._value, MpfrRounding.ToEven);
+        public void PowerInPlace(BigFloat value) => MpfrFloat.PowerInplace(_value, _value, value._value, MpfrRounding.ToEven);
+        public void PowerInPlace(double value) => MpfrFloat.PowerInplace(_value, _value, value, MpfrRounding.ToEven);
 
         public static bool operator ==(BigFloat left, BigFloat right) => left._value.Equals(right._value);
         public static bool operator !=(BigFloat left, BigFloat right) => !left._value.Equals(right._value);
@@ -35,6 +37,13 @@ namespace fractalis.Core.Numbers
         public static BigFloat operator -(BigFloat left, BigFloat right) => new BigFloat(left._value - right._value);
         public static BigFloat operator *(BigFloat left, BigFloat right) => new BigFloat(left._value * right._value);
         public static BigFloat operator /(BigFloat left, BigFloat right) => new BigFloat(left._value / right._value);
+        public static BigFloat operator ^(BigFloat left, BigFloat right) => new BigFloat(left._value ^ right._value);
+        public static BigFloat operator ^(BigFloat left, double right) => new BigFloat(left._value ^ right);
+        public static BigFloat operator ^(double left, BigFloat right) => new BigFloat(left ^ right._value);
+        public static bool operator <(BigFloat left, BigFloat right) => left._value < right._value;
+        public static bool operator >(BigFloat left, BigFloat right) => left._value > right._value;
+        public static bool operator <=(BigFloat left, BigFloat right) => left._value <= right._value;
+        public static bool operator >=(BigFloat left, BigFloat right) => left._value >= right._value;
         public static explicit operator BigFloat(double d) => new BigFloat(d);
 
         public override string ToString() => _value.ToString();

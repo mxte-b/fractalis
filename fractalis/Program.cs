@@ -35,32 +35,32 @@ namespace fractalis
             palette.AddStop(new(0.8f, Color.FromRgb(0, 2, 0)));
             palette.AddStop(new(1f, Color.FromRgb(0, 7, 100)));
 
-            FractalRendererConfig rendererConfig = new FractalRendererConfig() 
-            { 
-                Fractal = new Mandelbrot(),
-                Iterations = iterations,
-                Width = w,
-                Height = h,
-                Zoom = zoom,
-                Center = center,
-                ColorPalette = palette
-            };
+            //FractalRendererConfig rendererConfig = new FractalRendererConfig() 
+            //{ 
+            //    Fractal = new Mandelbrot(),
+            //    Iterations = iterations,
+            //    Width = w,
+            //    Height = h,
+            //    Zoom = zoom,
+            //    Center = center,
+            //    ColorPalette = palette
+            //};
 
-            FractalRenderer renderer = new FractalRenderer(rendererConfig);
+            //FractalRenderer renderer = new FractalRenderer(rendererConfig);
 
             //Image<Rgb24> image = renderer.Render();
             //image.Save("render.png");
 
-            VideoConfig config = new VideoConfig()
-            {
-                Duration = 2,
-                FPS = 60,
-                ZoomStart = new BigFixed("0.5"),
-                ZoomEnd = new BigFixed("1e300")
-            };
-            VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
+            //VideoConfig config = new VideoConfig()
+            //{
+            //    Duration = 2,
+            //    FPS = 60,
+            //    ZoomStart = new BigFixed("0.5"),
+            //    ZoomEnd = new BigFixed("1e300")
+            //};
+            //VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
 
-            videoRenderer.Start();
+            //videoRenderer.Start();
 
             //Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
         }
