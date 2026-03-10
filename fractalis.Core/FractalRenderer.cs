@@ -13,38 +13,67 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core
 {
+    public record FractalRendererConfig
+    {
+        public required IFractal    Fractal         { get; init; }
+        public required int         Iterations      { get; init; }
+        public required int         Width           { get; init; }
+        public required int         Height          { get; init; }
+        public required BigFixed    Zoom            { get; init; }
+        public required BigComplex  Center          { get; init; }
+        public ColorPalette         ColorPalette    { get; init; }
+    }
+
     public enum RenderMode
     {
         Default,
-        HighPrecision, // Perturbation Theory
-        HighPrecisionWithFloatExp // FloatExp + Perturbation Theory
+        HighPrecision,              // Perturbation Theory
+        HighPrecisionWithFloatExp   // FloatExp + Perturbation Theory
     }
 
-    public struct ReferenceOrbit
+    public struct ReferenceOrbit(int maxIterations)
     {
-        public Complex[] Points;
-        public ScaledComplex[] ScaledPoints;
-        public int EscapeIteration;
-
-        public ReferenceOrbit(int maxIterations)
-        {
-            Points = new Complex[maxIterations];
-            ScaledPoints = new ScaledComplex[maxIterations];
-            EscapeIteration = 0;
-        }
+        public Complex[]            Points          = new Complex[maxIterations];
+        public ScaledComplex[]      ScaledPoints    = new ScaledComplex[maxIterations];
+        public int                  EscapeIteration = 0;
     }
 
-    public class FractalRenderer<TFractal>(int i, int w, int h, BigFixed z, BigComplex c) where TFractal : IFractal, new()
+    public class FractalRenderer(FractalRendererConfig config)
     {
+        private ReferenceOrbit          _referenceOrbit;
+        private BigFixed                _zoom           = config.Zoom;
+        private double                  _zoomDouble     = (double)config.Zoom;
+        private BigComplex              _center         = config.Center;
+        private Complex                 _centerDouble   = config.Center.ToComplex();
+        private double                  PixelSpacing   => 1 / (Width * _zoomDouble);
+
         // --- Public properties ---
-        public int                  Iterations      = i;
-        public int                  Width           = w;
-        public int                  Height          = h;
-        public double               Zoom            { get; set; } = (double)z;
-        public Complex              Center          { get; set; } = c.ToComplex();
-        public BigFixed             ZoomHigh        { get; set; } = z;
-        public BigComplex           CenterHigh      { get; set; } = c;
-        public RenderMode           RenderMode
+        public readonly IFractal        Fractal         = config.Fractal;
+        public readonly int             Iterations      = config.Iterations;
+        public readonly int             Width           = config.Width;
+        public readonly int             Height          = config.Height;
+        public readonly ColorPalette    ColorPalette    = config.ColorPalette;
+        public BigFixed                 Zoom            
+        {
+            get => _zoom;
+            set
+            {
+                Console.WriteLine("\n\nSetting to " + value);
+                
+                _zoom = value;
+                _zoomDouble = (double)value;
+            }
+        }
+        public BigComplex               Center          
+        {
+            get => _center;
+            set
+            {
+                _center = value;
+                _centerDouble = value.ToComplex();
+            }
+        }
+        public RenderMode               RenderMode
         {
             get
             {
@@ -64,24 +93,12 @@ namespace fractalis.Core
                 else return RenderMode.Default;
             }
         }
-        public ColorPalette         ColorPalette    { get; set; }
-
-        // --- Private properties ---
-        private ReferenceOrbit      ReferenceOrbit;
-        private readonly TFractal   Fractal         = new();
-        private double              PixelSpacing 
-        {
-            get
-            {
-                return 1 / (Width * Zoom);
-            }
-        }
 
         // --- Methods ---
         private double EvaluateNormal(double ndcX, double ndcY)
         {
-            Complex c = new Complex(ndcX / Zoom + Center.Real, ndcY / Zoom + Center.Imaginary);
-            return Fractal.Iteration(c, Iterations).Iteration;
+            Complex c = new Complex(ndcX / _zoomDouble + _centerDouble.Real, ndcY / _zoomDouble + _centerDouble.Imaginary);
+            return Fractal.GetContinousValue(Fractal.Iteration(c, Iterations));
         }
 
         private double EvaluatePerturbation(double ndcX, double ndcY, int x, int y)
@@ -89,16 +106,18 @@ namespace fractalis.Core
             if (Fractal is not IPerturbableFractal perturbable) throw new InvalidOperationException("Fractal does not support perturbation.");
 
             // Since the reference point is at the center, that pixel is already calculated
-            if (x == Width / 2 && y == Height / 2) return ReferenceOrbit.EscapeIteration;
+            if (x == Width / 2 && y == Height / 2) return _referenceOrbit.EscapeIteration;
 
-            BigComplex dc = new BigComplex(ndcX / ZoomHigh, ndcY / ZoomHigh);
+            BigComplex dc = new BigComplex(ndcX / _zoom, ndcY / _zoom);
 
             IterationResult result = RenderMode == RenderMode.HighPrecision
-                ? perturbable.IterationPerturbed(dc.ToComplex(), Iterations, in ReferenceOrbit)
-                : perturbable.IterationFloatExp(dc.ToScaledComplex(), Iterations, in ReferenceOrbit);
+                ? perturbable.IterationPerturbed(dc.ToComplex(), Iterations, in _referenceOrbit)
+                : perturbable.IterationFloatExp(dc.ToScaledComplex(), Iterations, in _referenceOrbit);
 
             return Fractal.GetContinousValue(result);
         }
+
+        
 
         private Rgb24 ComputePixel(int x, int y)
         {
@@ -126,14 +145,14 @@ namespace fractalis.Core
 
             // High Precision - using Perturbation Theory
             if (
-                (RenderMode == RenderMode.HighPrecision || RenderMode == RenderMode.HighPrecisionWithFloatExp) && 
+                (RenderMode == RenderMode.HighPrecision || RenderMode == RenderMode.HighPrecisionWithFloatExp) &&
+                _referenceOrbit.Points == null &&
                 Fractal is IPerturbableFractal perturbable
             )
             {
-                perturbable.CalculateReferenceOrbit(CenterHigh, Iterations, out ReferenceOrbit);
+                perturbable.CalculateReferenceOrbit(_center, Iterations, out _referenceOrbit);
                 Console.WriteLine($"    - Done!");
             }
-
 
             // Main render loop
             AnsiConsole.Progress()

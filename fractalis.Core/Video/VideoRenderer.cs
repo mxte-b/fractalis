@@ -22,15 +22,15 @@ namespace fractalis.Core.Video
         public int                  FrameCount              => (int)Math.Floor(Duration * FPS);
     }
 
-    public class VideoRenderer<TFractal> where TFractal : IFractal, new()
+    public class VideoRenderer
     {
-        private VideoConfig                 Config              { get; set; }
-        private VideoEncoder                Encoder             { get; set; }
-        private FractalRenderer<TFractal>   Renderer            { get; set; }
-        private readonly string             RenderId            = Guid.NewGuid().ToString();
-        private string                      ImageSequencePath   => $"render-{RenderId}";
+        private VideoConfig         Config              { get; set; }
+        private VideoEncoder        Encoder             { get; set; }
+        private FractalRenderer     Renderer            { get; set; }
+        private readonly string     RenderId            = Guid.NewGuid().ToString();
+        private string              ImageSequencePath   => $"render-{RenderId}";
 
-        public VideoRenderer(FractalRenderer<TFractal> r, VideoConfig c)
+        public VideoRenderer(FractalRenderer r, VideoConfig c)
         {
             Renderer = r;
             Config = c;
@@ -43,7 +43,8 @@ namespace fractalis.Core.Video
             // Start rendering each frame one by one
             for (int i = 0; i < Config.FrameCount; i++)
             {
-                Renderer.ZoomHigh = GetZoom(i);
+                Renderer.Zoom = GetZoom(i);
+                Console.WriteLine(Renderer.Zoom);
                 Image<Rgb24> image = Renderer.Render();
 
                 image.Save(ImageSequencePath + $"/frame-{i+1}.png");
@@ -58,7 +59,13 @@ namespace fractalis.Core.Video
 
         private BigFixed GetZoom(int frameId) 
         {
-            return Config.ZoomStart * BigFixed.Pow(Config.ZoomEnd / Config.ZoomStart, frameId / Config.FrameCount);
+            BigFixed zoom = Config.ZoomStart * BigFixed.Pow(Config.ZoomEnd / Config.ZoomStart, frameId / Config.FrameCount);
+            Console.WriteLine("\n\n");
+            Console.WriteLine(Config.ZoomStart);
+            Console.WriteLine(Config.ZoomEnd);
+
+            Console.WriteLine(Config.ZoomEnd / Config.ZoomStart);
+            return zoom;
         }
 
         private void CreateOutputDirectory() => Directory.CreateDirectory($"render-{RenderId}");

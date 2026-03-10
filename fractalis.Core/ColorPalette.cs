@@ -11,42 +11,33 @@ using System.Xml.Schema;
 namespace fractalis.Core
 {
     public enum PalettePreset { Grayscale, Fire, Ocean, Electric, Rainbow }
+    public struct ColorStop
+    {
+        public float Position { get; set; }
+        public Vector4 Color { get; set; }
+        public ColorStop(float position, Color color) 
+        {
+            Position = position;
+            Color = color.ToPixel<Rgba32>().ToVector4();
+        }
+    }
 
     public class ColorPalette
     {
-        // --- Inner type ---
-        public struct ColorStop
-        {
-            public float Position { get; set; }
-            public Vector4 Color { get; set; }
-            public ColorStop(float position, Color color) 
-            {
-                Position = position;
-                Color = color.ToPixel<Rgba32>().ToVector4();
-            }
-        }
-
-        // --- Properties ---
         public int MaxIterations { get; set; }
         public int Frequency { get; set; }
         public float Offset { get; set; }
         public Color InteriorColor { get; set; }
         private List<ColorStop> Stops { get; }
 
-        // --- Constructors ---
         public ColorPalette() => Stops = new List<ColorStop>();
-
         public ColorPalette(IEnumerable<ColorStop> stops) => Stops = stops.ToList();
 
-        // --- Presets / Factory ---
         public static ColorPalette FromPreset(PalettePreset preset) => throw new NotImplementedException();
 
-        // --- Stop management ---
         public void AddStop(ColorStop stop) => Stops.Add(stop);
         public void RemoveStop(int index) => Stops.RemoveAt(index);
         public void ClearStops() => Stops.Clear();
-
-        // --- Sampling ---
         public Color Sample(double iteration)
         {
 
@@ -69,7 +60,6 @@ namespace fractalis.Core
             return new Color(interpolated);
         }
 
-        // --- Serialization ---
         public string ToJson() => throw new NotImplementedException();
         public static ColorPalette FromJson(string json) => throw new NotImplementedException();
         public ColorPalette Clone() => throw new NotImplementedException();

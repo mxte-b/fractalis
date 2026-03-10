@@ -13,10 +13,11 @@ namespace fractalis
         static void Main(string[] args)
         {
             Console.WriteLine(Banner.V1);
+
             int w = 400;
             int h = 400;
 
-            BigComplex center = Sights.Test;
+            MpfrComplex center = Sights.Test;
 
             BigFixed zoom = new BigFixed("1e530");
 
@@ -34,8 +35,18 @@ namespace fractalis
             palette.AddStop(new(0.8f, Color.FromRgb(0, 2, 0)));
             palette.AddStop(new(1f, Color.FromRgb(0, 7, 100)));
 
-            var renderer = new FractalRenderer<Mandelbrot>(iterations, w, h, zoom, center);
-            renderer.ColorPalette = palette;
+            FractalRendererConfig rendererConfig = new FractalRendererConfig() 
+            { 
+                Fractal = new Mandelbrot(),
+                Iterations = iterations,
+                Width = w,
+                Height = h,
+                Zoom = zoom,
+                Center = center,
+                ColorPalette = palette
+            };
+
+            FractalRenderer renderer = new FractalRenderer(rendererConfig);
 
             //Image<Rgb24> image = renderer.Render();
             //image.Save("render.png");
@@ -47,8 +58,8 @@ namespace fractalis
                 ZoomStart = new BigFixed("0.5"),
                 ZoomEnd = new BigFixed("1e300")
             };
-            VideoRenderer<Mandelbrot> videoRenderer = new VideoRenderer<Mandelbrot>(renderer, config);
-            
+            VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
+
             videoRenderer.Start();
 
             //Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
