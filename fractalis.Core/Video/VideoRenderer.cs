@@ -14,8 +14,8 @@ namespace fractalis.Core.Video
     {
         public required double      Duration                { get; init; }
         public int                  FPS                     { get; init; } = 30;
-        public required BigFixed    ZoomStart               { get; init; }
-        public required BigFixed    ZoomEnd                 { get; init; }
+        public required BigFloat    ZoomStart               { get; init; }
+        public required BigFloat    ZoomEnd                 { get; init; }
         public double               StartAnimationDuration  { get; init; } = 0;
         public double               StopAnimationDuration   { get; init; } = 0;
 
@@ -44,7 +44,6 @@ namespace fractalis.Core.Video
             for (int i = 0; i < Config.FrameCount; i++)
             {
                 Renderer.Zoom = GetZoom(i);
-                Console.WriteLine(Renderer.Zoom);
                 Image<Rgb24> image = Renderer.Render();
 
                 image.Save(ImageSequencePath + $"/frame-{i+1}.png");
@@ -57,14 +56,9 @@ namespace fractalis.Core.Video
             RemoveOutputDirectory();
         }
 
-        private BigFixed GetZoom(int frameId) 
+        private BigFloat GetZoom(int frameId) 
         {
-            BigFixed zoom = Config.ZoomStart * BigFixed.Pow(Config.ZoomEnd / Config.ZoomStart, frameId / Config.FrameCount);
-            Console.WriteLine("\n\n");
-            Console.WriteLine(Config.ZoomStart);
-            Console.WriteLine(Config.ZoomEnd);
-
-            Console.WriteLine(Config.ZoomEnd / Config.ZoomStart);
+            BigFloat zoom = Config.ZoomStart * (Config.ZoomEnd / Config.ZoomStart) ^ ((double)frameId / Config.FrameCount);
             return zoom;
         }
 

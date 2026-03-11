@@ -6,6 +6,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using Spectre.Console;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,7 +20,7 @@ namespace fractalis.Core
         public required int         Iterations      { get; init; }
         public required int         Width           { get; init; }
         public required int         Height          { get; init; }
-        public required BigFixed    Zoom            { get; init; }
+        public required BigFloat    Zoom            { get; init; }
         public required BigComplex  Center          { get; init; }
         public ColorPalette         ColorPalette    { get; init; }
     }
@@ -30,7 +31,6 @@ namespace fractalis.Core
         HighPrecision,              // Perturbation Theory
         HighPrecisionWithFloatExp   // FloatExp + Perturbation Theory
     }
-
     public struct ReferenceOrbit(int maxIterations)
     {
         public Complex[]            Points          = new Complex[maxIterations];
@@ -40,31 +40,33 @@ namespace fractalis.Core
 
     public class FractalRenderer(FractalRendererConfig config)
     {
-        private ReferenceOrbit          _referenceOrbit;
-        private BigFixed                _zoom           = config.Zoom;
-        private double                  _zoomDouble     = (double)config.Zoom;
-        private BigComplex              _center         = config.Center;
-        private Complex                 _centerDouble   = config.Center.ToComplex();
-        private double                  PixelSpacing   => 1 / (Width * _zoomDouble);
+        private ReferenceOrbit              _referenceOrbit;
+        private BigFloat                    _zoom           = config.Zoom;
+        private double                      _zoomDouble     = config.Zoom.ToDouble();
+        private BigComplex                  _center         = config.Center;
+        private Complex                     _centerDouble   = config.Center.ToComplex();
+        private FloatExp                    _pixelSpacing   = FloatExp.One / (FloatExp)config.Zoom;
+
+        private static readonly FloatExp    HIGHPRECISION_THRESHOLD = new FloatExp(1, -53);
+        private static readonly FloatExp    FLOATEXP_THRESHOLD = new FloatExp(1, -1070);
 
         // --- Public properties ---
-        public readonly IFractal        Fractal         = config.Fractal;
-        public readonly int             Iterations      = config.Iterations;
-        public readonly int             Width           = config.Width;
-        public readonly int             Height          = config.Height;
-        public readonly ColorPalette    ColorPalette    = config.ColorPalette;
-        public BigFixed                 Zoom            
+        public readonly IFractal            Fractal         = config.Fractal;
+        public readonly int                 Iterations      = config.Iterations;
+        public readonly int                 Width           = config.Width;
+        public readonly int                 Height          = config.Height;
+        public readonly ColorPalette        ColorPalette    = config.ColorPalette;
+        public BigFloat                     Zoom            
         {
             get => _zoom;
             set
             {
-                Console.WriteLine("\n\nSetting to " + value);
-                
                 _zoom = value;
-                _zoomDouble = (double)value;
+                _zoomDouble = value.ToDouble();
+                _pixelSpacing = FloatExp.One / (FloatExp)value;
             }
         }
-        public BigComplex               Center          
+        public BigComplex                   Center          
         {
             get => _center;
             set
@@ -73,7 +75,11 @@ namespace fractalis.Core
                 _centerDouble = value.ToComplex();
             }
         }
-        public RenderMode               RenderMode
+        public FloatExp                     PixelSpacing
+        {
+            get => _pixelSpacing;
+        }
+        public RenderMode                   RenderMode
         {
             get
             {
@@ -82,11 +88,11 @@ namespace fractalis.Core
                     return RenderMode.Default;
                 }
 
-                if (PixelSpacing < 1e-322)
+                if (PixelSpacing < FLOATEXP_THRESHOLD)
                 {
                     return RenderMode.HighPrecisionWithFloatExp;
                 }
-                else if (PixelSpacing < 1e-16)
+                else if (PixelSpacing < HIGHPRECISION_THRESHOLD)
                 {
                     return RenderMode.HighPrecision;
                 }
@@ -108,16 +114,14 @@ namespace fractalis.Core
             // Since the reference point is at the center, that pixel is already calculated
             if (x == Width / 2 && y == Height / 2) return _referenceOrbit.EscapeIteration;
 
-            BigComplex dc = new BigComplex(ndcX / _zoom, ndcY / _zoom);
+            ScaledComplex dc = new ScaledComplex(ndcX * _pixelSpacing, ndcY * _pixelSpacing);
 
             IterationResult result = RenderMode == RenderMode.HighPrecision
                 ? perturbable.IterationPerturbed(dc.ToComplex(), Iterations, in _referenceOrbit)
-                : perturbable.IterationFloatExp(dc.ToScaledComplex(), Iterations, in _referenceOrbit);
+                : perturbable.IterationFloatExp(dc, Iterations, in _referenceOrbit);
 
             return Fractal.GetContinousValue(result);
         }
-
-        
 
         private Rgb24 ComputePixel(int x, int y)
         {
@@ -168,7 +172,7 @@ namespace fractalis.Core
             {
                 var task = ctx.AddTask($"<#> Rendering", maxValue: Height);
 
-                Parallel.For(0, Height, y =>
+                Parallel.ForEach(Partitioner.Create(Enumerable.Range(0, Height), EnumerablePartitionerOptions.NoBuffering), y =>
                 {
                     for (int x = 0; x < Width; x++) image[x, y] = ComputePixel(x, y);
                     task.Increment(1);

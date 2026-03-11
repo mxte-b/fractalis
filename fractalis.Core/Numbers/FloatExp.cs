@@ -48,30 +48,34 @@ namespace fractalis.Core.Numbers
 
             return new FloatExp(Math.Sqrt(m), e / 2);
         }
-
         public readonly FloatExp Abs() => new(Math.Abs(Mantissa), Exponent);
 
         public static FloatExp operator *(FloatExp left, FloatExp right) {
-            return new FloatExp(left.Mantissa * right.Mantissa, left.Exponent + right.Exponent);
-        }
+            double m = left.Mantissa * right.Mantissa;
+            int e = left.Exponent + right.Exponent;
 
+            if (m != 0 && Math.Abs(m) < 0.5) { m *= 2.0; e--; }
+
+            return new FloatExp { Mantissa = m, Exponent = e };
+        }
         public static FloatExp operator *(FloatExp left, double right)
         {
             if (right == 0) return Zero;
-            return new FloatExp(left.Mantissa * right, left.Exponent);
+            double m = left.Mantissa * right;
+            int e = left.Exponent;
+            if (m != 0)
+            {
+                if (m >= 1.0 || m <= -1.0) { m *= 0.5; e++; }
+                else if (m > -0.5 && m < 0.5) { m *= 2.0; e--; }
+            }
+            return new FloatExp { Mantissa = m, Exponent = e };
         }
 
-        public static FloatExp operator *(double left, FloatExp right)
-        {
-            if (left == 0) return Zero;
-            return new FloatExp(right.Mantissa * left, right.Exponent);
-        }
-
+        public static FloatExp operator *(double left, FloatExp right) => right * left;
         public static FloatExp operator /(FloatExp left, FloatExp right)
         {
             return new FloatExp(left.Mantissa / right.Mantissa, left.Exponent - right.Exponent);
         }
-
         public static FloatExp operator +(FloatExp left, FloatExp right)
         {
             if (left.Mantissa == 0) return right;
@@ -95,12 +99,9 @@ namespace fractalis.Core.Numbers
                 return new FloatExp(Math.ScaleB(left.Mantissa, exponentDiff) + right.Mantissa, right.Exponent);
             }
         }
-
         public static FloatExp operator -(FloatExp x) => new FloatExp(-x.Mantissa, x.Exponent);
-
         public static FloatExp operator -(FloatExp left, FloatExp right) => left + (-right);
-
-        public static bool operator >(FloatExp left, FloatExp right)
+        public static bool operator     >(FloatExp left, FloatExp right)
         {
             bool lz = left.Mantissa == 0, rz = right.Mantissa == 0;
 
@@ -127,10 +128,9 @@ namespace fractalis.Core.Numbers
                 return left.Mantissa > right.Mantissa;
             }
         }
-
-        public static bool operator <(FloatExp left, FloatExp right) => right > left;
-        public static bool operator >=(FloatExp left, FloatExp right) => !(left < right);
-        public static bool operator <=(FloatExp left, FloatExp right) => !(left > right);
+        public static bool operator     <(FloatExp left, FloatExp right) => right > left;
+        public static bool operator     >=(FloatExp left, FloatExp right) => !(left < right);
+        public static bool operator     <=(FloatExp left, FloatExp right) => !(left > right);
         public static explicit operator double(FloatExp x) => Math.ScaleB(x.Mantissa, x.Exponent);
         public readonly override string ToString() => $"{Mantissa}*2^{Exponent}";
     }

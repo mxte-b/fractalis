@@ -17,16 +17,16 @@ namespace fractalis
             int w = 400;
             int h = 400;
 
-            MpfrComplex center = Sights.Test;
+            BigComplex center = Sights.Test;
 
-            BigFixed zoom = new BigFixed("1e530");
+            BigFloat zoom = new BigFloat("1e300");
 
             int iterations = 80000;
 
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;
             palette.MaxIterations = iterations;
-            palette.Frequency = 500;
+            palette.Frequency = 800;
 
             palette.AddStop(new(0f, Color.FromRgb(0, 7, 100)));
             palette.AddStop(new(0.2f, Color.FromRgb(32, 107, 203)));
@@ -35,34 +35,34 @@ namespace fractalis
             palette.AddStop(new(0.8f, Color.FromRgb(0, 2, 0)));
             palette.AddStop(new(1f, Color.FromRgb(0, 7, 100)));
 
-            //FractalRendererConfig rendererConfig = new FractalRendererConfig() 
-            //{ 
-            //    Fractal = new Mandelbrot(),
-            //    Iterations = iterations,
-            //    Width = w,
-            //    Height = h,
-            //    Zoom = zoom,
-            //    Center = center,
-            //    ColorPalette = palette
-            //};
+            FractalRendererConfig rendererConfig = new FractalRendererConfig()
+            {
+                Fractal = new Mandelbrot(),
+                Iterations = iterations,
+                Width = w,
+                Height = h,
+                Zoom = zoom,
+                Center = center,
+                ColorPalette = palette
+            };
 
-            //FractalRenderer renderer = new FractalRenderer(rendererConfig);
+            FractalRenderer renderer = new FractalRenderer(rendererConfig);
 
-            //Image<Rgb24> image = renderer.Render();
-            //image.Save("render.png");
+            Image<Rgb24> image = renderer.Render();
+            image.Save("render.png");
 
             //VideoConfig config = new VideoConfig()
             //{
-            //    Duration = 2,
+            //    Duration = 20,
             //    FPS = 60,
-            //    ZoomStart = new BigFixed("0.5"),
-            //    ZoomEnd = new BigFixed("1e300")
+            //    ZoomStart = new BigFloat("0.5"),
+            //    ZoomEnd = new BigFloat("1e15")
             //};
             //VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
 
             //videoRenderer.Start();
 
-            //Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
         }
     }
 }

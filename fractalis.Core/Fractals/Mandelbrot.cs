@@ -21,10 +21,7 @@ namespace fractalis.Core.Fractals
 
             for (; i < maxIterations; i++)
             {
-                double zrTemp = z.Real;
-
-                z.Real = z.Real * z.Real - z.Imaginary * z.Imaginary + c.Real;
-                z.Imaginary = 2 * zrTemp * z.Imaginary + c.Imaginary;
+                z = z * z + c;
 
                 if (z.MagnitudeSquared > 100) break;
             }
@@ -125,12 +122,14 @@ namespace fractalis.Core.Fractals
                         o.Points[i] = z.ToComplex();
                         o.ScaledPoints[i] = z.ToScaledComplex();
 
-                        BigFixed zrTemp = z.Real;
-                        BigFixed zr2 = z.Real * z.Real;
-                        BigFixed zi2 = z.Imaginary * z.Imaginary;
+                        BigFloat zrTemp = z.Real;
+                        BigFloat zr2 = z.Real * z.Real;
+                        BigFloat zi2 = z.Imaginary * z.Imaginary;
 
                         z.Real = zr2 - zi2 + center.Real;
                         z.Imaginary = 2 * zrTemp * z.Imaginary + center.Imaginary;
+
+                        //z = z * z + center;
 
                         if (zr2 + zi2 > BAILOUT_DOUBLE) break;
 
