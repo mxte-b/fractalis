@@ -14,8 +14,8 @@ namespace fractalis
         {
             Console.WriteLine(Banner.V1);
 
-            int w = 400;
-            int h = 400;
+            int w = 1920;
+            int h = 1080;
 
             BigComplex center = Sights.Test;
 
@@ -26,7 +26,7 @@ namespace fractalis
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;
             palette.MaxIterations = iterations;
-            palette.Frequency = 800;
+            palette.Frequency = 200;
 
             palette.AddStop(new(0f, Color.FromRgb(0, 7, 100)));
             palette.AddStop(new(0.2f, Color.FromRgb(32, 107, 203)));
@@ -43,26 +43,30 @@ namespace fractalis
                 Height = h,
                 Zoom = zoom,
                 Center = center,
-                ColorPalette = palette
+                ColorPalette = palette,
             };
 
             FractalRenderer renderer = new FractalRenderer(rendererConfig);
 
-            Image<Rgb24> image = renderer.Render();
-            image.Save("render.png");
+            //Image<Rgb24> image = renderer.Render(true);
+            //image.Save("render.png");
 
-            //VideoConfig config = new VideoConfig()
-            //{
-            //    Duration = 20,
-            //    FPS = 60,
-            //    ZoomStart = new BigFloat("0.5"),
-            //    ZoomEnd = new BigFloat("1e15")
-            //};
-            //VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
+            //FractalBenchmark bench = new FractalBenchmark(rendererConfig);
+            //bench.Run("My custom AVX", 10);
 
-            //videoRenderer.Start();
+            VideoConfig config = new VideoConfig()
+            {
+                Duration = 11 * 60,
+                FPS = 30,
+                ZoomStart = new BigFloat("0.5"),
+                ZoomEnd = new BigFloat("1e201"),
+                StartFrame = 10300
+            };
+            VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
 
-            Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
+            videoRenderer.Start();
+
+            //Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
         }
     }
 }
