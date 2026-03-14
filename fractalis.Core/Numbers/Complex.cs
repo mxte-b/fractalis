@@ -26,6 +26,11 @@ namespace fractalis.Core.Numbers
             }
         }
 
+        public static double Dot(Complex a, Complex b)
+        {
+            return a.Real * b.Real + a.Imaginary * b.Imaginary;
+        }
+
         public static Complex operator *(Complex a, double b)
         {
             return new Complex(a.Real * b, a.Imaginary * b);

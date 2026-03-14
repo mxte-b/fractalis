@@ -10,6 +10,6 @@ namespace fractalis.Core.Fractals
     {
         public bool Escaped = es;
         public int Iteration = e;
-        public double Magnitude = m;
+        public double MagnitudeSquared = m;
     }
 }

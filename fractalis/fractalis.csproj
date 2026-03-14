@@ -15,5 +15,4 @@
   <ItemGroup>
     <ProjectReference Include="..\fractalis.Core\fractalis.Core.csproj" />
   </ItemGroup>
-
 </Project>

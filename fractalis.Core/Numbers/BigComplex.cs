@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Sdcb.Arithmetic.Mpfr;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,27 +10,27 @@ namespace fractalis.Core.Numbers
 {
     public struct BigComplex
     {
-        public BigFixed Real { get; set; }
-        public BigFixed Imaginary { get; set; }
+        public BigFloat Real { get; set; }
+        public BigFloat Imaginary { get; set; }
+        public BigFloat MagnitudeSquared => Real * Real + Imaginary * Imaginary;
+        public BigFloat Magnitude => BigFloat.Sqrt(MagnitudeSquared);
 
-        public BigFixed MagnitudeSquared
-        {
-            get
-            {
-                return Real * Real + Imaginary * Imaginary;
-            }
-        }
-
-        public BigComplex(BigFixed r, BigFixed i)
+        public BigComplex(BigFloat r, BigFloat i)
         {
             Real = r;
             Imaginary = i;
         }
 
+        public BigComplex(double r, double i)
+        {
+            Real = new BigFloat(r);
+            Imaginary = new BigFloat(i);
+        }
+
         public BigComplex(string r, string i)
         {
-            Real = new BigFixed(r);
-            Imaginary = new BigFixed(i);
+            Real = new BigFloat(r);
+            Imaginary = new BigFloat(i);
         }
 
         public static BigComplex operator +(BigComplex a, BigComplex b)
@@ -38,7 +40,7 @@ namespace fractalis.Core.Numbers
 
         public Complex ToComplex()
         {
-            return new Complex((double)Real, (double)Imaginary);
+            return new Complex(Real.ToDouble(), Imaginary.ToDouble());
         }
 
         public ScaledComplex ToScaledComplex()
@@ -50,5 +52,5 @@ namespace fractalis.Core.Numbers
         {
             return Real.ToString() + "+" + Imaginary.ToString() + "i";
         }
-    }
-}
+     }
+ }

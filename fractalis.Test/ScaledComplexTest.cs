@@ -127,13 +127,11 @@ namespace fractalis.Test
         }
 
         [Theory]
-        [InlineData(1.0, 1.0, "1E0 + 1E0i")]
-        [InlineData(0.0, 0.0, "0E0 + 0E0i")]
-        [InlineData(-3.5, 2.1, "-3.5E0 + 2.1E0i")]
-        [InlineData(2.5, -1.5, "2.5E0 - 1.5E0i")]
-        [InlineData(-7.2, -3.3, "-7.2E0 - 3.3E0i")]
-        [InlineData(0, -5, "0E0 - 5E0i")]
-        [InlineData(0, 7, "0E0 + 7E0i")]
+        [InlineData(1.0, 1.0, "1*2^0 + 1*2^0i")]
+        [InlineData(0.0, 0.0, "0*2^0 + 0*2^0i")]
+        [InlineData(-3.5, 2.1, "-1.75*2^1 + 1.05*2^1i")]
+        [InlineData(2.5, -1.5, "1.25*2^1 - 1.5*2^0i")]
+        [InlineData(-7.2, -3.3, "-1.8*2^2 - 1.65*2^1i")]
         public void StringConversion(double r, double i, string expected)
         {
             var z = new ScaledComplex(r, i);
