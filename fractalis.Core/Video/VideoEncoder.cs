@@ -7,20 +7,8 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Video
 {
-    public class VideoEncoder
+    public static class VideoEncoder
     {
-        private double Duration { get; set; }
-        private int FPS { get; set; }
-        public string InputDirectory { get; set; }
-        public string OutputPath { get; set; }
-
-        public VideoEncoder() 
-        {
-            if (!IsFFmpegAvailable())
-            {
-                throw new InvalidOperationException("FFmpeg is not installed on this machine.");
-            }
-        }
 
         public static bool IsFFmpegAvailable()
         {
@@ -45,9 +33,35 @@ namespace fractalis.Core.Video
             }
         }
 
-        public void MergeImageSequence()
+        public static void MergeImageSequence(string path, int fps, string outputPath)
         {
-            // Merge image sequence into a video with FFmpeg
+            if (!IsFFmpegAvailable())
+            {
+                throw new InvalidOperationException("FFmpeg is not available in PATH or is not installed.");
+            }
+
+            string inputPattern = Path.Combine(path, "frame%05d.png");
+
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = "ffmpeg.exe",
+                Arguments = $"-y -framerate {fps} -i \"{inputPattern}\" -c:v libx264 -pix_fmt yuv420p \"{outputPath}.mp4\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            using Process process = Process.Start(startInfo) ?? throw new Exception("Couldn't start encoding process.");
+
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                throw new Exception($"FFmpeg failed:\n{error}");
+            }
+                
         }
     }
 }

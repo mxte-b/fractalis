@@ -14,14 +14,14 @@ namespace fractalis
         {
             Console.WriteLine(Banner.V1);
 
-            int w = 1920;
-            int h = 1080;
+            int w = 400;
+            int h = 400;
 
-            BigComplex center = Sights.Test;
+            BigComplex center = Sights.RetroDays;
 
             BigFloat zoom = new BigFloat("1e300");
 
-            int iterations = 80000;
+            int iterations = 2000;
 
             ColorPalette palette = new ColorPalette();
             palette.InteriorColor = Color.Black;
@@ -56,15 +56,17 @@ namespace fractalis
 
             VideoConfig config = new VideoConfig()
             {
-                Duration = 11 * 60,
+                Duration = 1 * 60,
                 FPS = 30,
                 ZoomStart = new BigFloat("0.5"),
-                ZoomEnd = new BigFloat("1e201"),
-                StartFrame = 10300
+                ZoomEnd = new BigFloat("1e15"),
+                StartAnimationDuration = 1,
+                StopAnimationDuration = 2,
             };
             VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
 
             videoRenderer.Start();
+            videoRenderer.Save();
 
             //Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
         }

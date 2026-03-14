@@ -51,7 +51,7 @@ namespace fractalis.Core
         private FloatExp                    _pixelSpacing           = FloatExp.One / (FloatExp)config.Zoom;
         private double                      _pixelSpacingDouble     = 1 / config.Zoom.ToDouble();
 
-        private static readonly FloatExp    HIGHPRECISION_THRESHOLD = new FloatExp(1, -53);
+        private static readonly FloatExp    HIGHPRECISION_THRESHOLD = new FloatExp(1, -40);
         private static readonly FloatExp    FLOATEXP_THRESHOLD      = new FloatExp(1, -1070);
 
         // --- Public properties ---
