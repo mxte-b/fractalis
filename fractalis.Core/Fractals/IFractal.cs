@@ -14,11 +14,22 @@ namespace fractalis.Core.Fractals
         double GetContinousValue(IterationResult result);
     }
 
+    public interface ISimdFractal : IFractal
+    {
+        (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) 
+            IterationSIMD(Vector256<double> cr, Vector256<double> ci, int maxIterations);
+    }
+
+    public interface ISimdPerturbableFractal : ISimdFractal, IPerturbableFractal
+    {
+        (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) 
+            IterationPerturbedSIMD(Vector256<double> ndcX, double ndcY, double pixelSpacing, int maxIterations, in ReferenceOrbit referenceOrbit);
+    }
+
     public interface IPerturbableFractal : IFractal
     {
         void CalculateReferenceOrbit(BigComplex center, int maxIterations, out ReferenceOrbit referenceOrbit);
         IterationResult IterationPerturbed(double deltaR, double deltaI, int maxIterations, in ReferenceOrbit referenceOrbit);
-        (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationPerturbedSIMD(Vector256<double> ndcX, double ndcY, double pixelSpacing, int maxIterations, in ReferenceOrbit referenceOrbit);
         IterationResult IterationFloatExp(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit);
     }
 }

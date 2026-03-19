@@ -1,18 +1,11 @@
 ﻿using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 using Spectre.Console;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fractalis.Core
 {
@@ -46,6 +39,7 @@ namespace fractalis.Core
         private ReferenceOrbit              _referenceOrbit;
         private BigFloat                    _zoom                   = config.Zoom;
         private double                      _zoomDouble             = config.Zoom.ToDouble();
+        private double                      _aspectRatio            = (double)config.Width / config.Height;
         private BigComplex                  _center                 = config.Center;
         private Complex                     _centerDouble           = config.Center.ToComplex();
         private FloatExp                    _pixelSpacing           = FloatExp.One / (FloatExp)config.Zoom;
@@ -105,126 +99,168 @@ namespace fractalis.Core
             }
         }
 
-        // --- Methods ---
-        private double EvaluateNormal(double ndcX, double ndcY)
-        {
-            Complex c = new Complex(ndcX / _zoomDouble + _centerDouble.Real, ndcY / _zoomDouble + _centerDouble.Imaginary);
-            return Fractal.GetContinousValue(Fractal.Iteration(c, Iterations));
-        }
-        private double EvaluatePerturbation(double ndcX, double ndcY, int x, int y, IPerturbableFractal perturbable)
-        {
-            if (x == Width / 2 && y == Height / 2) return _referenceOrbit.EscapeIteration;
-
-            IterationResult result;
-            if (RenderMode == RenderMode.HighPrecision)
-                result = perturbable.IterationPerturbed(ndcX * _pixelSpacingDouble, ndcY * _pixelSpacingDouble, Iterations, in _referenceOrbit);
-            else
-            {
-                ScaledComplex dc = new ScaledComplex(ndcX * _pixelSpacing, ndcY * _pixelSpacing);
-                result = perturbable.IterationFloatExp(dc, Iterations, in _referenceOrbit);
-            }
-            return Fractal.GetContinousValue(result);
-        }
-
         public Image<Rgb24> Render(bool showProgress = true)
         {
-            Image<Rgb24> image = new Image<Rgb24>(Width, Height);
+            Image<Rgb24> image  = new Image<Rgb24>(Width, Height);
+            RenderMode mode     = RenderMode;
 
-            RenderMode mode = RenderMode;
-            IPerturbableFractal? perturbable = Fractal as IPerturbableFractal;
-
-            if (
-                (mode == RenderMode.HighPrecision || mode == RenderMode.HighPrecisionWithFloatExp) &&
-                _referenceOrbit.PointsR == null &&
-                perturbable != null
-            )
+            if (mode != RenderMode.Default && Fractal is IPerturbableFractal perturbable && _referenceOrbit.PointsR == null)
             {
                 perturbable.CalculateReferenceOrbit(_center, Iterations, out _referenceOrbit);
-                Console.WriteLine($"    - Done!");
             }
 
-            double ndcScaleX = 2.0 * Width / Height;
-            double ndcScaleY = 2.0;
-            double ndcOffX = 0.5 * ndcScaleX;
-            double ndcOffY = 0.5 * ndcScaleY;
-
-            void RenderRow(int y)
+            Action<int> renderRow = (mode, Fractal) switch
             {
-                double ndcY = -(((double)y / Height) - 0.5) * ndcScaleY;
-                double ndcStepX = ndcScaleX / Width;
+                (RenderMode.HighPrecision,             ISimdPerturbableFractal s) => y => RenderRowSimdPerturbed   (image, y, s),
+                (RenderMode.HighPrecision,             IPerturbableFractal p)     => y => RenderRowPerturbed       (image, y, p),
+                (RenderMode.HighPrecisionWithFloatExp, IPerturbableFractal p)     => y => RenderRowFloatExp        (image, y, p),
+                (_,                                    ISimdFractal s)            => y => RenderRowSimd            (image, y, s),
+                _                                                                 => y => RenderRowScalar          (image, y)
+            };
 
-                if (mode == RenderMode.HighPrecision && perturbable != null)
-                {
-                    int x = 0;
-
-                    for (; x <= Width - 4; x += 4)
-                    {
-                        Vector256<double> ndcX = Fma.MultiplyAdd(
-                            Vector256.Create(x, x + 1.0, x + 2.0, x + 3.0),
-                            Vector256.Create(ndcStepX),
-                            Vector256.Create(-ndcOffX)
-                        );
-
-                        var (r0, r1, r2, r3) = perturbable.IterationPerturbedSIMD(ndcX, ndcY, _pixelSpacingDouble, Iterations, in _referenceOrbit);
-
-                        image[x, y] = ColorPalette.Sample(Fractal.GetContinousValue(r0)).ToPixel<Rgb24>();
-                        image[x + 1, y] = ColorPalette.Sample(Fractal.GetContinousValue(r1)).ToPixel<Rgb24>();
-                        image[x + 2, y] = ColorPalette.Sample(Fractal.GetContinousValue(r2)).ToPixel<Rgb24>();
-                        image[x + 3, y] = ColorPalette.Sample(Fractal.GetContinousValue(r3)).ToPixel<Rgb24>();
-                    }
-
-                    // If there are remaining pixels, just render normally
-                    for (; x < Width; x++)
-                    {
-                        double ndcX = x * ndcStepX - ndcOffX;
-                        double val = EvaluatePerturbation(ndcX, ndcY, x, y, perturbable);
-                        image[x, y] = ColorPalette.Sample(val).ToPixel<Rgb24>();
-                    }
-                }
-                else
-                {
-                    for (int x = 0; x < Width; x++)
-                    {
-                        double ndcX = x * ndcStepX - ndcOffX;
-                        double val = mode == RenderMode.Default
-                            ? EvaluateNormal(ndcX, ndcY)
-                            : EvaluatePerturbation(ndcX, ndcY, x, y, perturbable!);
-                        image[x, y] = ColorPalette.Sample(val).ToPixel<Rgb24>();
-                    }
-                }
-            }
-
-            if (showProgress) 
-            {
-                Console.WriteLine($"<#> Current render mode: {mode}");
-                AnsiConsole.Progress()
-                   .Columns([
-                       new TaskDescriptionColumn(),
-                        new ProgressBarColumn(),
-                        new PercentageColumn(),
-                        new ElapsedTimeColumn(),
-                        new RemainingTimeColumn(),
-                        new SpinnerColumn(),
-                   ])
-                   .Start(ctx =>
-                   {
-                       var task = ctx.AddTask($"<#> Rendering", maxValue: Height);
-
-                       Parallel.ForEach(Partitioner.Create(Enumerable.Range(0, Height), EnumerablePartitionerOptions.NoBuffering), y =>
-                       {
-                           RenderRow(y);
-                           task.Increment(1);
-                       });
-                   });
-
-                Console.WriteLine($"    - Done!");
-            }
-            else
-            {
-                Parallel.ForEach(Partitioner.Create(Enumerable.Range(0, Height), EnumerablePartitionerOptions.NoBuffering), RenderRow);
-            }
-
+            RenderRows(renderRow, showProgress, mode);
             return image;
+        }
+
+        // Helpers
+        private double NdcY(int y)              => -(((double)y / Height) - 0.5) * 2.0;
+        private double NdcX(int x)              => x * (2.0 / Height) - _aspectRatio;
+        private Rgb24 Sample(IterationResult r)
+        {
+            if (!r.Escaped) return ColorPalette.InteriorColor.ToPixel<Rgb24>();
+
+            double smoothIter = Fractal.GetContinousValue(r);
+
+            System.Numerics.Vector4 c = ColorPalette.Sample(smoothIter);
+            return new Rgb24((byte)(c.X * 255), (byte)(c.Y * 255), (byte)(c.Z * 255));
+        }
+        private Complex PixelCoordinates(double ndcX, double ndcY) => new (ndcX / _zoomDouble + _centerDouble.Real, ndcY / _zoomDouble + _centerDouble.Imaginary);
+
+        // Row rendering
+        private void RenderRowScalar(Image<Rgb24> image, int y)
+        {
+            double ndcY = NdcY(y);
+
+            for (int x = 0; x < Width; x++)
+            {
+                double ndcX = NdcX(x);
+                IterationResult result  = Fractal.Iteration(PixelCoordinates(ndcX, ndcY), Iterations);
+                image[x, y] = Sample(result);
+            }
+        }
+
+        private void RenderRowSimd(Image<Rgb24> image, int y, ISimdFractal simd)
+        {
+            double ndcY = NdcY(y);
+            double ci = ndcY * _pixelSpacingDouble + _centerDouble.Imaginary;
+            double ndcStepX = 2.0 / Height;
+
+            int x = 0;
+            for (; x <= Width - 4; x += 4)
+            {
+                var ndcX = Fma.MultiplyAdd(
+                    Vector256.Create(x, x + 1.0, x + 2.0, x + 3.0),
+                    Vector256.Create(ndcStepX),
+                    Vector256.Create(-_aspectRatio));
+
+                var cr = Fma.MultiplyAdd(ndcX, Vector256.Create(_pixelSpacingDouble), Vector256.Create(_centerDouble.Real));
+                var (r0, r1, r2, r3) = simd.IterationSIMD(cr, Vector256.Create(ci), Iterations);
+
+                image[x, y]     = Sample(r0);
+                image[x + 1, y] = Sample(r1);
+                image[x + 2, y] = Sample(r2);
+                image[x + 3, y] = Sample(r3);
+            }
+
+            // If there are remaining pixels, just render normally
+            for (; x < Width; x++)
+            {
+                double ndcX = NdcX(x);
+                IterationResult result = Fractal.Iteration(PixelCoordinates(ndcX, ndcY), Iterations);
+                image[x, y] = Sample(result);
+            }
+        }
+
+        private void RenderRowPerturbed(Image<Rgb24> image, int y, IPerturbableFractal p)
+        {
+            double ndcY = NdcY(y);
+            for (int x = 0; x < Width; x++)
+            {
+                double ndcX = NdcX(x);
+                IterationResult result = p.IterationPerturbed(ndcX * _pixelSpacingDouble, ndcY * _pixelSpacingDouble, Iterations, in _referenceOrbit);
+                image[x, y] = Sample(result);
+            }
+        }
+
+        private void RenderRowFloatExp(Image<Rgb24> image, int y, IPerturbableFractal p)
+        {
+            double ndcY = NdcY(y);
+            for (int x = 0; x < Width; x++)
+            {
+                double ndcX = NdcX(x);
+                ScaledComplex delta = new ScaledComplex(ndcX * _pixelSpacing, ndcY * _pixelSpacing);
+                IterationResult result = p.IterationFloatExp(delta, Iterations, in _referenceOrbit);
+                image[x, y] = Sample(result);
+            }
+        }
+
+        private void RenderRowSimdPerturbed(Image<Rgb24> image, int y, ISimdPerturbableFractal simd)
+        {
+            double ndcY = NdcY(y);
+            double ndcStepX = 2.0 / Height;
+            int x = 0;
+
+            for (; x <= Width - 4; x += 4)
+            {
+                var ndcX = Fma.MultiplyAdd(
+                    Vector256.Create(x, x + 1.0, x + 2.0, x + 3.0),
+                    Vector256.Create(ndcStepX),
+                    Vector256.Create(-_aspectRatio));
+
+                var (r0, r1, r2, r3) = simd.IterationPerturbedSIMD(ndcX, ndcY, _pixelSpacingDouble, Iterations, in _referenceOrbit);
+                
+                image[x, y]     = Sample(r0);
+                image[x + 1, y] = Sample(r1);
+                image[x + 2, y] = Sample(r2);
+                image[x + 3, y] = Sample(r3);
+            }
+            for (; x < Width; x++)
+            {
+                double ndcX = NdcX(x);
+                IterationResult result = simd.IterationPerturbed(ndcX * _pixelSpacingDouble, ndcY * _pixelSpacingDouble, Iterations, in _referenceOrbit);
+                image[x, y] = Sample(result);
+            }
+        }
+
+        private void RenderRows(Action<int> renderRow, bool showProgress, RenderMode mode)
+        {
+            var rows = Partitioner.Create(Enumerable.Range(0, Height), EnumerablePartitionerOptions.NoBuffering);
+
+            if (!showProgress) 
+            { 
+                Parallel.ForEach(rows, renderRow);
+                return;
+            }
+
+            Console.WriteLine($"<#> Current render mode: {mode}");
+            AnsiConsole.Progress()
+            .Columns([
+                new TaskDescriptionColumn(),
+                new ProgressBarColumn(),
+                new PercentageColumn(),
+                new ElapsedTimeColumn(),
+                new RemainingTimeColumn(),
+                new SpinnerColumn(),
+            ])
+            .Start(ctx =>
+            {
+                var task = ctx.AddTask($"<#> Rendering", maxValue: Height);
+                Parallel.ForEach(rows, y => 
+                { 
+                    renderRow(y); 
+                    task.Increment(1); 
+                });
+            });
         }
     }
 }

@@ -1,22 +1,18 @@
 ﻿using fractalis.Core.Numbers;
 using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
 namespace fractalis.Core.Fractals
 {
-    public class Mandelbrot : IPerturbableFractal
+    public class Mandelbrot : IPerturbableFractal, ISimdPerturbableFractal
     {
-        private const double ILOG2 = 1.4426950408889634;
-        private static readonly FloatExp BAILOUT = new FloatExp(1, 7);
-        private static readonly double BAILOUT_DOUBLE = Math.Pow(2, 7);
+        private const double                ILOG2           = 1.4426950408889634;
+        private static readonly FloatExp    BAILOUT         = new FloatExp(1, 7);
+        private static readonly double      BAILOUT_DOUBLE  = Math.Pow(2, 7);
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public IterationResult Iteration(Complex c, int maxIterations)
         {
             Complex z = new Complex(0, 0);
@@ -24,7 +20,10 @@ namespace fractalis.Core.Fractals
 
             for (; i < maxIterations; i++)
             {
-                z = z * z + c;
+                double zrTemp = z.Real;
+
+                z.Real = z.Real * z.Real - z.Imaginary * z.Imaginary + c.Real;
+                z.Imaginary = 2 * zrTemp * z.Imaginary + c.Imaginary;
 
                 if (z.MagnitudeSquared > 100) break;
             }
@@ -32,6 +31,98 @@ namespace fractalis.Core.Fractals
             if (i == maxIterations) return new IterationResult(i, double.NaN, false);
 
             return new IterationResult(i, z.MagnitudeSquared);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public IterationResult IterationFloatExp(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit)
+        {
+            int i = 0;
+            int refIteration = 0;
+            ScaledComplex dz = new ScaledComplex(0, 0);
+            double escapeMag = 0;
+
+            for (; i < maxIterations; i++)
+            {
+                // We don't collect the common dz term here, because that would involve
+                // adding the reference (~1e0 scale) to dz (~1e-300+ scale), which would be catastrophic.
+                dz = 2 * referenceOrbit.ScaledPoints[refIteration++] * dz + dz * dz + delta;
+
+                ScaledComplex z = referenceOrbit.ScaledPoints[refIteration] + dz;
+                FloatExp zMag = z.MagnitudeSquared;
+
+                // Bailout
+                if (zMag > BAILOUT)
+                {
+                    escapeMag = (double)zMag;
+                    break;
+                }
+
+                // Prevent delta from straying off and causing visual glitches
+                if (zMag < dz.MagnitudeSquared || refIteration == referenceOrbit.EscapeIteration - 1)
+                {
+                    dz = z;
+                    refIteration = 0;
+                }
+            }
+
+            if (i == maxIterations) return new IterationResult(i, double.NaN, false);
+
+            return new IterationResult(i, escapeMag);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationSIMD(Vector256<double> cr, Vector256<double> ci, int maxIterations)
+        {
+            Vector256<double> zr            = Vector256<double>.Zero;
+            Vector256<double> zi            = Vector256<double>.Zero;
+            Vector256<double> iterations    = Vector256<double>.Zero;
+            Vector256<double> escapeMags    = Vector256<double>.Zero;
+            Vector256<double> active        = Vector256<double>.AllBitsSet;
+            Vector256<double> one           = Vector256.Create(1.0);
+            Vector256<double> two           = Vector256.Create(2.0);
+            Vector256<double> bailout       = Vector256.Create(BAILOUT_DOUBLE);
+
+            for (int i = 0; i < maxIterations; i++)
+            {
+                Vector256<double> newzi = Fma.MultiplyAdd(two * zr, zi, ci);
+                Vector256<double> newzr = Fma.MultiplyAdd(zr, zr, Fma.MultiplyAddNegated(zi, zi, cr));
+
+                // Only apply it to non-escaped points
+                zr = Avx.BlendVariable(zr, newzr, active);
+                zi = Avx.BlendVariable(zi, newzi, active);
+
+                // Bailout if every point escaped
+                Vector256<double> zmag          = Fma.MultiplyAdd(zr, zr, zi * zi);
+                Vector256<double> prevActive    = active;
+
+                active      = Avx.Compare(zmag, bailout, FloatComparisonMode.OrderedLessThanNonSignaling);
+                escapeMags  = Avx.BlendVariable(escapeMags, zmag, Avx.AndNot(active, prevActive));
+
+                if (Avx.TestZ(active, active)) break;
+
+                // Increment iterations
+                iterations = Avx.Add(iterations, Avx.And(active, one));
+            }
+
+            double* magnitudeBuffer = stackalloc double[4];
+            double* iterationBuffer = stackalloc double[4];
+
+            Avx.Store(magnitudeBuffer, escapeMags);
+            Avx.Store(iterationBuffer, iterations);
+
+            int i0 = (int)iterationBuffer[0];
+            int i1 = (int)iterationBuffer[1];
+            int i2 = (int)iterationBuffer[2];
+            int i3 = (int)iterationBuffer[3];
+
+            double z0 = magnitudeBuffer[0];
+            double z1 = magnitudeBuffer[1];
+            double z2 = magnitudeBuffer[2];
+            double z3 = magnitudeBuffer[3];
+
+            static IterationResult Make(int i, double z, int m) => new(i, z, i < m);
+
+            return (Make(i0, z0, maxIterations), Make(i1, z1, maxIterations), Make(i2, z2, maxIterations), Make(i3, z3, maxIterations));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -173,43 +264,9 @@ namespace fractalis.Core.Fractals
             }
 
             if (i == maxIterations) return new IterationResult(i, double.NaN, false);
-            return new IterationResult(i, Math.Sqrt(zmag));
+            return new IterationResult(i, zmag);
         }
-        public IterationResult IterationFloatExp(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit)
-        {
-            int i = 0;
-            int refIteration = 0;
-            ScaledComplex dz = new ScaledComplex(0, 0);
-            ScaledComplex lastZ = new ScaledComplex(0, 0);
 
-            for (; i < maxIterations; i++)
-            {
-                // We don't collect the common dz term here, because that would involve
-                // adding the reference (~1e0 scale) to dz (~1e-300+ scale), which would be catastrophic.
-                dz = 2 * referenceOrbit.ScaledPoints[refIteration++] * dz + dz * dz + delta;
-
-                ScaledComplex z = referenceOrbit.ScaledPoints[refIteration] + dz;
-                FloatExp zMag = z.MagnitudeSquared;
-
-                // Bailout
-                if (zMag > BAILOUT)
-                {
-                    lastZ = z;
-                    break;
-                }
-
-                // Prevent delta from straying off and causing visual glitches
-                if (zMag < dz.MagnitudeSquared || refIteration == referenceOrbit.EscapeIteration - 1)
-                {
-                    dz = z;
-                    refIteration = 0;
-                }
-            }
-
-            if (i == maxIterations) return new IterationResult(i, double.NaN, false);
-
-            return new IterationResult(i, (double)lastZ.Magnitude);
-        }
         public void CalculateReferenceOrbit(BigComplex center, int maxIterations, out ReferenceOrbit orbit)
         {
             ReferenceOrbit o = new ReferenceOrbit(maxIterations);
@@ -242,8 +299,6 @@ namespace fractalis.Core.Fractals
 
                         z.Real = zr2 - zi2 + center.Real;
                         z.Imaginary = 2 * zrTemp * z.Imaginary + center.Imaginary;
-
-                        //z = z * z + center;
 
                         if (zr2 + zi2 > BAILOUT_DOUBLE) break;
 

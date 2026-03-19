@@ -8,6 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\palettes.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\palettes.json" />
+  </ItemGroup>
+
+  <ItemGroup>
 	<PackageReference Include="Sdcb.Arithmetic.Mpfr" Version="4.2.1" />
 	<PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
 	<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />

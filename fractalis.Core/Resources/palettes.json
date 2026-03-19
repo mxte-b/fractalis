@@ -1,0 +1,109 @@
+[
+  {
+    "name": "BB",
+    "stops": [
+      {
+        "position": 0,
+        "color": [ 0, 7, 100, 255 ]
+      },
+      {
+        "position": 0.2,
+        "color": [ 32, 107, 203, 255 ]
+      },
+      {
+        "position": 0.4,
+        "color": [ 237, 255, 255, 255 ]
+      },
+      {
+        "position": 0.6,
+        "color": [ 255, 170, 0, 255 ]
+      },
+      {
+        "position": 0.8,
+        "color": [ 0, 2, 0, 255 ]
+      },
+      {
+        "position": 1,
+        "color": [ 0, 7, 100, 255 ]
+      }
+    ]
+  },
+  {
+    "name": "RedAccent",
+    "stops": [
+      {
+        "position": 0,
+        "color": [ 32, 0, 0, 255 ]
+      },
+      {
+        "position": 0.2,
+        "color": [ 255, 15, 15, 255 ]
+      },
+      {
+        "position": 0.4,
+        "color": [ 255, 255, 255, 255 ]
+      },
+      {
+        "position": 0.6,
+        "color": [ 140, 140, 140, 255 ]
+      },
+      {
+        "position": 0.8,
+        "color": [ 0, 0, 0, 255 ]
+      },
+      {
+        "position": 1,
+        "color": [ 32, 0, 0, 255 ]
+      }
+    ]
+  },
+  {
+    "name": "Midnight",
+    "stops": [
+      {
+        "position": 0.0,
+        "color": [ 222, 226, 233, 255 ]
+      },
+      {
+        "position": 0.1,
+        "color": [ 24, 30, 53, 255 ]
+      },
+      {
+        "position": 0.2,
+        "color": [ 222, 226, 233, 255 ]
+      },
+      {
+        "position": 0.3,
+        "color": [ 9, 10, 17, 255 ]
+      },
+      {
+        "position": 0.4,
+        "color": [ 178, 138, 194, 255 ]
+      },
+      {
+        "position": 0.5,
+        "color": [ 16, 17, 20, 255 ]
+      },
+      {
+        "position": 0.6,
+        "color": [ 222, 226, 233, 255 ]
+      },
+      {
+        "position": 0.7,
+        "color": [ 18, 8, 10, 255 ]
+      },
+      {
+        "position": 0.8,
+        "color": [ 194, 166, 178, 255 ]
+      },
+      {
+        "position": 0.9,
+        "color": [ 14, 15, 26, 255 ]
+      },
+      {
+        "position": 1.0,
+        "color": [ 222, 226, 233, 255 ]
+      }
+    ]
+  }
+]

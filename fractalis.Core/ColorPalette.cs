@@ -1,67 +1,139 @@
-﻿using SixLabors.ImageSharp;
+﻿using Microsoft.VisualBasic;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Xml.Schema;
 
 namespace fractalis.Core
 {
-    public enum PalettePreset { Grayscale, Fire, Ocean, Electric, Rainbow }
-    public struct ColorStop
+    public enum PalettePreset { BB, Midnight, RedAccent }
+
+    public struct PaletteData
     {
-        public float Position { get; set; }
-        public Vector4 Color { get; set; }
-        public ColorStop(float position, Color color) 
-        {
-            Position = position;
-            Color = color.ToPixel<Rgba32>().ToVector4();
-        }
+        [JsonPropertyName("name")]
+        public string           Name        { get; set; }
+
+        [JsonPropertyName("stops")]
+        public List<ColorStop>  ColorStops  { get; set; }
+    }
+
+    public struct ColorStop(float position, Color color)
+    {
+        [JsonPropertyName("position")]
+        public float    Position { get; set; } = position;
+
+        [JsonPropertyName("color")]
+        public Vector4  Color    { get; set; } = color.ToPixel<Rgba32>().ToVector4();
     }
 
     public class ColorPalette
     {
-        public int MaxIterations { get; set; }
-        public int Frequency { get; set; }
-        public float Offset { get; set; }
-        public Color InteriorColor { get; set; }
-        private List<ColorStop> Stops { get; }
+        public int                          Frequency       { get; set; }
+        public float                        Offset          { get; set; }
+        public Color                        InteriorColor   { get; set; }
+        public static int                   LutResolution   { get; set; } = 4096;
 
-        public ColorPalette() => Stops = new List<ColorStop>();
-        public ColorPalette(IEnumerable<ColorStop> stops) => Stops = stops.ToList();
+        private readonly List<ColorStop>    _stops;
+        private readonly Vector4[]          _lut;
+        private static readonly ResourceManager    _resourceManager = ResourceManager.Instance;
 
-        public static ColorPalette FromPreset(PalettePreset preset) => throw new NotImplementedException();
-
-        public void AddStop(ColorStop stop) => Stops.Add(stop);
-        public void RemoveStop(int index) => Stops.RemoveAt(index);
-        public void ClearStops() => Stops.Clear();
-        public Color Sample(double iteration)
+        public ColorPalette()
         {
-
-            if (iteration == MaxIterations) return InteriorColor;
-
-            // Normalizing the iteration with repeating
-            double idx = iteration % Frequency;
-            float normalized = (float)idx / Frequency;
-
-            // Selecting the stops that bracket the value
-            ColorStop left = Stops.LastOrDefault(x => x.Position <= normalized);
-            ColorStop right = Stops.FirstOrDefault(x => x.Position >= normalized);
-
-            if (left.Position == right.Position) return new Color(left.Color);
-
-            // Interpolating between them
-            float t = (normalized - left.Position) / (right.Position - left.Position);
-            Vector4 interpolated = Vector4.Lerp(left.Color, right.Color, t);
-
-            return new Color(interpolated);
+            _stops = new List<ColorStop>();
+            _lut = new Vector4[LutResolution];
         }
 
-        public string ToJson() => throw new NotImplementedException();
-        public static ColorPalette FromJson(string json) => throw new NotImplementedException();
-        public ColorPalette Clone() => throw new NotImplementedException();
+        public ColorPalette(IEnumerable<ColorStop> stops)
+        {
+            _stops = stops.ToList();
+            _lut = new Vector4[LutResolution];
+            BakeLUT();
+        }
+
+        public static ColorPalette FromPreset(PalettePreset preset)
+        {
+            List<ColorStop>? stops;
+            _resourceManager.ColorPalettes.TryGetValue(preset.ToString(), out stops);
+
+            if (stops == null)
+            {
+                throw new KeyNotFoundException($"The key '{preset}' is not a valid color palette.");
+            }
+
+            return new ColorPalette(stops);
+        }
+
+        public void AddStop(ColorStop stop) 
+        {
+            _stops.Add(stop);
+            BakeLUT();
+        }
+
+        public void RemoveStop(int index)
+        {
+            _stops.RemoveAt(index);
+            BakeLUT();
+        }
+
+        public void ClearStops()
+        {
+            _stops.Clear();
+            BakeLUT();
+        }
+
+        private void BakeLUT()
+        {
+            if (_stops.Count == 0) return;
+            if (_stops.Count == 1)
+            {
+                Vector4 stop = _stops[0].Color;
+                for (int i = 0; i < LutResolution; i++)
+                {
+                    _lut[i] = stop;
+                }
+
+                return;
+            }
+
+            for (int i = 0; i < LutResolution; i++)
+            {
+                _lut[i] = SampleStops(i / (float)(LutResolution - 1));
+            }
+        }
+
+        private Vector4 SampleStops(float t)
+        {
+            // Normalizing the iteration with repeating
+            if (_stops.Count == 1) return _stops[0].Color;
+
+            // Selecting the stops that bracket the value
+            ColorStop left = _stops.LastOrDefault(s => s.Position <= t);
+            ColorStop right = _stops.FirstOrDefault(s => s.Position >= t);
+            if (left.Position == right.Position) return left.Color;
+
+            // Interpolating between them
+            float localT = (t - left.Position) / (right.Position - left.Position);
+            return Vector4.Lerp(left.Color, right.Color, localT);
+        }
+
+        public Vector4 Sample(double smoothIteration)
+        {
+            if (_lut.Length == 0) return Vector4.Zero;
+
+            double normalized = (smoothIteration % Frequency) / Frequency;
+            double shifted = (normalized + Offset) % 1.0;
+            if (shifted < 0) shifted += 1.0;
+
+            int index = (int)(shifted * (LutResolution - 1));
+            return _lut[index];
+        }
     }
 }

@@ -103,8 +103,8 @@ namespace fractalis.Core.Video
 
         private BigFloat GetZoom(int frameId) 
         {
-            BigFloat zoom = Config.ZoomStart * (Config.ZoomEnd / Config.ZoomStart) ^ (Time(frameId) / Config.FrameCount);
-            return zoom;
+            BigFloat zoom = (Config.ZoomEnd / Config.ZoomStart) ^ (Time(frameId) / Config.FrameCount);
+            return Config.ZoomStart * zoom;
         }
 
         private void CreateOutputDirectory() => Directory.CreateDirectory($"render-{_renderId}");
