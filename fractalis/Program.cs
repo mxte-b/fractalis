@@ -22,12 +22,12 @@ namespace fractalis
             BigFloat zoom = new BigFloat("1e300");
             int iterations = 80000;
 #else
-            int w = 400;
-            int h = 400;
+            int w = 1920;
+            int h = 1080;
 
-            BigComplex center = Sights.Test;
-            BigFloat zoom = new BigFloat("1e500");
-            int iterations = 80000;
+            BigComplex center = Sights.RetroDays;
+            BigFloat zoom = new BigFloat("1e200");
+            int iterations = 20000;
 #endif
 
             ColorPalette palette = ColorPalette.FromPreset(PalettePreset.Midnight);
@@ -49,23 +49,27 @@ namespace fractalis
             FractalBenchmark bench = new FractalBenchmark(rendererConfig);
             bench.Run("Baseline", 10);
 #else
-            Image<Rgb24> image = renderer.Render(true);
-            image.Save("render.png");
-            Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
+            //Image<Rgb24> image = renderer.Render(true);
+            //image.Save("render.png");
+            //Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
 
-            //VideoConfig config = new VideoConfig()
-            //{
-            //    Duration = 11 * 60,
-            //    FPS = 30,
-            //    ZoomStart = new BigFloat("0.5"),
-            //    ZoomEnd = new BigFloat("1e200"),
-            //    StartAnimationDuration = 0.5,
-            //    StopAnimationDuration = 3,
-            //};
-            //VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
+            VideoConfig config = new VideoConfig()
+            {
+                Duration = 11 * 60,
+                FPS = 30,
+                ZoomStart = new BigFloat("0.5"),
+                ZoomEnd = new BigFloat("1e200"),
+                StartAnimationDuration = 0.5,
+                StopAnimationDuration = 3,
 
-            //videoRenderer.Start();
-            //videoRenderer.Save();
+                // For the ability to split the work into multiple sessions
+                StartFrame = 17393,
+                RenderIdOverride = "a9f5523e-bd93-4cd1-ac70-19d59a0e5018"
+            };
+            VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
+
+            videoRenderer.Start();
+            videoRenderer.Save();
 #endif
         }
     }

@@ -20,6 +20,7 @@ namespace fractalis.Core.Video
         public double               StartAnimationDuration  { get; init; } = 1;
         public double               StopAnimationDuration   { get; init; } = 1;
         public int                  StartFrame              { get; init; } = 0;
+        public string?              RenderIdOverride        { get; init; } = null;
 
         public int                  StartAnimationFrames    => (int)Math.Round(StartAnimationDuration * FPS);
         public int                  StopAnimationFrames     => (int)Math.Round(StopAnimationDuration * FPS);
@@ -29,12 +30,10 @@ namespace fractalis.Core.Video
 
     public class VideoRenderer(FractalRenderer r, VideoConfig c)
     {
-        private VideoConfig         Config      { get; set; } = c;
-        private FractalRenderer     Renderer    { get; set; } = r;
-
-        private readonly string     _renderId           = Guid.NewGuid().ToString();
-
-        private string              ImageSequencePath   => $"render-{_renderId}";
+        private readonly string     _renderId               = c.RenderIdOverride ?? Guid.NewGuid().ToString();
+        private VideoConfig         Config                  { get; set; } = c;
+        private FractalRenderer     Renderer                { get; set; } = r;
+        private string              ImageSequencePath       => $"render-{_renderId}";
         private double              Delta
         {
             get
@@ -42,7 +41,6 @@ namespace fractalis.Core.Video
                 return 3.0 * Config.FrameCount / (Config.FrameCount + 2 * Config.StopAnimationStartFrame - 2 * Config.StartAnimationFrames);
             }
         }
-
         private double              Gamma
         {
             get
