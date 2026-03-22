@@ -10,6 +10,11 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Video
 {
+    public record AnimationSettings()
+    {
+        public double                      Duration         { get; init; } = 1.0;
+        public double                      Exponent         { get; init; } = 3.0;
+    }
 
     public record VideoConfig()
     {
@@ -17,13 +22,13 @@ namespace fractalis.Core.Video
         public int                  FPS                     { get; init; } = 30;
         public required BigFloat    ZoomStart               { get; init; }
         public required BigFloat    ZoomEnd                 { get; init; }
-        public double               StartAnimationDuration  { get; init; } = 1;
-        public double               StopAnimationDuration   { get; init; } = 1;
+        public AnimationSettings    StartAnimation          { get; init; } = new AnimationSettings();
+        public AnimationSettings    StopAnimation           { get; init; } = new AnimationSettings();
         public int                  StartFrame              { get; init; } = 0;
         public string?              RenderIdOverride        { get; init; } = null;
 
-        public int                  StartAnimationFrames    => (int)Math.Round(StartAnimationDuration * FPS);
-        public int                  StopAnimationFrames     => (int)Math.Round(StopAnimationDuration * FPS);
+        public int                  StartAnimationFrames    => (int)Math.Round(StartAnimation.Duration * FPS);
+        public int                  StopAnimationFrames     => (int)Math.Round(StopAnimation.Duration * FPS);
         public int                  FrameCount              => (int)Math.Floor(Duration * FPS);
         public int                  StopAnimationStartFrame => FrameCount - StopAnimationFrames;
     }
@@ -34,18 +39,28 @@ namespace fractalis.Core.Video
         private VideoConfig         Config                  { get; set; } = c;
         private FractalRenderer     Renderer                { get; set; } = r;
         private string              ImageSequencePath       => $"render-{_renderId}";
+
+        // Correction values
         private double              Delta
         {
             get
             {
-                return 3.0 * Config.FrameCount / (Config.FrameCount + 2 * Config.StopAnimationStartFrame - 2 * Config.StartAnimationFrames);
+                double pStop = Config.StopAnimation.Exponent;
+                double pStartAdjusted = 1 / Config.StartAnimation.Exponent - 1;
+
+                return pStop * Config.FrameCount / 
+                    (
+                        Config.FrameCount + 
+                        (pStop - 1) * Config.StopAnimationStartFrame +
+                        pStop * pStartAdjusted * Config.StartAnimationFrames
+                    );
             }
         }
         private double              Gamma
         {
             get
             {
-                return -2.0 * Config.StartAnimationFrames * Delta / 3;
+                return (1 / Config.StartAnimation.Exponent - 1) * Config.StartAnimationFrames * Delta;
             }
         }
 
@@ -76,14 +91,14 @@ namespace fractalis.Core.Video
             double aStart = TBase(Config.StartAnimationFrames);
             double u = NormalizedTime(Config.StartAnimationFrames, Config.StartAnimationFrames, t);
 
-            return aStart * Math.Pow(u + 1, 3);
+            return aStart * Math.Pow(u + 1, Config.StartAnimation.Exponent);
         }
         private double TStop(double t)
         {
             double aStop = TBase(Config.StopAnimationStartFrame);
             double u = NormalizedTime(Config.StopAnimationStartFrame, Config.StopAnimationFrames, t);
 
-            return aStop + (Config.FrameCount - aStop) * (1 - Math.Pow(1 - u, 3));
+            return aStop + (Config.FrameCount - aStop) * (1 - Math.Pow(1 - u, Config.StopAnimation.Exponent));
         }
 
         private double Time(double t)

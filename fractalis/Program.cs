@@ -25,14 +25,14 @@ namespace fractalis
             int w = 1920;
             int h = 1080;
 
-            BigComplex center = Sights.RetroDays;
-            BigFloat zoom = new BigFloat("1e200");
-            int iterations = 20000;
+            BigComplex center = Sights.Test;
+            BigFloat zoom = new BigFloat("1e180");
+            int iterations = 80000;
 #endif
 
-            ColorPalette palette = ColorPalette.FromPreset(PalettePreset.Midnight);
+            ColorPalette palette = ColorPalette.FromPreset(PalettePreset.RedAccent);
             palette.InteriorColor = Color.Black;
-            palette.Frequency = 1500;
+            palette.Frequency = 800;
 
             FractalRendererConfig rendererConfig = new FractalRendererConfig()
             {
@@ -55,16 +55,23 @@ namespace fractalis
 
             VideoConfig config = new VideoConfig()
             {
-                Duration = 11 * 60,
+                Duration = 1 * 60,
                 FPS = 30,
                 ZoomStart = new BigFloat("0.5"),
-                ZoomEnd = new BigFloat("1e200"),
-                StartAnimationDuration = 0.5,
-                StopAnimationDuration = 3,
+                ZoomEnd = new BigFloat("1e15"),
+                StartAnimation = new AnimationSettings()
+                {
+                    Duration = 3,
+                    Exponent = 2.5
+                },
+                StopAnimation = new AnimationSettings()
+                {
+                    Duration = 3
+                },
 
                 // For the ability to split the work into multiple sessions
-                StartFrame = 17393,
-                RenderIdOverride = "a9f5523e-bd93-4cd1-ac70-19d59a0e5018"
+                //StartFrame = 17393,
+                //RenderIdOverride = "a9f5523e-bd93-4cd1-ac70-19d59a0e5018"
             };
             VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
 
