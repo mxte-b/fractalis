@@ -16,13 +16,13 @@ namespace fractalis.Core
 {
     public enum PalettePreset { BB, Midnight, RedAccent }
 
-    public struct PaletteData
+    public record PaletteData
     {
         [JsonPropertyName("name")]
-        public string           Name        { get; set; }
+        public required string          Name        { get; init; }
 
         [JsonPropertyName("stops")]
-        public List<ColorStop>  ColorStops  { get; set; }
+        public required List<ColorStop> ColorStops  { get; init; }
     }
 
     public struct ColorStop(float position, Color color)
@@ -31,6 +31,7 @@ namespace fractalis.Core
         public float    Position { get; set; } = position;
 
         [JsonPropertyName("color")]
+        [JsonConverter(typeof(Vector4Converter))]
         public Vector4  Color    { get; set; } = color.ToPixel<Rgba32>().ToVector4();
     }
 

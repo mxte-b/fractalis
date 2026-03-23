@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace fractalis.Core.Distributed
@@ -11,6 +12,7 @@ namespace fractalis.Core.Distributed
     {
         private ClientWebSocket? _ws;
         public bool Connected { get; private set; } = false;
+        public bool Registered { get; private set; } = false;
 
         public async Task Connect(Uri uri)
         {
@@ -19,13 +21,28 @@ namespace fractalis.Core.Distributed
             Connected = _ws.State == WebSocketState.Open;
         }
 
+        public async Task Register(string displayName)
+        {
+            Message message = new RegistrationMessage()
+            {
+                DisplayName = displayName,
+            };
+
+            await SendMessageToServer(message);
+        }
+
         public async Task Disconnect()
         {
             if (_ws == null || !Connected) return;
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, null, default);
         }
 
-        public async Task ReportToOrchestrator(string message)
+        public async Task SendMessageToServer(Message message)
+        {
+            await SendRawStringToServer(JsonSerializer.Serialize(message));
+        }
+
+        public async Task SendRawStringToServer(string message)
         {
             if (_ws == null || !Connected) return;
 

@@ -17,7 +17,6 @@ namespace fractalis.Server
 
             app.UseWebSockets(options);
 
-            app.MapGet("/", () => "Hello World!");
             app.Map("/ws", async context =>
             {
                 if (context.WebSockets.IsWebSocketRequest)

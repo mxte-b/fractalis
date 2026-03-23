@@ -54,9 +54,7 @@ namespace fractalis.Core
             StreamReader reader = new StreamReader(stream);
             string text = reader.ReadToEnd();
 
-            JsonSerializerOptions options = new JsonSerializerOptions();
-            options.Converters.Add(new Vector4Converter());
-            List<PaletteData>? data = JsonSerializer.Deserialize<List<PaletteData>>(text, options);
+            List<PaletteData>? data = JsonSerializer.Deserialize<List<PaletteData>>(text);
             if (data == null)
             {
                 throw new FormatException("The palette data was malformed.");
