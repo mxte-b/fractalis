@@ -59,7 +59,7 @@ namespace fractalis.Core.Distributed
                     {
                         string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-                        Console.WriteLine($"Client recieved message: {message}");
+                        Console.WriteLine($"Client received message: {message}");
                     }
                 }
             }
