@@ -26,13 +26,13 @@ namespace fractalis
             int h = 1080;
 
             BigComplex center = Sights.Test;
-            BigFloat zoom = new BigFloat("1e180");
-            int iterations = 80000;
+            BigFloat zoom = new BigFloat("1e5");
+            int iterations = 2000;
 #endif
 
             ColorPalette palette = ColorPalette.FromPreset(PalettePreset.RedAccent);
             palette.InteriorColor = Color.Black;
-            palette.Frequency = 800;
+            palette.Frequency = 200;
 
             FractalRendererConfig rendererConfig = new FractalRendererConfig()
             {
@@ -49,34 +49,34 @@ namespace fractalis
             FractalBenchmark bench = new FractalBenchmark(rendererConfig);
             bench.Run("Baseline", 10);
 #else
-            //Image<Rgb24> image = renderer.Render(true);
-            //image.Save("render.png");
-            //Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
+            Image<Rgb24> image = renderer.Render(true);
+            image.Save("render.png");
+            Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
 
-            VideoConfig config = new VideoConfig()
-            {
-                Duration = 1 * 60,
-                FPS = 30,
-                ZoomStart = new BigFloat("0.5"),
-                ZoomEnd = new BigFloat("1e15"),
-                StartAnimation = new AnimationSettings()
-                {
-                    Duration = 3,
-                    Exponent = 2.5
-                },
-                StopAnimation = new AnimationSettings()
-                {
-                    Duration = 3
-                },
+            //VideoConfig config = new VideoConfig()
+            //{
+            //    Duration = 1 * 60,
+            //    FPS = 30,
+            //    ZoomStart = new BigFloat("0.5"),
+            //    ZoomEnd = new BigFloat("1e15"),
+            //    StartAnimation = new AnimationSettings()
+            //    {
+            //        Duration = 3,
+            //        Exponent = 2.5
+            //    },
+            //    StopAnimation = new AnimationSettings()
+            //    {
+            //        Duration = 3
+            //    },
 
-                // For the ability to split the work into multiple sessions
-                //StartFrame = 17393,
-                //RenderIdOverride = "a9f5523e-bd93-4cd1-ac70-19d59a0e5018"
-            };
-            VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
+            //    // For the ability to split the work into multiple sessions
+            //    //StartFrame = 17393,
+            //    //RenderIdOverride = "a9f5523e-bd93-4cd1-ac70-19d59a0e5018"
+            //};
+            //VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
 
-            videoRenderer.Start();
-            videoRenderer.Save();
+            //videoRenderer.Start();
+            //videoRenderer.Save();
 #endif
         }
     }

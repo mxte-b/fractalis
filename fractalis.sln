@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Test", "fractalis
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Core", "fractalis.Core\fractalis.Core.csproj", "{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Orchestrator", "fractalis.Orchestrator\fractalis.Orchestrator.csproj", "{826A8046-B88A-4221-A06E-D844368DE656}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Server", "fractalis.Orchestrator\fractalis.Server.csproj", "{826A8046-B88A-4221-A06E-D844368DE656}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Client", "fractalis.Client\fractalis.Client.csproj", "{7C5ECBBE-E2EF-40CC-A099-90C2ECDE3EDE}"
 EndProject
@@ -42,5 +42,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {68FBC618-3BC7-4A6D-A808-9590C45124EE}
 	EndGlobalSection
 EndGlobal
