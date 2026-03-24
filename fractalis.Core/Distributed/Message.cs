@@ -32,6 +32,8 @@ namespace fractalis.Core.Distributed
     public record ReconnectMessage : Message 
     {
         public override MessageType     Type        => MessageType.Reconnect;
+        [JsonPropertyName("clientId")]
+        public required Guid            ClientId    { get; init; }
     }
 
     public record RegistrationAcknowledgedMessage : Message

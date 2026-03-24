@@ -1,3 +1,4 @@
+using fractalis.Core;
 using fractalis.Core.Distributed;
 
 namespace fractalis.Server
@@ -6,6 +7,8 @@ namespace fractalis.Server
     {
         public static void Main(string[] args)
         {
+            Console.WriteLine(Banner.V1);
+
             Orchestrator orchestrator = new Orchestrator();
             var builder = WebApplication.CreateBuilder(args);
             var app = builder.Build();
@@ -30,8 +33,7 @@ namespace fractalis.Server
                 }
             });
 
-            Console.WriteLine("<#> Orchestrator running...");
-            Console.WriteLine("    - WebSocket server running at ws://localhost:5059/ws");
+            Console.WriteLine("<#> WebSocket server running at ws://localhost:5059/ws");
             app.Run();
         }
     }

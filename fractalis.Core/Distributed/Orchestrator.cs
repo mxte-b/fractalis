@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SixLabors.ImageSharp.Processing.Processors.Transforms;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +39,16 @@ namespace fractalis.Core.Distributed
             Clients.TryAdd(c.Id, c);
 
             return c;
+        }
+
+        public ClientConnection ReconnectClient(WebSocket socket, Guid clientId)
+        {
+            //if (!Clients.TryGetValue(clientId, out ClientConnection? c))
+            //{
+            //    RegisterClient(socket)
+            //}
+
+            throw new NotImplementedException();
         }
 
         public void UnregisterClient(Guid id)
@@ -89,6 +100,7 @@ namespace fractalis.Core.Distributed
         public async Task HandleClient(WebSocket webSocket)
         {
             Console.WriteLine("<#> New client connected! Awaiting registration...");
+            ClientConnection? currentConnection = null;
 
             // Wait for registration or reconnection with timeout
             CancellationTokenSource source = new();
@@ -97,7 +109,6 @@ namespace fractalis.Core.Distributed
             {
                 await Listen(webSocket, (m, _) => 
                 {
-                    Console.WriteLine($"Got message: {m}");
                     JsonDocument doc = JsonDocument.Parse(m);
                     var root = doc.RootElement;
 
@@ -108,13 +119,14 @@ namespace fractalis.Core.Distributed
                     {
                         case MessageType.Registration:
                             RegistrationMessage reg = JsonSerializer.Deserialize<RegistrationMessage>(m)!;
-                            RegisterClient(webSocket, reg.DisplayName);
+                            currentConnection = RegisterClient(webSocket, reg.DisplayName);
 
                             // Remove timeout
                             source.Dispose();
                             break;
                         case MessageType.Reconnect:
                             ReconnectMessage rec = JsonSerializer.Deserialize<ReconnectMessage>(m)!;
+                            currentConnection = ReconnectClient(webSocket, rec.ClientId);
 
                             // Remove timeout
                             source.Dispose();
@@ -128,14 +140,16 @@ namespace fractalis.Core.Distributed
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("   - Client didn't send registration request in time, closing connnection.");
+                Console.WriteLine("   - Client registration timed out.");
             }
+
+            if (currentConnection == null) return;
 
             // Listen for job polls
             Console.WriteLine("Successful registration, awaiting messages");
             await Listen(webSocket, (m, _) =>
             {
-                Console.WriteLine($"Got message: {m}");
+                Console.WriteLine($"[{currentConnection.Id}]: {m}");
                 return false;
             }, CancellationToken.None);
         }
