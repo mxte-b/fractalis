@@ -24,9 +24,22 @@ namespace fractalis.Core.Distributed
 
     public class Orchestrator
     {
+        private readonly OrchestratorDashboard              _dashboard          = OrchestratorDashboard.Instance;
         public readonly static TimeSpan                     RegistrationTimeout = TimeSpan.FromSeconds(10);
         public ConcurrentDictionary<Guid, ClientConnection> Clients             = [];
 
+        public Orchestrator()
+        {
+            _dashboard.Initialize(Clients);
+            _dashboard.Start();
+        }   
+
+        /// <summary>
+        /// Registers a client to the orchestrator.
+        /// </summary>
+        /// <param name="socket">The client's current WebSocket connection</param>
+        /// <param name="displayName">The display name chosen by the client</param>
+        /// <returns>The current connection data</returns>
         public ClientConnection RegisterClient(WebSocket socket, string displayName)
         {
             ClientConnection c = new ClientConnection()
@@ -41,6 +54,14 @@ namespace fractalis.Core.Distributed
             return c;
         }
 
+        /// <summary>
+        /// Handles a reconnection request from the client. If the request is valid, it will replace 
+        /// the associated connection with the current one, else it will initiate a registration.
+        /// </summary>
+        /// <param name="socket">The client's current WebSocket connection</param>
+        /// <param name="clientId">The identifier assigned to the client by the orchestrator</param>
+        /// <returns>The new connection</returns>
+        /// <exception cref="NotImplementedException"></exception>
         public ClientConnection ReconnectClient(WebSocket socket, Guid clientId)
         {
             //if (!Clients.TryGetValue(clientId, out ClientConnection? c))
@@ -51,6 +72,10 @@ namespace fractalis.Core.Distributed
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Unregisters (removes) a client from the orchestrator.
+        /// </summary>
+        /// <param name="id">The Guid of the client to remove</param>
         public void UnregisterClient(Guid id)
         {
             Clients.TryRemove(id, out _);
@@ -99,7 +124,7 @@ namespace fractalis.Core.Distributed
 
         public async Task HandleClient(WebSocket webSocket)
         {
-            Console.WriteLine("<#> New client connected! Awaiting registration...");
+            _dashboard.AddLog($"New client connected! ");
             ClientConnection? currentConnection = null;
 
             // Wait for registration or reconnection with timeout
@@ -140,18 +165,24 @@ namespace fractalis.Core.Distributed
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("   - Client registration timed out.");
+                _dashboard.AddLog("   - Client registration timed out.");
             }
 
             if (currentConnection == null) return;
 
             // Listen for job polls
-            Console.WriteLine("Successful registration, awaiting messages");
-            await Listen(webSocket, (m, _) =>
+            try
             {
-                Console.WriteLine($"[{currentConnection.Id}]: {m}");
-                return false;
-            }, CancellationToken.None);
+                await Listen(webSocket, (m, _) =>
+                {
+                    _dashboard.AddLog(currentConnection, m.ToString());
+                    return false;
+                }, CancellationToken.None);
+            }
+            catch (WebSocketException)
+            {
+                _dashboard.AddLog(currentConnection, "Disconnected unexpectedly.");
+            }
         }
     }
 }

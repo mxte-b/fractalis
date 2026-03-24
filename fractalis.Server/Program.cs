@@ -7,7 +7,7 @@ namespace fractalis.Server
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine(Banner.V1);
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             Orchestrator orchestrator = new Orchestrator();
             var builder = WebApplication.CreateBuilder(args);
@@ -33,7 +33,6 @@ namespace fractalis.Server
                 }
             });
 
-            Console.WriteLine("<#> WebSocket server running at ws://localhost:5059/ws");
             app.Run();
         }
     }
