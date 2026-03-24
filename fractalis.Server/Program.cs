@@ -22,7 +22,7 @@ namespace fractalis.Server
                 if (context.WebSockets.IsWebSocketRequest)
                 {
                     using var websocket = await context.WebSockets.AcceptWebSocketAsync();
-                    await Orchestrator.Echo(websocket);
+                    await orchestrator.HandleClient(websocket);
                 }
                 else
                 {

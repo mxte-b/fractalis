@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace fractalis.Core.Distributed
@@ -22,7 +23,8 @@ namespace fractalis.Core.Distributed
 
     public class Orchestrator
     {
-        public ConcurrentDictionary<Guid, ClientConnection> Clients = [];
+        public readonly static TimeSpan                     RegistrationTimeout = TimeSpan.FromSeconds(10);
+        public ConcurrentDictionary<Guid, ClientConnection> Clients             = [];
 
         public ClientConnection RegisterClient(WebSocket socket, string displayName)
         {
@@ -43,40 +45,99 @@ namespace fractalis.Core.Distributed
             Clients.TryRemove(id, out _);
         }
 
-        public static async Task Echo(WebSocket webSocket)
+        private static async Task CloseConnection(WebSocket socket)
         {
-            byte[] buffer = new byte[1024 * 4];
-            Console.WriteLine("New client connected! Awaiting registration...");
+            await socket.CloseAsync(
+                WebSocketCloseStatus.NormalClosure,
+                null,
+                CancellationToken.None
+            );
+        }
+
+        private static async Task CloseConnection(WebSocket socket, WebSocketReceiveResult result)
+        {
+            await socket.CloseAsync(
+                result.CloseStatus != null ? result.CloseStatus.Value : WebSocketCloseStatus.NormalClosure,
+                result.CloseStatusDescription,
+                CancellationToken.None
+            );
+        }
+
+        public async Task Listen(WebSocket webSocket, Func<string, WebSocket, bool> callback, CancellationToken cancellationToken)
+        {
+            byte[] buffer = new byte[1024];
+
             while (webSocket.State == WebSocketState.Open)
             {
-                var result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
+                var result = await webSocket.ReceiveAsync(buffer, cancellationToken);
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    await webSocket.CloseAsync(
-                        result.CloseStatus != null ? result.CloseStatus.Value : WebSocketCloseStatus.NormalClosure, 
-                        result.CloseStatusDescription, 
-                        CancellationToken.None
-                    );
+                    await CloseConnection(webSocket, result);
+                    break;
                 }
                 else
                 {
                     string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-
-
-                    Console.WriteLine($"Orchestrator received message: {message}");
-
-                    byte[] response = Encoding.UTF8.GetBytes("Echo: " + message);
-
-                    await webSocket.SendAsync(
-                        new ArraySegment<byte>(response),
-                        WebSocketMessageType.Text,
-                        true,
-                        CancellationToken.None
-                    );
+                    // If the registration/reconnection is successful, return
+                    if (callback(message, webSocket)) break;
                 }
             }
+        }
+
+        public async Task HandleClient(WebSocket webSocket)
+        {
+            Console.WriteLine("<#> New client connected! Awaiting registration...");
+
+            // Wait for registration or reconnection with timeout
+            CancellationTokenSource source = new();
+            source.CancelAfter(RegistrationTimeout);
+            try
+            {
+                await Listen(webSocket, (m, _) => 
+                {
+                    Console.WriteLine($"Got message: {m}");
+                    JsonDocument doc = JsonDocument.Parse(m);
+                    var root = doc.RootElement;
+
+                    if (!root.TryGetProperty("type", out JsonElement typeProp)) return false;
+                    if (!Enum.TryParse(typeProp.ToString(), true, out MessageType type)) return false;
+
+                    switch (type)
+                    {
+                        case MessageType.Registration:
+                            RegistrationMessage reg = JsonSerializer.Deserialize<RegistrationMessage>(m)!;
+                            RegisterClient(webSocket, reg.DisplayName);
+
+                            // Remove timeout
+                            source.Dispose();
+                            break;
+                        case MessageType.Reconnect:
+                            ReconnectMessage rec = JsonSerializer.Deserialize<ReconnectMessage>(m)!;
+
+                            // Remove timeout
+                            source.Dispose();
+                            break;
+                        default: 
+                            return false;
+                    }
+
+                    return true;
+                }, source.Token);       
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("   - Client didn't send registration request in time, closing connnection.");
+            }
+
+            // Listen for job polls
+            Console.WriteLine("Successful registration, awaiting messages");
+            await Listen(webSocket, (m, _) =>
+            {
+                Console.WriteLine($"Got message: {m}");
+                return false;
+            }, CancellationToken.None);
         }
     }
 }

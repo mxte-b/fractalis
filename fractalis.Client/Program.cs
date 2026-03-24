@@ -49,6 +49,8 @@ namespace fractalis.Client
 
                 await client.SendRawStringToServer(message);
             }
+
+            client.Dispose();
         }
     }
 }
