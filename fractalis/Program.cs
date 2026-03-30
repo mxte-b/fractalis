@@ -26,13 +26,14 @@ namespace fractalis
             int h = 1080;
 
             BigComplex center = Sights.Test;
-            BigFloat zoom = new BigFloat("1e5");
-            int iterations = 2000;
+            BigFloat zoom = new BigFloat("1e100");
+            int iterations = 16000;
 #endif
 
-            ColorPalette palette = ColorPalette.FromPreset(PalettePreset.RedAccent);
+            ColorPalette palette = ColorPalette.FromPreset(PalettePreset.PurpleFlame);
             palette.InteriorColor = Color.Black;
             palette.Frequency = 200;
+            palette.Offset = 0.2f;
 
             FractalRendererConfig rendererConfig = new FractalRendererConfig()
             {

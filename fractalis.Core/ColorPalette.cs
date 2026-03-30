@@ -14,7 +14,13 @@ using System.Xml.Schema;
 
 namespace fractalis.Core
 {
-    public enum PalettePreset { BB, Midnight, RedAccent }
+    public enum PalettePreset { 
+        BB,
+        Midnight,
+        RedAccent,
+        Glacial,
+        PurpleFlame,
+    }
 
     public record PaletteData
     {
