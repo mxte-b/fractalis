@@ -1,12 +1,7 @@
-﻿using SixLabors.ImageSharp.Processing.Processors.Transforms;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace fractalis.Core.Distributed
 {
@@ -134,33 +129,29 @@ namespace fractalis.Core.Distributed
             {
                 await Listen(webSocket, (m, _) => 
                 {
-                    JsonDocument doc = JsonDocument.Parse(m);
-                    var root = doc.RootElement;
+                    Message msg = JsonSerializer.Deserialize<Message>(m)!;
 
-                    if (!root.TryGetProperty("type", out JsonElement typeProp)) return false;
-                    if (!Enum.TryParse(typeProp.ToString(), true, out MessageType type)) return false;
-
-                    switch (type)
+                    switch (msg)
                     {
-                        case MessageType.Registration:
-                            RegistrationMessage reg = JsonSerializer.Deserialize<RegistrationMessage>(m)!;
+                        case RegistrationMessage reg:
                             currentConnection = RegisterClient(webSocket, reg.DisplayName);
 
-                            // Remove timeout
                             source.Dispose();
-                            break;
-                        case MessageType.Reconnect:
-                            ReconnectMessage rec = JsonSerializer.Deserialize<ReconnectMessage>(m)!;
+                            return true;
+
+                        case ReconnectMessage rec:
                             currentConnection = ReconnectClient(webSocket, rec.ClientId);
 
-                            // Remove timeout
                             source.Dispose();
-                            break;
-                        default: 
+                            return true;
+
+                        case RegistrationAcknowledgedMessage ack:
+                            throw new NotImplementedException();
+
+                        default:
                             return false;
                     }
 
-                    return true;
                 }, source.Token);       
             }
             catch (OperationCanceledException)

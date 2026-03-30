@@ -1,12 +1,5 @@
 ﻿using Sdcb.Arithmetic.Gmp;
 using Sdcb.Arithmetic.Mpfr;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Authentication.ExtendedProtection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fractalis.Core.Numbers
 {

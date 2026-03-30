@@ -17,7 +17,7 @@ namespace fractalis.Core
         public required int         Height          { get; init; }
         public required BigFloat    Zoom            { get; init; }
         public required BigComplex  Center          { get; init; }
-        public ColorPalette         ColorPalette    { get; init; }
+        public ColorPalette         ColorPalette    { get; init; } = ColorPalette.FromPreset(PalettePreset.BB);
     }
 
     public enum RenderMode
@@ -48,7 +48,6 @@ namespace fractalis.Core
         private static readonly FloatExp    HIGHPRECISION_THRESHOLD = new FloatExp(1, -40);
         private static readonly FloatExp    FLOATEXP_THRESHOLD      = new FloatExp(1, -1070);
 
-        // --- Public properties ---
         public readonly IFractal            Fractal                 = config.Fractal;
         public readonly int                 Iterations              = config.Iterations;
         public readonly int                 Width                   = config.Width;

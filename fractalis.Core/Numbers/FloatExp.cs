@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace fractalis.Core.Numbers
+﻿namespace fractalis.Core.Numbers
 {
     public struct FloatExp
     {

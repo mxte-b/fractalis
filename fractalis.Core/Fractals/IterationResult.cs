@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace fractalis.Core.Fractals
+﻿namespace fractalis.Core.Fractals
 {
     public struct IterationResult(int e, double m, bool es = true)
     {

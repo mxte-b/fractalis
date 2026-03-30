@@ -1,5 +1,4 @@
 ﻿using fractalis.Core.Fractals;
-using fractalis.Core.Numbers;
 using Spectre.Console;
 using System.Diagnostics;
 using System.Reflection;

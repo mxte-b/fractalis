@@ -1,6 +1,5 @@
 ﻿using fractalis.Core;
 using fractalis.Core.Distributed;
-using System.Net.WebSockets;
 
 namespace fractalis.Client
 {
