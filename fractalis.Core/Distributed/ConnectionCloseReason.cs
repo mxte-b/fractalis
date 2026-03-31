@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Distributed
 {
-    public interface IMessageHandler
+    public enum ConnectionCloseReason
     {
-        Task HandleMessage(Message message);
+        NormalClosure,
+        Cancelled,
+        Error
     }
 }

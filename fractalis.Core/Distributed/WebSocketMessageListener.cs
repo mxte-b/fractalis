@@ -17,15 +17,6 @@ namespace fractalis.Core.Distributed
             _socket = socket;
         }
 
-        private static async Task CloseConnection(WebSocket socket)
-        {
-            await socket.CloseAsync(
-                WebSocketCloseStatus.NormalClosure,
-                null,
-                CancellationToken.None
-            );
-        }
-
         private static async Task CloseConnection(WebSocket socket, WebSocketReceiveResult result)
         {
             await socket.CloseAsync(
@@ -50,10 +41,17 @@ namespace fractalis.Core.Distributed
                 }
                 else
                 {
-                    string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    Message? parsed = JsonSerializer.Deserialize<Message>(message);
+                    try
+                    {
+                        string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                        Message? parsed = JsonSerializer.Deserialize<Message>(message);
 
-                    if (callback.Invoke(parsed, _socket)) break;
+                        if (callback.Invoke(parsed, _socket)) break;
+                    }
+                    catch (JsonException) 
+                    {
+                        // Ignore non-JSON messages
+                    }
                 }
             }
         }

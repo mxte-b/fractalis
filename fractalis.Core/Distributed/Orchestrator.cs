@@ -1,22 +1,11 @@
 ﻿using System.Collections.Concurrent;
+using System.Data;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
 namespace fractalis.Core.Distributed
 {
-    /// <summary>
-    /// This record uniquely represents a render client's connection.
-    /// </summary>
-    /// <param name="id">A randomly generated GUID.</param>
-    /// <param name="displayName">A user-chosen display name</param>
-    public record ClientConnection()
-    {
-        public required Guid        Id          { get; init; }
-        public required string      DisplayName { get; init; }
-        public required WebSocket   Socket      { get; init; }
-    }
-
     public class Orchestrator
     {
         private readonly OrchestratorDashboard              _dashboard          = OrchestratorDashboard.Instance;
@@ -29,34 +18,6 @@ namespace fractalis.Core.Distributed
             _dashboard.Start();
         }   
 
-        /// <summary>
-        /// Registers a client to the orchestrator.
-        /// </summary>
-        /// <param name="socket">The client's current WebSocket connection</param>
-        /// <param name="displayName">The display name chosen by the client</param>
-        /// <returns>The current connection data</returns>
-        public ClientConnection RegisterClient(WebSocket socket, string displayName)
-        {
-            ClientConnection c = new ClientConnection()
-            {
-                Id = Guid.NewGuid(),
-                DisplayName = displayName,
-                Socket = socket,
-            };
-
-            Clients.TryAdd(c.Id, c);
-
-            return c;
-        }
-
-        /// <summary>
-        /// Handles a reconnection request from the client. If the request is valid, it will replace 
-        /// the associated connection with the current one, else it will initiate a registration.
-        /// </summary>
-        /// <param name="socket">The client's current WebSocket connection</param>
-        /// <param name="clientId">The identifier assigned to the client by the orchestrator</param>
-        /// <returns>The new connection</returns>
-        /// <exception cref="NotImplementedException"></exception>
         public ClientConnection ReconnectClient(WebSocket socket, Guid clientId)
         {
             //if (!Clients.TryGetValue(clientId, out ClientConnection? c))
@@ -67,114 +28,46 @@ namespace fractalis.Core.Distributed
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Unregisters (removes) a client from the orchestrator.
-        /// </summary>
-        /// <param name="id">The Guid of the client to remove</param>
-        public void UnregisterClient(Guid id)
+        public async Task BroadcastMessage(Message message)
         {
-            Clients.TryRemove(id, out _);
-        }
-
-        private static async Task CloseConnection(WebSocket socket)
-        {
-            await socket.CloseAsync(
-                WebSocketCloseStatus.NormalClosure,
-                null,
-                CancellationToken.None
-            );
-        }
-
-        private static async Task CloseConnection(WebSocket socket, WebSocketReceiveResult result)
-        {
-            await socket.CloseAsync(
-                result.CloseStatus != null ? result.CloseStatus.Value : WebSocketCloseStatus.NormalClosure,
-                result.CloseStatusDescription,
-                CancellationToken.None
-            );
-        }
-
-        public async Task Listen(WebSocket webSocket, Func<string, WebSocket, bool> callback, CancellationToken cancellationToken)
-        {
-            byte[] buffer = new byte[1024];
-
-            while (webSocket.State == WebSocketState.Open)
-            {
-                var result = await webSocket.ReceiveAsync(buffer, cancellationToken);
-
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    await CloseConnection(webSocket, result);
-                    break;
-                }
-                else
-                {
-                    string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-
-                    // If the registration/reconnection is successful, return
-                    if (callback(message, webSocket)) break;
-                }
-            }
+            var tasks = Clients.Values.Select(c => c.SendMessageAsync(message));
+            await Task.WhenAll(tasks);
         }
 
         public async Task HandleClient(WebSocket webSocket)
         {
             _dashboard.AddLog($"New client connected! ");
 
-            ClientConnection? currentConnection = null;
-            WebSocketMessageListener messageListener = new(webSocket);
-
-            // Wait for registration or reconnection with timeout
-            CancellationTokenSource source = new();
-            source.CancelAfter(RegistrationTimeout);
-            try
-            {
-                await messageListener.ListenAsync((message, socket) =>
-                {
-                    switch (message)
-                    {
-                        case RegistrationMessage reg:
-                            currentConnection = RegisterClient(socket, reg.DisplayName);
-                            return true;
-
-                        case ReconnectMessage rec:
-                            currentConnection = ReconnectClient(socket, rec.ClientId);
-                            return true;
-
-                        case RegistrationAcknowledgedMessage ack:
-                            throw new NotImplementedException();
-
-                        default:
-                            return false;
-                    }
-
-                }, source.Token);
-            }
-            catch (OperationCanceledException)
+            // Wait for client registration
+            ClientConnection? connection = await ClientConnection.NegotiateAsync(webSocket, RegistrationTimeout);
+            if (connection is null)
             {
                 _dashboard.AddLog("   - Client registration timed out.");
+                return;
             }
 
-            if (currentConnection == null) return;
+            // Register the connection
+            Clients.TryAdd(connection.Id, connection);
+            _dashboard.AddLog(connection, "Registered.");
 
             // Listen for job polls
-            try
+            ConnectionCloseReason reason = await connection.ListenAsync((m, _) =>
             {
-                await messageListener.ListenAsync((m, _) =>
+                if (m == null)
                 {
-                    if (m == null)
-                    {
-                        _dashboard.AddLog(currentConnection, "Received invalid message");
-                    }
+                    _dashboard.AddLog(connection, "Received invalid message");
+                }
 
-                    _dashboard.AddLog(currentConnection, "Received a good message");
-                    return false;
-                }, CancellationToken.None);
+                _dashboard.AddLog(connection, "Received a good message");
+                return false;
+            }, CancellationToken.None);
+
+            if (reason != ConnectionCloseReason.NormalClosure)
+            { 
+                _dashboard.AddLog(connection, "Disconnected unexpectedly.");
             }
-            catch (WebSocketException)
-            {
-                _dashboard.AddLog(currentConnection, "Disconnected unexpectedly.");
-            }
+
+            Clients.TryRemove(connection.Id, out _);
         }
     }
 }

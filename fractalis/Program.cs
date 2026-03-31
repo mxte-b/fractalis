@@ -2,6 +2,7 @@
 using fractalis.Core;
 using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
+using fractalis.Core.Video;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Diagnostics;
@@ -29,10 +30,10 @@ namespace fractalis
             int iterations = 16000;
 #endif
 
-            ColorPalette palette = ColorPalette.FromPreset(PalettePreset.PurpleFlame);
+            ColorPalette palette = ColorPalette.FromPreset(PalettePreset.RedAccent);
             palette.InteriorColor = Color.Black;
             palette.Frequency = 200;
-            palette.Offset = 0.2f;
+            palette.Offset = 0f;
 
             FractalRendererConfig rendererConfig = new FractalRendererConfig()
             {

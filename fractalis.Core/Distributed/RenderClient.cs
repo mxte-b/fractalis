@@ -1,14 +1,17 @@
-﻿using System.Net.WebSockets;
+﻿using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 
 namespace fractalis.Core.Distributed
 {
     public class RenderClient : IDisposable
     {
-        private ClientWebSocket? _ws;
-        public bool Connected { get; private set; } = false;
-        public bool Registered { get; private set; } = false;
+        private ClientWebSocket?            _ws;
+        private WebSocketMessageListener?   _messageListener;
+        public bool Connected   { get; private set; } = false;
+        public bool Registered  { get; private set; } = false;
 
         public async Task Connect(Uri uri)
         {
@@ -35,14 +38,9 @@ namespace fractalis.Core.Distributed
 
         public async Task SendMessageToServer(Message message)
         {
-            await SendRawStringToServer(JsonSerializer.Serialize(message));
-        }
+            if (_ws is null || !Connected) return;
 
-        public async Task SendRawStringToServer(string message)
-        {
-            if (_ws == null || !Connected) return;
-
-            byte[] bytes = Encoding.UTF8.GetBytes(message);
+            byte[] bytes = MessageSerializer.Serialize(message);
             await _ws.SendAsync(bytes, WebSocketMessageType.Text, true, default);
         }
 
@@ -50,35 +48,19 @@ namespace fractalis.Core.Distributed
         {
             if (_ws == null || !Connected) return;
 
-            byte[] buffer = new byte[1024];
+            _messageListener = new WebSocketMessageListener(_ws);
 
             try
             {
-                while (Connected)
+                await _messageListener.ListenAsync((message, _) =>
                 {
-                    var result = await _ws.ReceiveAsync(buffer, default);
-
-                    if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        await _ws.CloseAsync(
-                            result.CloseStatus != null ? result.CloseStatus.Value : WebSocketCloseStatus.NormalClosure,
-                            result.CloseStatusDescription,
-                            CancellationToken.None
-                        );
-                        Connected = false;
-                        break;
-                    }
-                    else
-                    {
-                        string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-
-                        Console.WriteLine($"Client received message: {message}");
-                    }
-                }
+                    Console.WriteLine(JsonSerializer.Serialize(message));
+                    return false;
+                }, default);
             }
-            catch (Exception e)
+            catch (WebSocketException)
             {
-                Console.WriteLine($"WebSocket error: {e}");
+                Console.WriteLine("Lost connection to the server.");
                 Connected = false;
             }
         }

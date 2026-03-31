@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace fractalis.Core.Distributed
 {
@@ -6,6 +8,7 @@ namespace fractalis.Core.Distributed
     [JsonDerivedType(typeof(RegistrationMessage), "registration")]
     [JsonDerivedType(typeof(ReconnectMessage), "reconnect")]
     [JsonDerivedType(typeof(RegistrationAcknowledgedMessage), "registrationAcknowledged")]
+    [JsonDerivedType(typeof(DebugMessage), "debug")]
     public abstract record Message;
 
     public record RegistrationMessage : Message
@@ -24,5 +27,20 @@ namespace fractalis.Core.Distributed
     {
         [JsonPropertyName("clientId")]
         public required Guid            ClientId    { get; init; }
+    }
+
+    public record DebugMessage : Message
+    {
+        [JsonPropertyName("content")]
+        public required string          Content     { get; init; }
+    }
+
+    public static class MessageSerializer
+    {
+        public static byte[] Serialize(Message message)
+        {
+            string text = JsonSerializer.Serialize(message);
+            return Encoding.UTF8.GetBytes(text);
+        }
     }
 }

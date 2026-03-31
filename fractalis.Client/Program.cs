@@ -46,7 +46,7 @@ namespace fractalis.Client
                 message = Console.ReadLine();
                 if (message == "") break;
 
-                await client.SendRawStringToServer(message);
+                await client.SendMessageToServer(new DebugMessage() { Content = message });
             }
 
             client.Dispose();
