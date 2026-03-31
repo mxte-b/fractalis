@@ -1,8 +1,10 @@
-﻿#define BENCHMARK
+﻿//#define BENCHMARK
 using fractalis.Core;
 using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using System.Diagnostics;
 
 namespace fractalis
 {

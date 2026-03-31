@@ -120,29 +120,25 @@ namespace fractalis.Core.Distributed
         public async Task HandleClient(WebSocket webSocket)
         {
             _dashboard.AddLog($"New client connected! ");
+
             ClientConnection? currentConnection = null;
+            WebSocketMessageListener messageListener = new(webSocket);
 
             // Wait for registration or reconnection with timeout
             CancellationTokenSource source = new();
             source.CancelAfter(RegistrationTimeout);
             try
             {
-                await Listen(webSocket, (m, _) => 
+                await messageListener.ListenAsync((message, socket) =>
                 {
-                    Message msg = JsonSerializer.Deserialize<Message>(m)!;
-
-                    switch (msg)
+                    switch (message)
                     {
                         case RegistrationMessage reg:
-                            currentConnection = RegisterClient(webSocket, reg.DisplayName);
-
-                            source.Dispose();
+                            currentConnection = RegisterClient(socket, reg.DisplayName);
                             return true;
 
                         case ReconnectMessage rec:
-                            currentConnection = ReconnectClient(webSocket, rec.ClientId);
-
-                            source.Dispose();
+                            currentConnection = ReconnectClient(socket, rec.ClientId);
                             return true;
 
                         case RegistrationAcknowledgedMessage ack:
@@ -152,7 +148,7 @@ namespace fractalis.Core.Distributed
                             return false;
                     }
 
-                }, source.Token);       
+                }, source.Token);
             }
             catch (OperationCanceledException)
             {
@@ -164,9 +160,14 @@ namespace fractalis.Core.Distributed
             // Listen for job polls
             try
             {
-                await Listen(webSocket, (m, _) =>
+                await messageListener.ListenAsync((m, _) =>
                 {
-                    _dashboard.AddLog(currentConnection, m.ToString());
+                    if (m == null)
+                    {
+                        _dashboard.AddLog(currentConnection, "Received invalid message");
+                    }
+
+                    _dashboard.AddLog(currentConnection, "Received a good message");
                     return false;
                 }, CancellationToken.None);
             }
