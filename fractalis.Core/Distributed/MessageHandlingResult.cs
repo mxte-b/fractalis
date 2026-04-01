@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Distributed
 {
-    public interface IMessageHandler
+    public enum MessageHandlingResult
     {
-        Task HandleMessage(Message message);
+        Continue,
+        Stop
     }
 }

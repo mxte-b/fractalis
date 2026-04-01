@@ -25,15 +25,15 @@ namespace fractalis
             int w = 1920;
             int h = 1080;
 
-            BigComplex center = Sights.Test;
-            BigFloat zoom = new BigFloat("1e100");
+            BigComplex center = Sights.MagnumOpusEx;
+            BigFloat zoom = new BigFloat("1e170");
             int iterations = 16000;
 #endif
 
-            ColorPalette palette = ColorPalette.FromPreset(PalettePreset.RedAccent);
+            ColorPalette palette = ColorPalette.FromPreset(PalettePreset.PurpleFlame);
             palette.InteriorColor = Color.Black;
             palette.Frequency = 200;
-            palette.Offset = 0f;
+            palette.Offset = 0.4f;
 
             FractalRendererConfig rendererConfig = new FractalRendererConfig()
             {

@@ -12,11 +12,11 @@ namespace fractalis.Client
             string displayName = "User's Laptop";
             Uri uri = new Uri("ws://localhost:5059/ws");
 
-            using RenderClient client = new RenderClient();
+            RenderClient client = new RenderClient();
 
             // Initiate server connection
             Console.WriteLine("<#> Establishing connection to the Orchestrator...");
-            await client.Connect(uri);
+            await client.Connect(uri, displayName);
             if (client.Connected)
             {
                 Console.WriteLine("   - Done!");
@@ -26,18 +26,7 @@ namespace fractalis.Client
                 throw new Exception("Couldn't establish a connection to the server.");
             }
 
-            // Start listen loop
-            _ = Task.Run(client.Listen);
-
-            // Register this client to the server
-            Console.WriteLine("<#> Sending registration request...");
-            await client.Register(displayName);
-            if (client.Registered)
-            {
-                Console.WriteLine("   - Registration confirmed!");
-            }
-
-            // Poll currently available jobs and start asking for work
+            _ = Task.Run(client.Start);
 
             // Test echo
             string? message = null;
@@ -46,10 +35,8 @@ namespace fractalis.Client
                 message = Console.ReadLine();
                 if (message == "") break;
 
-                await client.SendMessageToServer(new DebugMessage() { Content = message });
+                await client.SendMessageToServerAsync(new DebugMessage() { Content = message });
             }
-
-            client.Dispose();
         }
     }
 }

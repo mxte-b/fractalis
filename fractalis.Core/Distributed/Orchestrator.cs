@@ -18,16 +18,6 @@ namespace fractalis.Core.Distributed
             _dashboard.Start();
         }   
 
-        public ClientConnection ReconnectClient(WebSocket socket, Guid clientId)
-        {
-            //if (!Clients.TryGetValue(clientId, out ClientConnection? c))
-            //{
-            //    RegisterClient(socket)
-            //}
-
-            throw new NotImplementedException();
-        }
-
         public async Task BroadcastMessage(Message message)
         {
             var tasks = Clients.Values.Select(c => c.SendMessageAsync(message));
@@ -51,15 +41,16 @@ namespace fractalis.Core.Distributed
             _dashboard.AddLog(connection, "Registered.");
 
             // Listen for job polls
-            ConnectionCloseReason reason = await connection.ListenAsync((m, _) =>
+            ConnectionCloseReason reason = await connection.ListenAsync(async (m, _) =>
             {
                 if (m == null)
                 {
                     _dashboard.AddLog(connection, "Received invalid message");
                 }
 
+                await BroadcastMessage(new DebugMessage() { Content = "asd" });
                 _dashboard.AddLog(connection, "Received a good message");
-                return false;
+                return MessageHandlingResult.Continue;
             }, CancellationToken.None);
 
             if (reason != ConnectionCloseReason.NormalClosure)

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Distributed
 {
-    internal class WebSocketMessageListener
+    public class WebSocketMessageListener
     {
         private WebSocket _socket;
         public WebSocketMessageListener(WebSocket socket)
@@ -26,7 +26,7 @@ namespace fractalis.Core.Distributed
             );
         }
 
-        public async Task ListenAsync(Func<Message?, WebSocket, bool> callback, CancellationToken cancellationToken)
+        public async Task ListenAsync(Func<Message?, WebSocket, Task<MessageHandlingResult>> callback, CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[1024];
 
@@ -46,7 +46,7 @@ namespace fractalis.Core.Distributed
                         string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                         Message? parsed = JsonSerializer.Deserialize<Message>(message);
 
-                        if (callback.Invoke(parsed, _socket)) break;
+                        if (await callback.Invoke(parsed, _socket) == MessageHandlingResult.Stop) break;
                     }
                     catch (JsonException) 
                     {
@@ -54,6 +54,11 @@ namespace fractalis.Core.Distributed
                     }
                 }
             }
+        }
+
+        public async Task ListenAsync(Func<Message?, WebSocket, MessageHandlingResult> callback, CancellationToken cancellationToken)
+        {
+            await ListenAsync((message, socket) => Task.FromResult(callback(message, socket)), cancellationToken);
         }
     }
 }

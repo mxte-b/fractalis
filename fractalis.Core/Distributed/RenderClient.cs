@@ -6,76 +6,60 @@ using System.Threading;
 
 namespace fractalis.Core.Distributed
 {
-    public class RenderClient : IDisposable
+    public class RenderClient
     {
-        private ClientWebSocket?            _ws;
-        private WebSocketMessageListener?   _messageListener;
+        private ServerConnection?           _connection;
+        private readonly ClientRuntime      _runtime = new ClientRuntime();
+        private static readonly TimeSpan    RegistrationTimeout = TimeSpan.FromSeconds(10);
         public bool Connected   { get; private set; } = false;
-        public bool Registered  { get; private set; } = false;
 
-        public async Task Connect(Uri uri)
+        public async Task Connect(Uri uri, string displayName)
         {
-            _ws = new();
-            await _ws.ConnectAsync(uri, default);
-            Connected = _ws.State == WebSocketState.Open;
+            ClientWebSocket ws = new ClientWebSocket();
+
+            await ws.ConnectAsync(uri, default);
+            if (ws.State != WebSocketState.Open)
+            {
+                return;
+            }
+
+            _connection = await ServerConnection.RegisterAsync(displayName, ws, RegistrationTimeout);
+            if (_connection != null)
+            {
+                Connected = true;
+            }
         }
 
-        public async Task Register(string displayName)
+        public async Task Start()
         {
-            Message message = new RegistrationMessage()
+            if (!Connected)
             {
-                DisplayName = displayName,
-            };
+                throw new InvalidOperationException("Cannot start client because it is not connected.");
+            }
 
-            await SendMessageToServer(message);
+            await _connection!.ListenAsync(async (message, _) => 
+            {
+                if (message != null)
+                {
+                    await _runtime.HandleMessage(message);
+                } 
+
+                return MessageHandlingResult.Continue;
+            }, CancellationToken.None);
+        }
+
+        public async Task SendMessageToServerAsync(Message message)
+        {
+            if (!Connected) return;
+
+            await _connection!.SendMessageAsync(message);
         }
 
         public async Task Disconnect()
         {
-            if (_ws == null || !Connected) return;
-            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, null, default);
-        }
+            if (!Connected) return;
 
-        public async Task SendMessageToServer(Message message)
-        {
-            if (_ws is null || !Connected) return;
-
-            byte[] bytes = MessageSerializer.Serialize(message);
-            await _ws.SendAsync(bytes, WebSocketMessageType.Text, true, default);
-        }
-
-        public async Task Listen()
-        {
-            if (_ws == null || !Connected) return;
-
-            _messageListener = new WebSocketMessageListener(_ws);
-
-            try
-            {
-                await _messageListener.ListenAsync((message, _) =>
-                {
-                    Console.WriteLine(JsonSerializer.Serialize(message));
-                    return false;
-                }, default);
-            }
-            catch (WebSocketException)
-            {
-                Console.WriteLine("Lost connection to the server.");
-                Connected = false;
-            }
-        }
-
-        public async void Dispose()
-        {
-            await Disconnect();
-            _ws?.Dispose();
-            _ws = null;
-            Connected = false;
-        }
-
-        ~RenderClient()
-        {
-            Dispose();
+            await _connection!.Close();
         }
     }
 }

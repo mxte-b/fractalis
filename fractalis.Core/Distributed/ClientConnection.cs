@@ -8,14 +8,9 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Distributed
 {
-    public class ClientConnection
+    public class ClientConnection : Connection
     {
-        public required Guid                Id          { get; init; }
-        public required string              DisplayName { get; init; }
-
-        public required WebSocket           Socket      { get; init; }
-
-        private WebSocketMessageListener?   _messageListener;
+        public required string DisplayName { get; init; }
 
         private ClientConnection() { }
 
@@ -41,15 +36,14 @@ namespace fractalis.Core.Distributed
                                 Id = Guid.NewGuid(),
                                 Socket = socket,
                             };
-                            return true;
+                            return MessageHandlingResult.Stop;
 
                         case ReconnectMessage rec:
                             throw new NotImplementedException();
 
                         default:
-                            return false;
+                            return MessageHandlingResult.Continue;
                     }
-
                 }, source.Token);
             }
             catch (OperationCanceledException)
@@ -62,41 +56,6 @@ namespace fractalis.Core.Distributed
             await connection.SendMessageAsync(new RegistrationAcknowledgedMessage() { ClientId = connection.Id });
 
             return connection;
-        }
-
-        public async Task SendMessageAsync(Message message, CancellationToken cancellationToken = default)
-        {
-            byte[] bytes = MessageSerializer.Serialize(message);
-            await Socket.SendAsync(bytes, WebSocketMessageType.Text, true, cancellationToken);
-        }
-
-        public async Task<ConnectionCloseReason> ListenAsync(Func<Message?, WebSocket, bool> callback, CancellationToken cancellationToken = default)
-        {
-            _messageListener = new WebSocketMessageListener(Socket);
-
-            try
-            {
-                await _messageListener.ListenAsync(callback, cancellationToken);
-            }
-            catch (WebSocketException)
-            {
-                return ConnectionCloseReason.Error;
-            }
-            catch (OperationCanceledException)
-            {
-                return ConnectionCloseReason.Cancelled;
-            }
-
-            return ConnectionCloseReason.NormalClosure;
-        }
-
-        public async Task Close()
-        {
-            await Socket.CloseAsync(
-                WebSocketCloseStatus.NormalClosure,
-                null,
-                CancellationToken.None
-            );
         }
     }
 }
