@@ -1,15 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace fractalis.Core.Fractals
+﻿namespace fractalis.Core.Fractals
 {
-    public struct IterationResult(int e, double m, bool es = true)
+    /// <summary>
+    /// Represents the result of a fractal iteration.
+    /// </summary>
+    /// <remarks>
+    /// Contains the number of iterations performed, the magnitude of the point at escape, 
+    /// and whether the point escaped the bailout threshold.
+    /// </remarks>
+    public struct IterationResult
     {
-        public bool Escaped             = es;
-        public int Iteration            = e;
-        public double MagnitudeSquared  = m;
+        /// <summary>
+        /// Indicates whether the point escaped the fractal’s bailout threshold.
+        /// </summary>
+        public bool Escaped;
+
+        /// <summary>
+        /// The number of iterations performed for this point.
+        /// </summary>
+        public int Iteration;
+
+        /// <summary>
+        /// The squared magnitude of the point when it escaped, or NaN if it did not escape.
+        /// </summary>
+        public double MagnitudeSquared;
+
+        /// <summary>
+        /// Initializes a new <see cref="IterationResult"/>.
+        /// </summary>
+        /// <param name="iteration">Number of iterations performed.</param>
+        /// <param name="magnitudeSquared">Magnitude value at escape or at final iteration.</param>
+        /// <param name="escaped">Whether the point escaped the bailout threshold. Defaults to <see langword="true"/>.</param>
+        public IterationResult(int iteration, double magnitudeSquared, bool escaped = true)
+        {
+            Iteration = iteration;
+            MagnitudeSquared = magnitudeSquared;
+            Escaped = escaped;
+        }
     }
 }

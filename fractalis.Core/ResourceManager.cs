@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace fractalis.Core
 {
@@ -21,10 +16,10 @@ namespace fractalis.Core
         public override void Write(Utf8JsonWriter writer, Vector4 value, JsonSerializerOptions options)
         {
             writer.WriteStartArray();
-            writer.WriteNumberValue(value.X);
-            writer.WriteNumberValue(value.Y);
-            writer.WriteNumberValue(value.Z);
-            writer.WriteNumberValue(value.W);
+            writer.WriteNumberValue(value.X * 255f);
+            writer.WriteNumberValue(value.Y * 255f);
+            writer.WriteNumberValue(value.Z * 255f);
+            writer.WriteNumberValue(value.W * 255f);
             writer.WriteEndArray();
         }
     }
@@ -54,9 +49,7 @@ namespace fractalis.Core
             StreamReader reader = new StreamReader(stream);
             string text = reader.ReadToEnd();
 
-            JsonSerializerOptions options = new JsonSerializerOptions();
-            options.Converters.Add(new Vector4Converter());
-            List<PaletteData>? data = JsonSerializer.Deserialize<List<PaletteData>>(text, options);
+            List<PaletteData>? data = JsonSerializer.Deserialize<List<PaletteData>>(text);
             if (data == null)
             {
                 throw new FormatException("The palette data was malformed.");

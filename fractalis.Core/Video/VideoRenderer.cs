@@ -1,54 +1,70 @@
-﻿using fractalis.Core.Fractals;
-using fractalis.Core.Numbers;
+﻿using fractalis.Core.Numbers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fractalis.Core.Video
 {
-
-    public record VideoConfig()
+    /// <summary>
+    /// Responsible for generating a sequence of fractal images and assembling them into a video.
+    /// </summary>
+    /// <param name="renderer">The fractal renderer to use to generate the frames with.</param>
+    /// <param name="config">Configuration of the video.</param>
+    public class VideoRenderer(FractalRenderer renderer, VideoConfig config)
     {
-        public required double      Duration                { get; init; }
-        public int                  FPS                     { get; init; } = 30;
-        public required BigFloat    ZoomStart               { get; init; }
-        public required BigFloat    ZoomEnd                 { get; init; }
-        public double               StartAnimationDuration  { get; init; } = 1;
-        public double               StopAnimationDuration   { get; init; } = 1;
-        public int                  StartFrame              { get; init; } = 0;
-        public string?              RenderIdOverride        { get; init; } = null;
+        /// <summary>
+        /// Unique ID for this render session (can be overridden in <paramref name="config"/>).
+        /// </summary>
+        private readonly string     _renderId               = config.RenderIdOverride ?? Guid.NewGuid().ToString();
 
-        public int                  StartAnimationFrames    => (int)Math.Round(StartAnimationDuration * FPS);
-        public int                  StopAnimationFrames     => (int)Math.Round(StopAnimationDuration * FPS);
-        public int                  FrameCount              => (int)Math.Floor(Duration * FPS);
-        public int                  StopAnimationStartFrame => FrameCount - StopAnimationFrames;
-    }
+        /// <summary>
+        /// Configuration of the video.
+        /// </summary>
+        private VideoConfig         Config                  { get; set; } = config;
 
-    public class VideoRenderer(FractalRenderer r, VideoConfig c)
-    {
-        private readonly string     _renderId               = c.RenderIdOverride ?? Guid.NewGuid().ToString();
-        private VideoConfig         Config                  { get; set; } = c;
-        private FractalRenderer     Renderer                { get; set; } = r;
+        /// <summary>
+        /// The fractal renderer to use to generate the frames with.
+        /// </summary>
+        private FractalRenderer     Renderer                { get; set; } = renderer;
+
+        /// <summary>
+        /// Path of the output directory for the frames.
+        /// </summary>
         private string              ImageSequencePath       => $"render-{_renderId}";
+
+        /// <summary>
+        /// Delta controls linear scaling of time across the animation. 
+        /// Ensures start/stop easing transitions align correctly with total duration.
+        /// </summary>
         private double              Delta
         {
             get
             {
-                return 3.0 * Config.FrameCount / (Config.FrameCount + 2 * Config.StopAnimationStartFrame - 2 * Config.StartAnimationFrames);
+                double pStop = Config.StopAnimation.Exponent;
+                double pStartAdjusted = 1 / Config.StartAnimation.Exponent - 1;
+
+                return pStop * Config.FrameCount / 
+                    (
+                        Config.FrameCount + 
+                        (pStop - 1) * Config.StopAnimationStartFrame +
+                        pStop * pStartAdjusted * Config.StartAnimationFrames
+                    );
             }
         }
+
+        /// <summary>
+        /// Gamma shifts the time curve to ensure continuity between easing phases.
+        /// </summary>
         private double              Gamma
         {
             get
             {
-                return -2.0 * Config.StartAnimationFrames * Delta / 3;
+                return (1 / Config.StartAnimation.Exponent - 1) * Config.StartAnimationFrames * Delta;
             }
         }
 
+        /// <summary>
+        /// Starts rendering the video locally, saving frames to the output directory.
+        /// </summary>
         public void Start()
         {
             CreateOutputDirectory();
@@ -63,29 +79,59 @@ namespace fractalis.Core.Video
             }
         }
 
+        /// <summary>
+        /// Merges the rendered image sequence into an MP4 video file with ffmpeg, then removes the image sequence directory.
+        /// </summary>
+        /// <param name="fileName">The filename of the video.</param>
         public void Save(string fileName = "render")
         {
             VideoEncoder.MergeImageSequence($"render-{_renderId}", Config.FPS, fileName);
             RemoveOutputDirectory();
         }
 
+        /// <summary>
+        /// Normalizes a frame index into a [0,1] range over a given segment.
+        /// </summary>
+        /// <param name="from">Start of the segment.</param>
+        /// <param name="length">Length of the segment.</param>
+        /// <param name="frame">Current frame index</param>
         private static double NormalizedTime(double from, double length, double frame) => (frame - from) / length;
+
+        /// <summary>
+        /// Base linear time mapping with correction applied.
+        /// </summary>
+        /// <param name="t">Current frame index</param>
         private double TBase(double t) => t * Delta + Gamma;
+
+        /// <summary>
+        /// Time mapping for the start easing phase.
+        /// </summary>
+        /// <param name="t">Current frame index</param>
         private double TStart(double t) 
         {
             double aStart = TBase(Config.StartAnimationFrames);
             double u = NormalizedTime(Config.StartAnimationFrames, Config.StartAnimationFrames, t);
 
-            return aStart * Math.Pow(u + 1, 3);
+            return aStart * Math.Pow(u + 1, Config.StartAnimation.Exponent);
         }
+
+        /// <summary>
+        /// Time mapping for the stop easing phase.
+        /// </summary>
+        /// <param name="t">Current frame index</param>
         private double TStop(double t)
         {
             double aStop = TBase(Config.StopAnimationStartFrame);
             double u = NormalizedTime(Config.StopAnimationStartFrame, Config.StopAnimationFrames, t);
 
-            return aStop + (Config.FrameCount - aStop) * (1 - Math.Pow(1 - u, 3));
+            return aStop + (Config.FrameCount - aStop) * (1 - Math.Pow(1 - u, Config.StopAnimation.Exponent));
         }
 
+        /// <summary>
+        /// Returns corrected timeline position for a given frame. 
+        /// Handles start easing, linear section, and stop easing.
+        /// </summary>
+        /// <param name="t">Current frame index</param>
         private double Time(double t)
         {
             if (t < Config.StartAnimationFrames)
@@ -99,6 +145,10 @@ namespace fractalis.Core.Video
             else return TStop(t);
         }
 
+        /// <summary>
+        /// Computes zoom level for a specific frame using exponential interpolation.
+        /// </summary>
+        /// <param name="frameId">Current frame index.</param>
         private BigFloat GetZoom(int frameId) 
         {
             BigFloat zoom = (Config.ZoomEnd / Config.ZoomStart) ^ (Time(frameId) / Config.FrameCount);

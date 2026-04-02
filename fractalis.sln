@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Test", "fractalis
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Core", "fractalis.Core\fractalis.Core.csproj", "{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Client", "fractalis.Client\fractalis.Client.csproj", "{7C5ECBBE-E2EF-40CC-A099-90C2ECDE3EDE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fractalis.Server", "fractalis.Server\fractalis.Server.csproj", "{BBEB48E4-1AF4-D3CB-0C33-FD47E01F01AC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,8 +31,19 @@ Global
 		{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D60692F-8DD2-4000-B1C4-AE09B1188F8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C5ECBBE-E2EF-40CC-A099-90C2ECDE3EDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C5ECBBE-E2EF-40CC-A099-90C2ECDE3EDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C5ECBBE-E2EF-40CC-A099-90C2ECDE3EDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C5ECBBE-E2EF-40CC-A099-90C2ECDE3EDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBEB48E4-1AF4-D3CB-0C33-FD47E01F01AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBEB48E4-1AF4-D3CB-0C33-FD47E01F01AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBEB48E4-1AF4-D3CB-0C33-FD47E01F01AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBEB48E4-1AF4-D3CB-0C33-FD47E01F01AC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {68FBC618-3BC7-4A6D-A808-9590C45124EE}
 	EndGlobalSection
 EndGlobal

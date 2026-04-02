@@ -105,5 +105,63 @@
         "color": [ 222, 226, 233, 255 ]
       }
     ]
+  },
+  {
+    "name": "Glacial",
+    "stops": [
+      {
+        "position": 0.0,
+        "color": [ 2, 0, 36, 255 ]
+      },
+      {
+        "position": 0.2,
+        "color": [ 9, 9, 121, 255 ]
+      },
+      {
+        "position": 0.4,
+        "color": [ 0, 207, 251, 255 ]
+      },
+      {
+        "position": 0.6,
+        "color": [ 214, 248, 255, 255 ]
+      },
+      {
+        "position": 0.8,
+        "color": [ 110, 96, 96, 255 ]
+      },
+      {
+        "position": 1.0,
+        "color": [ 0, 0, 0, 255 ]
+      }
+    ]
+  },
+  {
+    "name": "PurpleFlame",
+    "stops": [
+      {
+        "position": 0.0,
+        "color": [ 3, 3, 3, 255 ]
+      },
+      {
+        "position": 0.2,
+        "color": [ 131, 58, 180, 255 ]
+      },
+      {
+        "position": 0.4,
+        "color": [ 253, 29, 29, 255 ]
+      },
+      {
+        "position": 0.6,
+        "color": [ 255, 246, 237, 255 ]
+      },
+      {
+        "position": 0.8,
+        "color": [ 255, 94, 142, 255 ]
+      },
+      {
+        "position": 1.0,
+        "color": [ 3, 3, 3, 255 ]
+      }
+    ]
   }
 ]
