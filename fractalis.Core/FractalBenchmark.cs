@@ -5,11 +5,33 @@ using System.Reflection;
 
 namespace fractalis.Core
 {
+    /// <summary>
+    /// Provides benchmarking utilities for measuring fractal rendering performance.
+    /// </summary>
+    /// <remarks>
+    /// Measures both reference orbit calculation and rendering time, and displays
+    /// aggregated statistics using a formatted console table.
+    /// </remarks>
     public class FractalBenchmark(FractalRendererConfig config)
     {
         private readonly FractalRendererConfig _config = config;
+
+        /// <summary>
+        /// Reflection handle to the private <c>_referenceOrbit</c> field of <see cref="FractalRenderer"/>.
+        /// </summary>
+        /// <remarks>
+        /// Used to inject a precomputed reference orbit into the renderer for benchmarking purposes.
+        /// </remarks>
         private static readonly FieldInfo _orbitField = typeof(FractalRenderer).GetField("_referenceOrbit", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
+        /// <summary>
+        /// Runs the benchmark for the configured fractal.
+        /// </summary>
+        /// <param name="label">A label displayed in the benchmark output table.</param>
+        /// <param name="runs">Number of benchmark iterations to perform.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if the configured fractal does not support perturbation.
+        /// </exception>
         public void Run(string label, int runs = 3)
         {
             if (_config.Fractal is not IPerturbableFractal perturbable)
@@ -32,7 +54,7 @@ namespace fractalis.Core
                 FractalRenderer renderer = new FractalRenderer(_config);
                 _orbitField.SetValue(renderer, orbit);
 
-                // Benchmarking reference orbit calculation
+                // Benchmarking rendering phase
                 Stopwatch renderSw = Stopwatch.StartNew();
                 renderer.Render(showProgress: false);
                 renderSw.Stop();
@@ -43,6 +65,9 @@ namespace fractalis.Core
             long avgRender = renderTimes.Sum() / runs;
             long avgTotal = avgRef + avgRender;
 
+            /// <summary>
+            /// Displays benchmark results in a formatted table.
+            /// </summary>
             Table table = new Table()
                 .Border(TableBorder.Rounded)
                 .Title($"[bold]{label}[/]")

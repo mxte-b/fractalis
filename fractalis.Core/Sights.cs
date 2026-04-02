@@ -2,6 +2,9 @@
 
 namespace fractalis.Core
 {
+    /// <summary>
+    /// Contains predefined <see cref="BigComplex"/> constants for various sights (coordinates).
+    /// </summary>
     public static class Sights
     {
         // https://www.youtube.com/watch?v=LhOSM6uCWxk

@@ -2,9 +2,15 @@
 
 namespace fractalis.Core.Video
 {
+    /// <summary>
+    /// Responsible for handling video encoding using FFmpeg.
+    /// </summary>
     public static class VideoEncoder
     {
-
+        /// <summary>
+        /// Checks if FFmpeg is available on the machine's PATH.
+        /// </summary>
+        /// <returns><see langword="true"/> if available, <see langword="false"/> otherwise.</returns>
         public static bool IsFFmpegAvailable()
         {
             try
@@ -28,6 +34,14 @@ namespace fractalis.Core.Video
             }
         }
 
+        /// <summary>
+        /// Merges the image sequence at <paramref name="path"/> using FFmpeg, and saves the video into <paramref name="outputPath"/>
+        /// </summary>
+        /// <param name="path">The image sequence path.</param>
+        /// <param name="fps">The desired video framerate.</param>
+        /// <param name="outputPath">The output path of the video.</param>
+        /// <exception cref="InvalidOperationException">If FFmpeg is not available via PATH.</exception>
+        /// <exception cref="Exception">If an exception occurs while encoding.</exception>
         public static void MergeImageSequence(string path, int fps, string outputPath)
         {
             if (!IsFFmpegAvailable())

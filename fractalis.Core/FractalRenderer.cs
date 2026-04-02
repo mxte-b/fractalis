@@ -9,31 +9,66 @@ using System.Runtime.Intrinsics.X86;
 
 namespace fractalis.Core
 {
+    /// <summary>
+    /// Configuration parameters for the <see cref="FractalRenderer"/>.
+    /// </summary>
     public record FractalRendererConfig
     {
+        /// <summary>Fractal instance to render.</summary>
         public required IFractal    Fractal         { get; init; }
+
+        /// <summary>Maximum number of iterations for escape-time calculation.</summary>
         public required int         Iterations      { get; init; }
+
+        /// <summary>Width of the output image in pixels.</summary>
         public required int         Width           { get; init; }
+
+        /// <summary>Height of the output image in pixels.</summary>
         public required int         Height          { get; init; }
+
+        /// <summary>Zoom level for the fractal view.</summary>
         public required BigFloat    Zoom            { get; init; }
+
+        /// <summary>Center coordinate in the complex plane.</summary>
         public required BigComplex  Center          { get; init; }
+
+        /// <summary>Color palette used for rendering.</summary>
         public ColorPalette         ColorPalette    { get; init; } = ColorPalette.FromPreset(PalettePreset.BB);
     }
 
+    /// <summary>
+    /// Available rendering modes depending on precision and perturbation usage.
+    /// </summary>
     public enum RenderMode
     {
         Default,
         HighPrecision,              // Perturbation Theory
         HighPrecisionWithFloatExp   // FloatExp + Perturbation Theory
     }
+
+    /// <summary>
+    /// Stores reference orbit data for perturbation theory rendering.
+    /// </summary>
+    /// <param name="maxIterations">Maximum number of iterations in the reference orbit.</param>
     public struct ReferenceOrbit(int maxIterations)
     {
+        /// <summary>Real components of orbit points.</summary>
         public double[]             PointsR         = new double[maxIterations];
+
+        /// <summary>Imaginary components of orbit points.</summary>
         public double[]             PointsI         = new double[maxIterations];
+
+        /// <summary>Scaled complex points for high-precision rendering.</summary>
         public ScaledComplex[]      ScaledPoints    = new ScaledComplex[maxIterations];
+
+        /// <summary>The iteration at which escape occurred, or 0 if not escaped.</summary>
         public int                  EscapeIteration = 0;
     }
 
+    /// <summary>
+    /// Performs rendering of fractals to an <see cref="Image{Rgb24}"/> with support
+    /// for scalar, SIMD, perturbation, and FloatExp modes.
+    /// </summary>
     public class FractalRenderer(FractalRendererConfig config)
     {
         private ReferenceOrbit              _referenceOrbit;
@@ -48,11 +83,22 @@ namespace fractalis.Core
         private static readonly FloatExp    HIGHPRECISION_THRESHOLD = new FloatExp(1, -40);
         private static readonly FloatExp    FLOATEXP_THRESHOLD      = new FloatExp(1, -1070);
 
+        /// <summary>The fractal to render.</summary>
         public readonly IFractal            Fractal                 = config.Fractal;
+
+        /// <summary>Maximum iterations for escape-time calculation.</summary>
         public readonly int                 Iterations              = config.Iterations;
+
+        /// <summary>Width of the output image.</summary>
         public readonly int                 Width                   = config.Width;
+
+        /// <summary>Height of the output image.</summary>
         public readonly int                 Height                  = config.Height;
+
+        /// <summary>Color palette used for rendering.</summary>
         public readonly ColorPalette        ColorPalette            = config.ColorPalette;
+
+        /// <summary>Zoom level for the fractal view.</summary>
         public BigFloat                     Zoom            
         {
             get => _zoom;
@@ -64,6 +110,8 @@ namespace fractalis.Core
                 _pixelSpacingDouble = 1 / _zoomDouble;
             }
         }
+
+        /// <summary>Center coordinate in the complex plane.</summary>
         public BigComplex                   Center          
         {
             get => _center;
@@ -73,10 +121,14 @@ namespace fractalis.Core
                 _centerDouble = value.ToComplex();
             }
         }
+
+        /// <summary>Pixel spacing in fractal coordinates.</summary>
         public FloatExp                     PixelSpacing
         {
             get => _pixelSpacing;
         }
+
+        /// <summary>Automatically determines the appropriate render mode based on precision thresholds.</summary>
         public RenderMode                   RenderMode
         {
             get
@@ -98,6 +150,11 @@ namespace fractalis.Core
             }
         }
 
+        /// <summary>
+        /// Renders the fractal to an image.
+        /// </summary>
+        /// <param name="showProgress">Whether to show a console progress bar.</param>
+        /// <returns>The rendered image.</returns>
         public Image<Rgb24> Render(bool showProgress = true)
         {
             Image<Rgb24> image  = new Image<Rgb24>(Width, Height);
@@ -121,7 +178,7 @@ namespace fractalis.Core
             return image;
         }
 
-        // Helpers
+        #region Helper functions
         private double NdcY(int y)              => -(((double)y / Height) - 0.5) * 2.0;
         private double NdcX(int x)              => x * (2.0 / Height) - _aspectRatio;
         private Rgb24 Sample(IterationResult r)
@@ -134,8 +191,9 @@ namespace fractalis.Core
             return new Rgb24((byte)(c.X * 255), (byte)(c.Y * 255), (byte)(c.Z * 255));
         }
         private Complex PixelCoordinates(double ndcX, double ndcY) => new (ndcX / _zoomDouble + _centerDouble.Real, ndcY / _zoomDouble + _centerDouble.Imaginary);
+        #endregion
 
-        // Row rendering
+        #region Row rendering
         private void RenderRowScalar(Image<Rgb24> image, int y)
         {
             double ndcY = NdcY(y);
@@ -171,7 +229,6 @@ namespace fractalis.Core
                 image[x + 3, y] = Sample(r3);
             }
 
-            // If there are remaining pixels, just render normally
             for (; x < Width; x++)
             {
                 double ndcX = NdcX(x);
@@ -261,5 +318,6 @@ namespace fractalis.Core
                 });
             });
         }
+        #endregion
     }
 }

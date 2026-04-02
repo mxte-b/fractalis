@@ -8,6 +8,13 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Distributed
 {
+    /// <summary>
+    /// Represents a connection from the client to a server.
+    /// </summary>
+    /// <remarks>
+    /// Stored on the client to communicate with a remote server via WebSocket.
+    /// Handles registration/handshake and provides a WebSocket for sending messages to the server.
+    /// </remarks>
     internal class ServerConnection : Connection
     {
         private ServerConnection() { }
@@ -18,6 +25,15 @@ namespace fractalis.Core.Distributed
             await socket.SendAsync(bytes, WebSocketMessageType.Text, true, cancellationToken);
         }
 
+        /// <summary>
+        /// Performs a handshake and registers the client with the server.
+        /// </summary>
+        /// <param name="displayName">The client's display name to present to the server.</param>
+        /// <param name="socket">The WebSocket for communication with the server.</param>
+        /// <param name="timeout">Timeout for the registration handshake.</param>
+        /// <returns>
+        /// A <see cref="ServerConnection"/> representing the server connection if registration succeeds; otherwise, <see langword="null"/>.
+        /// </returns>
         public static async Task<ServerConnection?> RegisterAsync(string displayName, WebSocket socket, TimeSpan timeout)
         {
             ServerConnection? connection = null;
