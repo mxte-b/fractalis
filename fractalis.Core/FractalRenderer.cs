@@ -6,6 +6,7 @@ using Spectre.Console;
 using System.Collections.Concurrent;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using System.Text.Json.Serialization;
 
 namespace fractalis.Core
 {
@@ -27,10 +28,14 @@ namespace fractalis.Core
         public required int         Height          { get; init; }
 
         /// <summary>Zoom level for the fractal view.</summary>
+        [JsonConverter(typeof(BigFloatJsonConverter))]
         public required BigFloat    Zoom            { get; init; }
 
         /// <summary>Center coordinate in the complex plane.</summary>
         public required BigComplex  Center          { get; init; }
+
+        /// <summary>Antialiasing (supersampling) level</summary>
+        public AntiAliasing         AntiAliasing    { get; init; } = AntiAliasing.NoAntialiasing;
 
         /// <summary>Color palette used for rendering.</summary>
         public ColorPalette         ColorPalette    { get; init; } = ColorPalette.FromPreset(PalettePreset.BB);

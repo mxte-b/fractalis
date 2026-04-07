@@ -97,7 +97,7 @@ namespace fractalis.Core.Distributed
         /// <param name="message">The log message text.</param>
         public void AddLog(ClientConnection connection, string message)
         {
-            _logs.Enqueue($"[grey]{DateTime.Now:HH:mm:ss}[/] [cyan]{connection.DisplayName}[/] [grey]({connection.Id.ToString()[..8]}) [/]{message}");
+            _logs.Enqueue($"[grey]{DateTime.Now:HH:mm:ss}[/] [cyan]{connection.DisplayName}[/] [darkorange][[{connection.Role}]][/] [grey]({connection.Id.ToString()[..8]}) [/]{message}");
 
             while (_logs.Count > _maxLogs) _logs.TryDequeue(out _);
         }

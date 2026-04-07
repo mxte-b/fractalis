@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using fractalis.Core.Video;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,12 +12,17 @@ namespace fractalis.Core.Distributed
     /// Uses JSON polymorphic serialization with a type discriminator property named "type".
     /// </remarks>
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
-    [JsonDerivedType(typeof(RegistrationMessage), "registration")]
-    [JsonDerivedType(typeof(ReconnectMessage), "reconnect")]
-    [JsonDerivedType(typeof(RegistrationAcknowledgedMessage), "registrationAcknowledged")]
     [JsonDerivedType(typeof(DebugMessage), "debug")]
+    [JsonDerivedType(typeof(ReconnectMessage), "reconnect")]
+    [JsonDerivedType(typeof(RenderJobListMessage), "jobList")]
+    [JsonDerivedType(typeof(RegistrationMessage), "registration")]
+    [JsonDerivedType(typeof(VideoRenderRequest), "renderRequest")]
+    [JsonDerivedType(typeof(RenderJobAssignment), "jobAssignment")]
+    [JsonDerivedType(typeof(RenderJobAnnouncementMessage), "jobAnnouncement")]
+    [JsonDerivedType(typeof(RegistrationAcknowledgedMessage), "registrationAcknowledged")]
     public abstract record Message;
 
+    #region Message types
     /// <summary>
     /// Message sent by a client to register itself with the orchestrator.
     /// </summary>
@@ -25,8 +31,9 @@ namespace fractalis.Core.Distributed
         /// <summary>
         /// The display name of the client for identification purposes.
         /// </summary>
-        [JsonPropertyName("displayName")]
         public required string          DisplayName { get; init; }
+
+        public ClientRole               Role        { get; init; } = ClientRole.Worker;
     }
 
     /// <summary>
@@ -37,7 +44,6 @@ namespace fractalis.Core.Distributed
         /// <summary>
         /// The unique identifier of the client attempting to reconnect.
         /// </summary>
-        [JsonPropertyName("clientId")]
         public required Guid            ClientId    { get; init; }
     }
 
@@ -49,8 +55,69 @@ namespace fractalis.Core.Distributed
         /// <summary>
         /// The unique identifier assigned to the client by the orchestrator.
         /// </summary>
-        [JsonPropertyName("clientId")]
         public required Guid            ClientId    { get; init; }
+    }
+
+    /// <summary>
+    /// Message sent by the initiator to start rendering a video using distributed compute.
+    /// </summary>
+    public record VideoRenderRequest : Message
+    {
+        /// <summary>
+        /// Configuration of the video.
+        /// </summary>
+        public required VideoConfig             VideoConfig             { get; init; }
+
+        /// <summary>
+        /// Configuration of the fractal renderer.
+        /// </summary>
+        public required FractalRendererConfig   FractalRendererConfig   { get; init; }
+
+    }
+
+    /// <summary>
+    /// Message sent by the orchestrator to a render client that gives all currently available render jobs.
+    /// </summary>
+    public record RenderJobListMessage : Message
+    {
+        public required List<RenderJob>         Jobs                    { get; init; }   
+    }
+
+    /// <summary>
+    /// Message sent by the orchestrator to a render client when a new render job gets added.
+    /// </summary>
+    public record RenderJobAnnouncementMessage : Message
+    {
+        /// <summary>
+        /// The added job.
+        /// </summary>
+        public required RenderJob Job { get; init; }
+    }
+
+    /// <summary>
+    /// Message sent by the orchestrator to a render client for rendering images.
+    /// </summary>
+    public record RenderJobAssignment : Message
+    {
+        /// <summary>
+        /// The unique identifier of the assigned render job.
+        /// </summary>
+        public required Guid    RenderJobId     { get; init; }
+
+        /// <summary>
+        /// The URI where to upload the rendered images.
+        /// </summary>
+        public required Uri     UploadUri       { get; init; }
+
+        /// <summary>
+        /// Index of the first frame to render.
+        /// </summary>
+        public required int     StartFrameIndex { get; init; }
+
+        /// <summary>
+        /// Number of frames to render
+        /// </summary>
+        public required int     FrameCount      { get; init; }
     }
 
     /// <summary>
@@ -61,15 +128,17 @@ namespace fractalis.Core.Distributed
         /// <summary>
         /// The debug message content.
         /// </summary>
-        [JsonPropertyName("content")]
         public required string          Content     { get; init; }
     }
+    #endregion
 
     /// <summary>
     /// Provides serialization utilities for <see cref="Message"/> objects.
     /// </summary>
     public static class MessageSerializer
     {
+        private static readonly JsonSerializerOptions _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
         /// <summary>
         /// Serializes a <see cref="Message"/> into a UTF-8 encoded byte array.
         /// </summary>
@@ -77,8 +146,20 @@ namespace fractalis.Core.Distributed
         /// <returns>A UTF-8 encoded byte array representing the JSON-serialized message.</returns>
         public static byte[] Serialize(Message message)
         {
-            string text = JsonSerializer.Serialize(message);
+            string text = JsonSerializer.Serialize(message, _options);
             return Encoding.UTF8.GetBytes(text);
+        }
+
+        /// <summary>
+        /// Deserializes a JSON string into a <see cref="Message"/> instance.
+        /// </summary>
+        /// <param name="text">The JSON string to deserialize. Must not be <see langword="null"/> or empty.</param>
+        /// <returns>
+        /// The deserialized <see cref="Message"/> instance, or <see langword="null"/> if deserialization fails.
+        /// </returns>
+        public static Message? Deserialize(string text)
+        {
+            return JsonSerializer.Deserialize<Message?>(text, _options);
         }
     }
 }

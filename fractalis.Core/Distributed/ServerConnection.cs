@@ -34,7 +34,7 @@ namespace fractalis.Core.Distributed
         /// <returns>
         /// A <see cref="ServerConnection"/> representing the server connection if registration succeeds; otherwise, <see langword="null"/>.
         /// </returns>
-        public static async Task<ServerConnection?> RegisterAsync(string displayName, WebSocket socket, TimeSpan timeout)
+        public static async Task<ServerConnection?> RegisterAsync(WebSocket socket, string displayName, ClientRole role,  TimeSpan timeout)
         {
             ServerConnection? connection = null;
             WebSocketMessageListener messageListener = new(socket);
@@ -43,7 +43,7 @@ namespace fractalis.Core.Distributed
             source.CancelAfter(timeout);
 
             // Send registration request
-            await SendMessageInternal(new RegistrationMessage() { DisplayName = displayName }, socket, source.Token);
+            await SendMessageInternal(new RegistrationMessage() { DisplayName = displayName, Role = role }, socket, source.Token);
 
             // Listen for registration acknowledgement
             await messageListener.ListenAsync((message, socket) =>

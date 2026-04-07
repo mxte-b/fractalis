@@ -6,12 +6,13 @@ using fractalis.Core.Video;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace fractalis
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine(Banner.V1);
 #if BENCHMARK
@@ -74,10 +75,11 @@ namespace fractalis
                 //StartFrame = 17393,
                 //RenderIdOverride = "a9f5523e-bd93-4cd1-ac70-19d59a0e5018"
             };
+
+            //Console.WriteLine(JsonSerializer.Serialize(rendererConfig));
             VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
 
-
-            //videoRenderer.Start();
+            await videoRenderer.StartDistributed(new Uri("ws://localhost:5059/ws"), rendererConfig);
             //videoRenderer.Save();
 #endif
         }

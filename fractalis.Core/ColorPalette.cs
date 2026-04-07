@@ -1,6 +1,8 @@
-﻿using SixLabors.ImageSharp;
+﻿using fractalis.Core.Numbers;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Numerics;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace fractalis.Core
@@ -45,13 +47,11 @@ namespace fractalis.Core
         /// <summary>
         /// Normalized position of the stop in the gradient (0 = start, 1 = end).
         /// </summary>
-        [JsonPropertyName("position")]
         public float    Position { get; set; } = position;
 
         /// <summary>
         /// Color at this stop, serialized as a Vector4 for JSON compatibility.
         /// </summary>
-        [JsonPropertyName("color")]
         [JsonConverter(typeof(Vector4Converter))]
         public Vector4  Color    { get; set; } = color.ToPixel<Rgba32>().ToVector4();
     }
@@ -74,12 +74,18 @@ namespace fractalis.Core
         /// <summary>
         /// Color used for points inside the fractal.
         /// </summary>
+        [JsonConverter(typeof(ColorJsonConverter))]
         public Color                        InteriorColor   { get; set; }
 
         /// <summary>
         /// Resolution of the internal lookup table (LUT) used for fast gradient sampling.
         /// </summary>
         public static int                   LutResolution   { get; set; } = 4096;
+
+        /// <summary>
+        /// List of color stops that the palette is made out of.
+        /// </summary>
+        public List<ColorStop>              Stops           => _stops;
 
         private readonly List<ColorStop>    _stops;
         private readonly Vector4[]          _lut;
@@ -212,6 +218,29 @@ namespace fractalis.Core
 
             int index = (int)(shifted * (LutResolution - 1));
             return _lut[index];
+        }
+    }
+
+    public class ColorJsonConverter : JsonConverter<Color>
+    {
+        public override Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            Vector4Converter conv = new Vector4Converter();
+            Vector4 vec = conv.Read(ref reader, typeToConvert, options);
+
+            return Color.FromRgba(
+                (byte)(vec.X * 255),
+                (byte)(vec.Y * 255),
+                (byte)(vec.Z * 255),
+                (byte)(vec.W * 255)
+            );
+        }
+
+        public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
+        {
+            Vector4 col = value.ToPixel<Rgba32>().ToVector4();
+            Vector4Converter conv = new Vector4Converter();
+            conv.Write(writer, col, options);
         }
     }
 }

@@ -20,7 +20,12 @@ namespace fractalis.Core.Distributed
         /// <summary>
         /// Display name of the connected client.
         /// </summary>
-        public required string DisplayName { get; init; }
+        public required string      DisplayName { get; init; }
+        
+        /// <summary>
+        /// Role assigned to the client, determining its permissions and behavior on the server.
+        /// </summary>
+        public required ClientRole  Role        { get; init; }
 
         private ClientConnection() { }
 
@@ -52,6 +57,7 @@ namespace fractalis.Core.Distributed
                                 DisplayName = reg.DisplayName,
                                 Id = Guid.NewGuid(),
                                 Socket = socket,
+                                Role = reg.Role
                             };
                             return MessageHandlingResult.Stop;
 

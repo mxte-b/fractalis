@@ -27,6 +27,11 @@ namespace fractalis.Core.Distributed
         public ConcurrentDictionary<Guid, ClientConnection> Clients             = new();
 
         /// <summary>
+        /// Collection of active or queued rendering jobs.
+        /// </summary>
+        public ConcurrentBag<RenderJob>                     Jobs                = [];
+
+        /// <summary>
         /// Initializes the orchestrator and starts the dashboard UI.
         /// </summary>
         public Orchestrator()
@@ -36,13 +41,17 @@ namespace fractalis.Core.Distributed
         }
 
         /// <summary>
-        /// Broadcasts a message to all currently connected clients.
+        /// Broadcasts a message to all currently connected clients, optionally filtered by role.
         /// </summary>
         /// <param name="message">The <see cref="Message"/> to send.</param>
+        /// <param name="targetRole">
+        /// If specified, only clients with this <see cref="ClientRole"/> will receive the message.
+        /// If <see langword="null"/>, the message is sent to all connected clients.
+        /// </param>
         /// <returns>A <see cref="Task"/> that completes when all sends have finished.</returns>
-        public async Task BroadcastMessage(Message message)
+        public async Task BroadcastMessage(Message message, ClientRole? targetRole = null)
         {
-            var tasks = Clients.Values.Select(c => c.SendMessageAsync(message));
+            var tasks = Clients.Values.Where(c => targetRole == null || c.Role == targetRole).Select(c => c.SendMessageAsync(message));
             await Task.WhenAll(tasks);
         }
 
@@ -59,7 +68,7 @@ namespace fractalis.Core.Distributed
             ClientConnection? connection = await ClientConnection.NegotiateAsync(webSocket, RegistrationTimeout);
             if (connection is null)
             {
-                _dashboard.AddLog("   - Client registration timed out.");
+                _dashboard.AddLog("Client registration timed out.");
                 return;
             }
 
@@ -67,16 +76,36 @@ namespace fractalis.Core.Distributed
             Clients.TryAdd(connection.Id, connection);
             _dashboard.AddLog(connection, "Registered.");
 
-            // Listen for incoming messages from the client
-            ConnectionCloseReason reason = await connection.ListenAsync(async (m, _) =>
+            // Send available jobs to the client (if a worker)
+            if (connection.Role == ClientRole.Worker)
             {
-                if (m == null)
+                await connection.SendMessageAsync(new RenderJobListMessage() { Jobs = Jobs.ToList() });
+            }
+
+            // Listen for incoming messages from the client
+            ConnectionCloseReason reason = await connection.ListenAsync(async (message, _) =>
+            {
+                // Logging
+                if (message == null)
                 {
                     _dashboard.AddLog(connection, "Received invalid message");
                 }
+                _dashboard.AddLog(connection, message is null ?  "No content" : message.ToString());
 
-                await BroadcastMessage(new DebugMessage() { Content = "asd" });
-                _dashboard.AddLog(connection, "Received a good message");
+                // Message handling
+                switch (message)
+                {
+                    case VideoRenderRequest renderRequest:
+                        RenderJob job = new RenderJob()
+                        {
+                            VideoConfig = renderRequest.VideoConfig,
+                            FractalRendererConfig = renderRequest.FractalRendererConfig,
+                        };
+
+                        Jobs.Add(job);
+                        await BroadcastMessage(new RenderJobAnnouncementMessage() { Job = job }, ClientRole.Worker);
+                        break;
+                }
 
                 return MessageHandlingResult.Continue;
             }, CancellationToken.None);

@@ -17,7 +17,7 @@ namespace fractalis.Core.Distributed
         public async Task HandleMessage(Message message)
         {
             // Currently just prints the JSON representation to the console
-            Console.WriteLine(JsonSerializer.Serialize(message));
+            Console.WriteLine(message);
         }
     }
 }

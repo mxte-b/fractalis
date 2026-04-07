@@ -1,4 +1,7 @@
-﻿namespace fractalis.Core.Numbers
+﻿using System.Text.Json.Serialization;
+using System.Text.Json;
+
+namespace fractalis.Core.Numbers
 {
     /// <summary>
     /// Represents an arbitrary-precision complex number with a real and imaginary component,
@@ -14,11 +17,13 @@
         /// <summary>
         /// The real part of the complex number.
         /// </summary>
+        [JsonConverter(typeof(BigFloatJsonConverter))]
         public BigFloat Real { get; set; }
 
         /// <summary>
         /// The imaginary part of the complex number.
         /// </summary>
+        [JsonConverter(typeof(BigFloatJsonConverter))]
         public BigFloat Imaginary { get; set; }
 
         /// <summary>
@@ -28,7 +33,8 @@
         /// Represents how large the number is in a relative sense, without taking a square root.
         /// Use this when you need a performance-friendly measure of size.
         /// </remarks>
-        public BigFloat MagnitudeSquared => Real * Real + Imaginary * Imaginary;
+        [JsonIgnore]
+        public readonly BigFloat MagnitudeSquared => Real * Real + Imaginary * Imaginary;
 
         /// <summary>
         /// Gets the magnitude (absolute value) of the complex number.
@@ -37,7 +43,8 @@
         /// Represents the overall size of the number. Computed from the real and imaginary parts.
         /// This involves a square root operation and may be more expensive than <see cref="MagnitudeSquared"/>.
         /// </remarks>
-        public BigFloat Magnitude => BigFloat.Sqrt(MagnitudeSquared);
+        [JsonIgnore]
+        public readonly BigFloat Magnitude => BigFloat.Sqrt(MagnitudeSquared);
 
         /// <summary>
         /// Initializes a new instance of <see cref="BigComplex"/> with the given real and imaginary parts.

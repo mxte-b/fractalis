@@ -36,29 +36,35 @@ namespace fractalis.Core.Distributed
         public async Task ListenAsync(Func<Message?, WebSocket, Task<MessageHandlingResult>> callback, CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[1024];
+            using MemoryStream ms = new();
 
             while (_socket.State == WebSocketState.Open)
             {
-                var result = await _socket.ReceiveAsync(buffer, cancellationToken);
+                ms.SetLength(0);
+
+                WebSocketReceiveResult result;
+                do
+                {
+                    result = await _socket.ReceiveAsync(buffer, cancellationToken);
+                    ms.Write(buffer, 0, result.Count);
+                }
+                while (!result.EndOfMessage);
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     await CloseConnection(_socket, result);
                     break;
                 }
-                else
-                {
-                    try
-                    {
-                        string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                        Message? parsed = JsonSerializer.Deserialize<Message>(message);
 
-                        if (await callback.Invoke(parsed, _socket) == MessageHandlingResult.Stop) break;
-                    }
-                    catch (JsonException)
-                    {
-                        // Ignore non-JSON messages
-                    }
+                try
+                {
+                    string message = Encoding.UTF8.GetString(ms.ToArray());
+                    Message? parsed = MessageSerializer.Deserialize(message);
+                    if (await callback.Invoke(parsed, _socket) == MessageHandlingResult.Stop) break;
+                }
+                catch (JsonException)
+                {
+                    // Ignore non-JSON messages
                 }
             }
         }

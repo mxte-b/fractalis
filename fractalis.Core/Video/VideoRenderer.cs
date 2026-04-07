@@ -1,6 +1,10 @@
-﻿using fractalis.Core.Numbers;
+﻿using fractalis.Core.Distributed;
+using fractalis.Core.Numbers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
 
 namespace fractalis.Core.Video
 {
@@ -77,6 +81,27 @@ namespace fractalis.Core.Video
 
                 image.Save(ImageSequencePath + $"/frame{(i+1).ToString().PadLeft(5, '0')}.png");
             }
+        }
+
+        /// <summary>
+        /// Starts rendering the video using the locally distributed render network.
+        /// </summary>
+        /// <param name="uri">URI of the network orchestrator.</param>
+        /// <param name="config">Fractal renderer config to use.</param>
+        public async Task StartDistributed(Uri uri, FractalRendererConfig config)
+        {
+            Client client = new Client();
+            await client.Connect(uri, "initiator", ClientRole.Initiator);
+
+            VideoRenderRequest req = new VideoRenderRequest()
+            {
+                VideoConfig = Config,
+                FractalRendererConfig = config
+            };
+
+            await client.SendMessageToServerAsync(req);
+            Console.WriteLine("Message sent");
+            await client.Disconnect();
         }
 
         /// <summary>

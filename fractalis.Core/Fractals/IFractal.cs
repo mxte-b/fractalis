@@ -1,5 +1,6 @@
 ﻿using fractalis.Core.Numbers;
 using System.Runtime.Intrinsics;
+using System.Text.Json.Serialization;
 
 namespace fractalis.Core.Fractals
 {
@@ -10,6 +11,8 @@ namespace fractalis.Core.Fractals
     /// A fractal implementing this interface must support iteration for a complex point
     /// and provide a continuous iteration value useful for smooth coloring.
     /// </remarks>
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+    [JsonDerivedType(typeof(Mandelbrot), "mandelbrot")]
     public interface IFractal
     {
         /// <summary>

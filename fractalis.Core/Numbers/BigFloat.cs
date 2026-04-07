@@ -1,5 +1,7 @@
 ﻿using Sdcb.Arithmetic.Gmp;
 using Sdcb.Arithmetic.Mpfr;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace fractalis.Core.Numbers
 {
@@ -171,5 +173,19 @@ namespace fractalis.Core.Numbers
         public override bool Equals(object? obj) => obj is BigFloat other && _value.Equals(other._value);
 
         public override int GetHashCode() => _value.GetHashCode();
+    }
+
+    public class BigFloatJsonConverter : JsonConverter<BigFloat>
+    {
+        public override BigFloat Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            string? value = reader.GetString();
+            return value is null ? throw new JsonException("Expected a string for BigFloat.") : new BigFloat(value);
+        }
+
+        public override void Write(Utf8JsonWriter writer, BigFloat value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString());
+        }
     }
 }
