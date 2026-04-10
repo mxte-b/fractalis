@@ -77,9 +77,10 @@ namespace fractalis
             };
 
             //Console.WriteLine(JsonSerializer.Serialize(rendererConfig));
-            VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
+            DistributedVideoRenderer videoRenderer = new DistributedVideoRenderer(renderer, config);
+            videoRenderer.Initialize();
 
-            await videoRenderer.StartDistributed(new Uri("ws://localhost:5059/ws"), rendererConfig);
+            await videoRenderer.Start(new Uri("ws://localhost:5059/ws"), rendererConfig);
             //videoRenderer.Save();
 #endif
         }

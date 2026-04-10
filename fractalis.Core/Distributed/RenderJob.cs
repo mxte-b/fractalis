@@ -27,4 +27,20 @@ namespace fractalis.Core.Distributed
         /// </summary>
         public required FractalRendererConfig   FractalRendererConfig   { get; init; }
     }
+
+    /// <summary>
+    /// Defines the possible statuses a render job can have.
+    /// </summary>
+    public enum RenderJobStatus
+    {
+        /// <summary>
+        /// Indicates that the render job is finished.
+        /// </summary>
+        Finished,
+
+        /// <summary>
+        /// Indicates that the render job is cancelled.
+        /// </summary>
+        Cancelled,
+    }
 }

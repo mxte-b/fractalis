@@ -11,14 +11,15 @@ namespace fractalis.Core.Distributed
     /// <summary>
     /// Represents a client that connects to the orchestrator server to send and receive messages.
     /// </summary>
+    /// <param name="runtime">The client runtime which will handle incoming messages.</param>
     /// <remarks>
     /// Manages connection registration, message listening, sending, and graceful disconnection.
     /// Uses <see cref="ClientRuntime"/> to handle incoming messages.
     /// </remarks>
-    public class Client
+    public class Client(IRuntime runtime)
     {
         private ServerConnection?           _connection;
-        private readonly ClientRuntime      _runtime = new ClientRuntime();
+        private readonly IRuntime     _runtime = runtime;
         private static readonly TimeSpan    RegistrationTimeout = TimeSpan.FromSeconds(10);
 
         /// <summary>
@@ -66,14 +67,11 @@ namespace fractalis.Core.Distributed
                 throw new InvalidOperationException("Cannot start client because it is not connected.");
             }
 
-            await _connection.ListenAsync(async (message, _) =>
+            await _connection.ListenAsync(async (message) =>
             {
-                if (message != null)
-                {
-                    await _runtime.HandleMessage(message);
-                }
+                if (message is null) return MessageHandlingResult.Continue;
 
-                return MessageHandlingResult.Continue;
+                return await _runtime.HandleMessage(message);
             }, CancellationToken.None);
         }
 

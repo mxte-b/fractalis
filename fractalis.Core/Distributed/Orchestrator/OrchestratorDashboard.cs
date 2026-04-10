@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Orchestrator
 {
     /// <summary>
     /// Singleton dashboard for monitoring and interacting with connected clients

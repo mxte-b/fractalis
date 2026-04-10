@@ -47,7 +47,7 @@ namespace fractalis.Core.Distributed
 
             try
             {
-                await messageListener.ListenAsync((message, socket) =>
+                await messageListener.ListenAsync((message) =>
                 {
                     switch (message)
                     {

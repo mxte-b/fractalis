@@ -46,7 +46,7 @@ namespace fractalis.Core.Distributed
             await SendMessageInternal(new RegistrationMessage() { DisplayName = displayName, Role = role }, socket, source.Token);
 
             // Listen for registration acknowledgement
-            await messageListener.ListenAsync((message, socket) =>
+            await messageListener.ListenAsync((message) =>
             {
                 if (message is RegistrationAcknowledgedMessage ack)
                 {

@@ -3,7 +3,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Orchestrator
 {
     /// <summary>
     /// Manages connected clients, message broadcasting, and orchestrator-level operations.
@@ -12,7 +12,7 @@ namespace fractalis.Core.Distributed
     /// Integrates with <see cref="OrchestratorDashboard"/> to provide live console visualization
     /// of clients and logs. Handles client registration, connection lifecycle, and incoming messages.
     /// </remarks>
-    public class Orchestrator
+    public class Orchestrator : IOrchestratorContext
     {
         private readonly OrchestratorDashboard              _dashboard          = OrchestratorDashboard.Instance;
 
@@ -49,11 +49,21 @@ namespace fractalis.Core.Distributed
         /// If <see langword="null"/>, the message is sent to all connected clients.
         /// </param>
         /// <returns>A <see cref="Task"/> that completes when all sends have finished.</returns>
-        public async Task BroadcastMessage(Message message, ClientRole? targetRole = null)
+        public async Task BroadcastMessageAsync(Message message, ClientRole? targetRole = null)
         {
             var tasks = Clients.Values.Where(c => targetRole == null || c.Role == targetRole).Select(c => c.SendMessageAsync(message));
             await Task.WhenAll(tasks);
         }
+
+        public async Task AddJobAsync(RenderJob job)
+        {
+            Jobs.Add(job);
+            await BroadcastMessageAsync(new RenderJobAnnouncementMessage() { Job = job }, ClientRole.Worker);
+        }
+
+        public void Log(string message) => _dashboard.AddLog(message);
+
+        public void Log(ClientConnection connection, string message) => _dashboard.AddLog(connection, message);
 
         /// <summary>
         /// Handles a new client connection, including registration, message handling, and disconnection.
@@ -83,32 +93,8 @@ namespace fractalis.Core.Distributed
             }
 
             // Listen for incoming messages from the client
-            ConnectionCloseReason reason = await connection.ListenAsync(async (message, _) =>
-            {
-                // Logging
-                if (message == null)
-                {
-                    _dashboard.AddLog(connection, "Received invalid message");
-                }
-                _dashboard.AddLog(connection, message is null ?  "No content" : message.ToString());
-
-                // Message handling
-                switch (message)
-                {
-                    case VideoRenderRequest renderRequest:
-                        RenderJob job = new RenderJob()
-                        {
-                            VideoConfig = renderRequest.VideoConfig,
-                            FractalRendererConfig = renderRequest.FractalRendererConfig,
-                        };
-
-                        Jobs.Add(job);
-                        await BroadcastMessage(new RenderJobAnnouncementMessage() { Job = job }, ClientRole.Worker);
-                        break;
-                }
-
-                return MessageHandlingResult.Continue;
-            }, CancellationToken.None);
+            OrchestratorRuntime runtime = new OrchestratorRuntime(this, connection);
+            ConnectionCloseReason reason = await connection.ListenAsync(runtime, CancellationToken.None);
 
             if (reason != ConnectionCloseReason.NormalClosure)
             {

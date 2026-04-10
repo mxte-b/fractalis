@@ -33,7 +33,7 @@ namespace fractalis.Core.Distributed
         /// Returning <see cref="MessageHandlingResult.Stop"/> will end the listener.
         /// </param>
         /// <param name="cancellationToken">Token to cancel the listener.</param>
-        public async Task ListenAsync(Func<Message?, WebSocket, Task<MessageHandlingResult>> callback, CancellationToken cancellationToken)
+        public async Task ListenAsync(Func<Message?, Task<MessageHandlingResult>> callback, CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[1024];
             using MemoryStream ms = new();
@@ -60,7 +60,7 @@ namespace fractalis.Core.Distributed
                 {
                     string message = Encoding.UTF8.GetString(ms.ToArray());
                     Message? parsed = MessageSerializer.Deserialize(message);
-                    if (await callback.Invoke(parsed, _socket) == MessageHandlingResult.Stop) break;
+                    if (await callback.Invoke(parsed) == MessageHandlingResult.Stop) break;
                 }
                 catch (JsonException)
                 {
@@ -72,9 +72,9 @@ namespace fractalis.Core.Distributed
         /// <summary>
         /// Overload of <see cref="ListenAsync(Func{Message?,WebSocket,Task{MessageHandlingResult}},CancellationToken)"/> for synchronous callbacks.
         /// </summary>
-        public async Task ListenAsync(Func<Message?, WebSocket, MessageHandlingResult> callback, CancellationToken cancellationToken)
+        public async Task ListenAsync(Func<Message?, MessageHandlingResult> callback, CancellationToken cancellationToken)
         {
-            await ListenAsync((message, socket) => Task.FromResult(callback(message, socket)), cancellationToken);
+            await ListenAsync((message) => Task.FromResult(callback(message)), cancellationToken);
         }
 
         /// <summary>

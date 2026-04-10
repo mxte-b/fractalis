@@ -12,7 +12,7 @@ namespace fractalis.ClientApp
             string displayName = "User's Laptop";
             Uri uri = new Uri("ws://localhost:5059/ws");
 
-            Client client = new Client();
+            Client client = new Client(new WorkerRuntime());
 
             // Initiate server connection
             Console.WriteLine("<#> Establishing connection to the Orchestrator...");

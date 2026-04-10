@@ -1,4 +1,4 @@
-using fractalis.Core.Distributed;
+using fractalis.Core.Distributed.Orchestrator;
 
 namespace fractalis.ServerApp
 {
