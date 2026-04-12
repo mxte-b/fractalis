@@ -1,9 +1,10 @@
-﻿using fractalis.Core.Video;
+﻿using fractalis.Core.Distributed.Clients;
+using fractalis.Core.Video;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Networking
 {
     /// <summary>
     /// Base class for all message types exchanged between clients and the orchestrator.
@@ -14,12 +15,13 @@ namespace fractalis.Core.Distributed
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
     [JsonDerivedType(typeof(DebugMessage), "debug")]
     [JsonDerivedType(typeof(ReconnectMessage), "reconnect")]
-    [JsonDerivedType(typeof(RenderJobRequest), "jobRequest")]
+    [JsonDerivedType(typeof(RenderAssignmentRequest), "jobRequest")]
     [JsonDerivedType(typeof(RenderJobListMessage), "jobList")]
+    [JsonDerivedType(typeof(NoAssignmentMessage), "noAssignment")]
     [JsonDerivedType(typeof(RegistrationMessage), "registration")]
     [JsonDerivedType(typeof(VideoRenderRequest), "renderRequest")]
     [JsonDerivedType(typeof(RenderJobStatusMessage), "jobStatus")]
-    [JsonDerivedType(typeof(RenderJobAssignmentMessage), "jobAssignment")]
+    [JsonDerivedType(typeof(RenderAssignmentMessage), "jobAssignment")]
     [JsonDerivedType(typeof(RenderJobAnnouncementMessage), "jobAnnouncement")]
     [JsonDerivedType(typeof(RegistrationAcknowledgedMessage), "registrationAcknowledged")]
     public abstract record Message;
@@ -66,9 +68,9 @@ namespace fractalis.Core.Distributed
     public record VideoRenderRequest : Message
     {
         /// <summary>
-        /// The URL where clients will upload the frames to.
+        /// The URI where clients will upload the frames to.
         /// </summary>
-        public required string                  UploadUrl               { get; init; }
+        public required Uri                     UploadUri               { get; init; }
 
         /// <summary>
         /// Configuration of the video.
@@ -104,33 +106,23 @@ namespace fractalis.Core.Distributed
     /// <summary>
     /// Message sent by a worker to the orchestrator to request a render job.
     /// </summary>
-    public record RenderJobRequest : Message;
+    public record RenderAssignmentRequest : Message;
 
     /// <summary>
     /// Message sent by the orchestrator to a render client for rendering images.
     /// </summary>
-    public record RenderJobAssignmentMessage : Message
+    public record RenderAssignmentMessage : Message
     {
         /// <summary>
-        /// The unique identifier of the assigned render job.
+        /// The assignment.
         /// </summary>
-        public required Guid    RenderJobId     { get; init; }
-
-        /// <summary>
-        /// The URI where to upload the rendered images.
-        /// </summary>
-        public required Uri     UploadUri       { get; init; }
-
-        /// <summary>
-        /// Index of the first frame to render.
-        /// </summary>
-        public required int     StartFrameIndex { get; init; }
-
-        /// <summary>
-        /// Number of frames to render
-        /// </summary>
-        public required int     FrameCount      { get; init; }
+        public required RenderAssignment Assignment { get; init; }
     }
+
+    /// <summary>
+    /// Message sent by the orchestrator to a render client when no assignment could be provided.
+    /// </summary>
+    public record NoAssignmentMessage : Message;
 
     /// <summary>
     /// Message sent by the orchestrator to the initiator to report job status.

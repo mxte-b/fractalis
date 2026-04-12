@@ -1,4 +1,6 @@
 ﻿using fractalis.Core.Distributed;
+using fractalis.Core.Distributed.Clients;
+using fractalis.Core.Distributed.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,16 +33,16 @@ namespace fractalis.Core.Video
 
             // Starting frame listener
             _ = _listener.Start();
-            Console.WriteLine($"Frame listener running at {_listener.Url}");
+            Console.WriteLine($"Frame listener running at {_listener.Uri}");
 
             // Connecting to the orchestrator
-            Client client = new Client(new InitiatorRuntime());
-            await client.Connect(uri, "Administrator", ClientRole.Initiator);
+            InitiatorClient client = new InitiatorClient();
+            await client.Connect(uri, "Administrator");
 
             // Sending render request to the orchestrator
             await client.SendMessageToServerAsync(new VideoRenderRequest()
             {
-                UploadUrl = _listener.Url,
+                UploadUri = _listener.Uri,
                 VideoConfig = Config,
                 FractalRendererConfig = config
             });

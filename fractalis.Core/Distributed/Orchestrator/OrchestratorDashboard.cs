@@ -1,4 +1,5 @@
-﻿using Spectre.Console;
+﻿using fractalis.Core.Distributed.Networking;
+using Spectre.Console;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 

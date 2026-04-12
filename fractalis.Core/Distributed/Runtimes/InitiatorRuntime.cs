@@ -1,19 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using fractalis.Core.Distributed.Contexts;
+using fractalis.Core.Distributed.Networking;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Runtimes
 {
-    internal class InitiatorRuntime : IRuntime
+    public class InitiatorRuntime(IClientContext context) : IRuntime
     {
+        private IClientContext _context = context;
+
         public Task<MessageHandlingResult> HandleMessage(Message message)
         {
             if (message is RenderJobStatusMessage statusMessage)
             {
                 Console.WriteLine($"New status: {statusMessage.Status}");
-                
+
                 return Task.FromResult(MessageHandlingResult.Stop);
             }
 

@@ -1,5 +1,6 @@
 ﻿using fractalis.Core;
-using fractalis.Core.Distributed;
+using fractalis.Core.Distributed.Clients;
+using fractalis.Core.Distributed.Networking;
 
 namespace fractalis.ClientApp
 {
@@ -12,7 +13,7 @@ namespace fractalis.ClientApp
             string displayName = "User's Laptop";
             Uri uri = new Uri("ws://localhost:5059/ws");
 
-            Client client = new Client(new WorkerRuntime());
+            WorkerClient client = new WorkerClient();
 
             // Initiate server connection
             Console.WriteLine("<#> Establishing connection to the Orchestrator...");

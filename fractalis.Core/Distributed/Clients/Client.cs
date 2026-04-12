@@ -1,12 +1,9 @@
-﻿using System;
-using System.Net.Sockets;
+﻿using fractalis.Core.Distributed.Contexts;
+using fractalis.Core.Distributed.Networking;
+using fractalis.Core.Distributed.Runtimes;
 using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Clients
 {
     /// <summary>
     /// Represents a client that connects to the orchestrator server to send and receive messages.
@@ -16,10 +13,10 @@ namespace fractalis.Core.Distributed
     /// Manages connection registration, message listening, sending, and graceful disconnection.
     /// Uses <see cref="ClientRuntime"/> to handle incoming messages.
     /// </remarks>
-    public class Client(IRuntime runtime)
+    public class Client(IRuntime runtime) : IClientContext
     {
         private ServerConnection?           _connection;
-        private readonly IRuntime     _runtime = runtime;
+        private readonly IRuntime           _runtime            = runtime;
         private static readonly TimeSpan    RegistrationTimeout = TimeSpan.FromSeconds(10);
 
         /// <summary>
@@ -67,12 +64,7 @@ namespace fractalis.Core.Distributed
                 throw new InvalidOperationException("Cannot start client because it is not connected.");
             }
 
-            await _connection.ListenAsync(async (message) =>
-            {
-                if (message is null) return MessageHandlingResult.Continue;
-
-                return await _runtime.HandleMessage(message);
-            }, CancellationToken.None);
+            await _connection.ListenAsync(_runtime, CancellationToken.None);
         }
 
         /// <summary>

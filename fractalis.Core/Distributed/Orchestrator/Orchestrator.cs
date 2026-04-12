@@ -1,7 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using fractalis.Core.Distributed.Clients;
+using fractalis.Core.Distributed.Contexts;
+using fractalis.Core.Distributed.Networking;
+using fractalis.Core.Distributed.Runtimes;
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
 
 namespace fractalis.Core.Distributed.Orchestrator
 {
@@ -27,9 +29,14 @@ namespace fractalis.Core.Distributed.Orchestrator
         public ConcurrentDictionary<Guid, ClientConnection> Clients             = new();
 
         /// <summary>
-        /// Collection of active or queued rendering jobs.
+        /// Active render jobs keyed by <see cref="RenderJob.Id"/>.
         /// </summary>
-        public ConcurrentBag<RenderJob>                     Jobs                = [];
+        public ConcurrentDictionary<Guid, RenderJob>        Jobs                = new();
+
+        /// <summary>
+        /// Active assignments keyed by <see cref="RenderAssignment.Id"/>. Removing an entry signals completion.
+        /// </summary>
+        public ConcurrentDictionary<Guid, RenderAssignment> Assignments         = new();
 
         /// <summary>
         /// Initializes the orchestrator and starts the dashboard UI.
@@ -55,15 +62,41 @@ namespace fractalis.Core.Distributed.Orchestrator
             await Task.WhenAll(tasks);
         }
 
+        private void SplitJobIntoAssignments(RenderJob job, int size)
+        {
+            for (int i = 0; i < job.VideoConfig.FrameCount; i += size)
+            {
+                RenderAssignment assignment = new RenderAssignment()
+                {
+                    JobId = job.Id,
+                    StartFrameIndex = i,
+                    FrameCount = Math.Min(size, job.VideoConfig.FrameCount - i)
+                };
+
+                Assignments.TryAdd(assignment.Id, assignment);
+            }
+        }
+
+        #region Context-revealed methods
         public async Task AddJobAsync(RenderJob job)
         {
-            Jobs.Add(job);
+            Jobs.TryAdd(job.Id, job);
+            SplitJobIntoAssignments(job, 5);
             await BroadcastMessageAsync(new RenderJobAnnouncementMessage() { Job = job }, ClientRole.Worker);
+        }
+
+        public Message GetRenderAssignment()
+        {
+            RenderAssignment? assignment = Assignments.Values.FirstOrDefault(x => x.TryClaim());
+            if (assignment is null) return new NoAssignmentMessage();
+
+            return new RenderAssignmentMessage() { Assignment = assignment };
         }
 
         public void Log(string message) => _dashboard.AddLog(message);
 
         public void Log(ClientConnection connection, string message) => _dashboard.AddLog(connection, message);
+        #endregion
 
         /// <summary>
         /// Handles a new client connection, including registration, message handling, and disconnection.
@@ -89,7 +122,7 @@ namespace fractalis.Core.Distributed.Orchestrator
             // Send available jobs to the client (if a worker)
             if (connection.Role == ClientRole.Worker)
             {
-                await connection.SendMessageAsync(new RenderJobListMessage() { Jobs = Jobs.ToList() });
+                await connection.SendMessageAsync(new RenderJobListMessage() { Jobs = Jobs.Values.ToList() });
             }
 
             // Listen for incoming messages from the client

@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using fractalis.Core.Distributed.Clients;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Networking
 {
     /// <summary>
     /// Represents a connection from the client to a server.
@@ -34,7 +29,7 @@ namespace fractalis.Core.Distributed
         /// <returns>
         /// A <see cref="ServerConnection"/> representing the server connection if registration succeeds; otherwise, <see langword="null"/>.
         /// </returns>
-        public static async Task<ServerConnection?> RegisterAsync(WebSocket socket, string displayName, ClientRole role,  TimeSpan timeout)
+        public static async Task<ServerConnection?> RegisterAsync(WebSocket socket, string displayName, ClientRole role, TimeSpan timeout)
         {
             ServerConnection? connection = null;
             WebSocketMessageListener messageListener = new(socket);
@@ -50,7 +45,7 @@ namespace fractalis.Core.Distributed
             {
                 if (message is RegistrationAcknowledgedMessage ack)
                 {
-                    connection = new ServerConnection() 
+                    connection = new ServerConnection()
                     {
                         Id = ack.ClientId,
                         Socket = socket
@@ -61,7 +56,7 @@ namespace fractalis.Core.Distributed
 
                 return MessageHandlingResult.Continue;
             }, source.Token);
-            
+
             return connection;
         }
     }

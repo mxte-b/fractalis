@@ -1,8 +1,6 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using fractalis.Core.Distributed.Networking;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Runtimes
 {
     /// <summary>
     /// Handles incoming messages and rendering for a client instance.

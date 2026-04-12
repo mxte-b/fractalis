@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using fractalis.Core.Distributed.Contexts;
+using fractalis.Core.Distributed.Networking;
 
-namespace fractalis.Core.Distributed.Orchestrator
+namespace fractalis.Core.Distributed.Runtimes
 {
     public class OrchestratorRuntime(IOrchestratorContext ctx, ClientConnection conn) : IRuntime
     {
-        private readonly IOrchestratorContext   _context = ctx;
-        private readonly ClientConnection       _connection = conn;
+        private readonly IOrchestratorContext _context = ctx;
+        private readonly ClientConnection _connection = conn;
         public async Task<MessageHandlingResult> HandleMessage(Message message)
         {
             // Logging
@@ -22,14 +19,23 @@ namespace fractalis.Core.Distributed.Orchestrator
             // Message handling
             switch (message)
             {
+                // New video render request
                 case VideoRenderRequest renderRequest:
-                    RenderJob job = new RenderJob()
+                    await _context.AddJobAsync(new RenderJob()
                     {
+                        UploadUri = renderRequest.UploadUri,
                         VideoConfig = renderRequest.VideoConfig,
                         FractalRendererConfig = renderRequest.FractalRendererConfig,
-                    };
+                    });
+                    break;
 
-                    await _context.AddJobAsync(job);
+                // Worker requesting work
+                case RenderAssignmentRequest:
+                    await _connection.SendMessageAsync(_context.GetRenderAssignment());
+                    break;
+
+                // Status message for a render job
+                case RenderJobStatusMessage statusMessage:
                     break;
             }
 

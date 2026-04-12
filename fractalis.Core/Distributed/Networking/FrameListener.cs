@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 using WatsonWebserver;
 using WatsonWebserver.Core;
 
-
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Networking
 {
     /// <summary>
     /// Represents a request that contains a rendered frame's data.
@@ -30,11 +24,11 @@ namespace fractalis.Core.Distributed
     public class FrameListener : IDisposable
     {
         private readonly Webserver _listener;
-        public string Url { get; private set; }
+        public Uri Uri { get; private set; }
 
         public FrameListener(int port)
         {
-            Url = $"http://{GetLocalIPAddress()}:{port}/";
+            Uri = new Uri($"http://{GetLocalIPAddress()}:{port}/");
 
             // Creating the webserver
             WebserverSettings settings = new WebserverSettings(GetLocalIPAddress(), port);
