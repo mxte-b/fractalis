@@ -47,12 +47,14 @@ namespace fractalis.Core
         /// <summary>
         /// Normalized position of the stop in the gradient (0 = start, 1 = end).
         /// </summary>
+        [JsonPropertyName("position")]
         public float    Position { get; set; } = position;
 
         /// <summary>
         /// Color at this stop, serialized as a Vector4 for JSON compatibility.
         /// </summary>
         [JsonConverter(typeof(Vector4Converter))]
+        [JsonPropertyName("color")]
         public Vector4  Color    { get; set; } = color.ToPixel<Rgba32>().ToVector4();
     }
 
@@ -82,13 +84,17 @@ namespace fractalis.Core
         /// </summary>
         public static int                   LutResolution   { get; set; } = 4096;
 
-        /// <summary>
-        /// List of color stops that the palette is made out of.
-        /// </summary>
-        public List<ColorStop>              Stops           => _stops;
+        [JsonInclude]
+        [JsonPropertyName("stops")]
+        private List<ColorStop> Stops
+        {
+            get => _stops;
+            set { _stops = value; BakeLUT(); }
+        }
 
-        private readonly List<ColorStop>    _stops;
+        private List<ColorStop>             _stops;
         private readonly Vector4[]          _lut;
+
         private static readonly ResourceManager    _resourceManager = ResourceManager.Instance;
 
         /// <summary>
@@ -119,8 +125,7 @@ namespace fractalis.Core
         /// <exception cref="KeyNotFoundException">Thrown if the preset is not found in <see cref="ResourceManager"/>.</exception>
         public static ColorPalette FromPreset(PalettePreset preset)
         {
-            List<ColorStop>? stops;
-            _resourceManager.ColorPalettes.TryGetValue(preset.ToString(), out stops);
+            _resourceManager.ColorPalettes.TryGetValue(preset.ToString(), out List<ColorStop>? stops);
 
             if (stops == null)
             {

@@ -6,38 +6,41 @@ using WatsonWebserver.Core;
 namespace fractalis.Core.Distributed.Networking
 {
     /// <summary>
-    /// Represents a request that contains a rendered frame's data.
+    /// Listens for incoming rendered frames over HTTP and saves them to disk.
     /// </summary>
-    internal record FrameUploadRequest
-    {
-        /// <summary>
-        /// The unique identifier of the rendered frame.
-        /// </summary>
-        public required int     FrameId     { get; init; }
-
-        /// <summary>
-        /// The raw byte array of the frame.
-        /// </summary>
-        public required byte[]  Bytes       { get; init; }
-    }
-
     public class FrameListener : IDisposable
     {
         private readonly Webserver _listener;
+        private readonly string _imageSequencePath;
+
+        /// <summary>
+        /// Base URI where the listener is accessible.
+        /// </summary>
         public Uri Uri { get; private set; }
 
-        public FrameListener(int port)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FrameListener"/> class.
+        /// </summary>
+        /// <param name="port">Port to listen on.</param>
+        /// <param name="imageSequencePath">Directory where received frames will be saved.</param>
+        public FrameListener(int port, string imageSequencePath)
         {
             Uri = new Uri($"http://{GetLocalIPAddress()}:{port}/");
+            _imageSequencePath = imageSequencePath;
 
             // Creating the webserver
             WebserverSettings settings = new WebserverSettings(GetLocalIPAddress(), port);
             _listener = new Webserver(settings, DefaultRoute);
 
             // Endpoints
-            _listener.Post<FrameUploadRequest>("/jobs/{jobId}", PostFrame);
+            _listener.Post<RenderedImageMessage>("/frame", PostFrame);
         }
 
+        /// <summary>
+        /// Retrieves the local IPv4 address of the machine.
+        /// </summary>
+        /// <returns>The first available IPv4 address.</returns>
+        /// <exception cref="Exception">Thrown if no IPv4 address is found.</exception>
         private static string GetLocalIPAddress()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
@@ -54,26 +57,46 @@ namespace fractalis.Core.Distributed.Networking
         }
 
         #region Endpoints
+
+        /// <summary>
+        /// Default route handler returning 404 for unknown endpoints.
+        /// </summary>
         private static async Task DefaultRoute(HttpContextBase ctx)
         {
             ctx.Response.StatusCode = 404;
             await ctx.Response.Send("Not found");
         }
 
-        private static Task<object?> PostFrame(ApiRequest req)
+        /// <summary>
+        /// Receives a rendered frame and writes it to disk.
+        /// </summary>
+        /// <param name="req">Incoming request containing frame data.</param>
+        /// <returns>A completed task.</returns>
+        private Task<object?> PostFrame(ApiRequest req)
         {
-            Guid jobId              = req.Parameters.GetGuid("jobId");
-            FrameUploadRequest body = req.GetData<FrameUploadRequest>();
+            RenderedImageMessage body = req.GetData<RenderedImageMessage>();
 
-            Console.WriteLine($"Got data for job {jobId}, frame {body.FrameId}.");
+            string path = $"{_imageSequencePath}/frame-{(body.FrameIndex + 1).ToString().PadLeft(5, '0')}.png";
+            Console.WriteLine($"Saving to {path}");
+
+            File.WriteAllBytes(path, body.Bytes);
+
             return Task.FromResult<object?>(null);
         }
+
         #endregion
 
-        public async Task Start()   => await _listener.StartAsync();
+        /// <summary>
+        /// Starts the listener.
+        /// </summary>
+        public async Task Start() => await _listener.StartAsync();
 
-        public void Stop()          => _listener.Stop();
+        /// <summary>
+        /// Stops the listener.
+        /// </summary>
+        public void Stop() => _listener.Stop();
 
-        public void Dispose()       => _listener.Dispose();
+        /// <inheritdoc/>
+        public void Dispose() => _listener.Dispose();
     }
 }

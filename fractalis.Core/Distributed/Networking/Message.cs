@@ -21,6 +21,7 @@ namespace fractalis.Core.Distributed.Networking
     [JsonDerivedType(typeof(RegistrationMessage), "registration")]
     [JsonDerivedType(typeof(VideoRenderRequest), "renderRequest")]
     [JsonDerivedType(typeof(RenderJobStatusMessage), "jobStatus")]
+    [JsonDerivedType(typeof(RenderedImageMessage), "renderedImage")]
     [JsonDerivedType(typeof(RenderAssignmentMessage), "jobAssignment")]
     [JsonDerivedType(typeof(RenderJobAnnouncementMessage), "jobAnnouncement")]
     [JsonDerivedType(typeof(RegistrationAcknowledgedMessage), "registrationAcknowledged")]
@@ -138,6 +139,22 @@ namespace fractalis.Core.Distributed.Networking
         /// The status of the render job.
         /// </summary>
         public required RenderJobStatus Status          { get; init; }
+    }
+
+    /// <summary>
+    /// Message containing rendered image data for a specific frame.
+    /// </summary>
+    public record RenderedImageMessage : Message
+    {
+        /// <summary>
+        /// Index of the rendered frame.
+        /// </summary>
+        public required int             FrameIndex      { get; init; }
+
+        /// <summary>
+        /// Raw image data in byte form.
+        /// </summary>
+        public required byte[]          Bytes           { get; init; }
     }
 
     /// <summary>

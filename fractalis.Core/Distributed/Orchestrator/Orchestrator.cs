@@ -62,9 +62,14 @@ namespace fractalis.Core.Distributed.Orchestrator
             await Task.WhenAll(tasks);
         }
 
+        /// <summary>
+        /// Splits a <see cref="RenderJob"/> into smaller assignments.
+        /// </summary>
+        /// <param name="job">The job to split.</param>
+        /// <param name="size">Maximum number of frames per assignment.</param>
         private void SplitJobIntoAssignments(RenderJob job, int size)
         {
-            for (int i = 0; i < job.VideoConfig.FrameCount; i += size)
+            for (int i = job.VideoConfig.StartFrame; i < job.VideoConfig.FrameCount; i += size)
             {
                 RenderAssignment assignment = new RenderAssignment()
                 {
@@ -78,6 +83,10 @@ namespace fractalis.Core.Distributed.Orchestrator
         }
 
         #region Context-revealed methods
+        /// <summary>
+        /// Adds a job, splits it into assignments, and notifies worker clients.
+        /// </summary>
+        /// <param name="job">The job to add.</param>
         public async Task AddJobAsync(RenderJob job)
         {
             Jobs.TryAdd(job.Id, job);
@@ -85,6 +94,12 @@ namespace fractalis.Core.Distributed.Orchestrator
             await BroadcastMessageAsync(new RenderJobAnnouncementMessage() { Job = job }, ClientRole.Worker);
         }
 
+        /// <summary>
+        /// Retrieves and claims the next available render assignment.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="RenderAssignmentMessage"/> if available; otherwise a <see cref="NoAssignmentMessage"/>.
+        /// </returns>
         public Message GetRenderAssignment()
         {
             RenderAssignment? assignment = Assignments.Values.FirstOrDefault(x => x.TryClaim());
@@ -93,8 +108,14 @@ namespace fractalis.Core.Distributed.Orchestrator
             return new RenderAssignmentMessage() { Assignment = assignment };
         }
 
+        /// <summary>
+        /// Logs a message to the dashboard.
+        /// </summary>
         public void Log(string message) => _dashboard.AddLog(message);
 
+        /// <summary>
+        /// Logs a message to the dashboard associated with a specific client.
+        /// </summary>
         public void Log(ClientConnection connection, string message) => _dashboard.AddLog(connection, message);
         #endregion
 

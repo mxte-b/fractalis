@@ -10,7 +10,7 @@
         /// <summary>
         /// Attempts to claim this assignment for dispatch. Returns false if already claimed.
         /// </summary>
-        public bool             TryClaim()      => Interlocked.CompareExchange(ref _pending, 1, 0) == 1;
+        public bool             TryClaim()      => Interlocked.CompareExchange(ref _pending, 0, 1) == 1;
 
         /// <summary>
         /// Whether this assignment is still pending and has not been assigned.

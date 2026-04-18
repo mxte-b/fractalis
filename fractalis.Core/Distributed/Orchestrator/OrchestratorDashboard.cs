@@ -17,9 +17,9 @@ namespace fractalis.Core.Distributed.Orchestrator
     internal class OrchestratorDashboard
     {
         private static readonly OrchestratorDashboard           _instance   = new();
-        private ConcurrentQueue<string>                         _logs       = new();
+        private readonly ConcurrentQueue<string>                _logs       = new();
         private ConcurrentDictionary<Guid, ClientConnection>?   _clients;
-        private Layout                                          _layout;
+        private readonly Layout                                 _layout;
         private readonly Panel                                  _header     = new Panel(Banner.V1 + "\n[bold]Orchestrator Dashboard[/]").Border(BoxBorder.Rounded);
         private static readonly int                             _maxLogs    = 8;
 

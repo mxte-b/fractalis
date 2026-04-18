@@ -6,6 +6,7 @@ using Spectre.Console;
 using System.Collections.Concurrent;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace fractalis.Core

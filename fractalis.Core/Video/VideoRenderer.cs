@@ -19,7 +19,7 @@ namespace fractalis.Core.Video
         /// <summary>
         /// Unique ID for this render session (can be overridden in <paramref name="config"/>).
         /// </summary>
-        private readonly string     _renderId               = config.RenderIdOverride ?? Guid.NewGuid().ToString();
+        protected readonly string   _renderId               = config.RenderIdOverride ?? Guid.NewGuid().ToString();
 
         /// <summary>
         /// Configuration of the video.
@@ -29,12 +29,12 @@ namespace fractalis.Core.Video
         /// <summary>
         /// The fractal renderer to use to generate the frames with.
         /// </summary>
-        private FractalRenderer     Renderer                { get; set; } = renderer;
+        protected FractalRenderer   Renderer                { get; set; } = renderer;
 
         /// <summary>
         /// Path of the output directory for the frames.
         /// </summary>
-        private string              ImageSequencePath       => $"render-{_renderId}";
+        protected string            ImageSequencePath       => $"render-{_renderId}";
 
         /// <summary>
         /// Delta controls linear scaling of time across the animation. 
@@ -81,6 +81,28 @@ namespace fractalis.Core.Video
                 Image<Rgb24> image = Renderer.Render(false);
 
                 image.Save(ImageSequencePath + $"/frame{(i+1).ToString().PadLeft(5, '0')}.png");
+            }
+        }
+
+        /// <summary>
+        /// Renders a segment of the video, invoking a callback for each frame with its PNG bytes.
+        /// </summary>
+        /// <param name="startFrame">Absolute frame index to begin rendering from.</param>
+        /// <param name="frameCount">Number of frames to render.</param>
+        /// <param name="onFrame">Async callback receiving the absolute frame index and PNG bytes.</param>
+        public void RenderSegment(int startFrame, int frameCount, Action<int, byte[]> onFrame)
+        {
+            int endFrame = Math.Min(startFrame + frameCount, Config.FrameCount);
+
+            for (int i = startFrame; i < endFrame; i++)
+            {
+                Renderer.Zoom = GetZoom(i);
+
+                using Image<Rgb24> image = Renderer.Render(false);
+                using MemoryStream ms = new();
+
+                image.SaveAsPng(ms);
+                onFrame(i, ms.ToArray());
             }
         }
 
@@ -160,7 +182,7 @@ namespace fractalis.Core.Video
             return Config.ZoomStart * zoom;
         }
 
-        private void CreateOutputDirectory() => Directory.CreateDirectory($"render-{_renderId}");
+        protected void CreateOutputDirectory() => Directory.CreateDirectory($"render-{_renderId}");
         private void RemoveOutputDirectory() => Directory.Delete(ImageSequencePath, true);
     }
 }

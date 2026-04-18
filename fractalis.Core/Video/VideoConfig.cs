@@ -48,7 +48,7 @@ namespace fractalis.Core.Video
         /// <summary>
         /// Frame index to start rendering from (can be used to resume rendering).
         /// </summary>
-        public int                  StartFrame          { get; init; }
+        public int                  StartFrame          { get; init; } = 0;
 
         /// <summary>
         /// Overrides the identifier assigned to the render (used for resume functionality).

@@ -16,7 +16,7 @@ namespace fractalis.Core.Video
 
         public void Initialize(int listenPort = 8060)
         {
-            _listener = new FrameListener(listenPort);
+            _listener = new FrameListener(listenPort, ImageSequencePath);
         }
 
         /// <summary>
@@ -31,6 +31,8 @@ namespace fractalis.Core.Video
                 throw new Exception("The video renderer is not yet initialized.");
             }
 
+            CreateOutputDirectory();
+
             // Starting frame listener
             _ = _listener.Start();
             Console.WriteLine($"Frame listener running at {_listener.Uri}");
@@ -42,7 +44,7 @@ namespace fractalis.Core.Video
             // Sending render request to the orchestrator
             await client.SendMessageToServerAsync(new VideoRenderRequest()
             {
-                UploadUri = _listener.Uri,
+                UploadUri = new Uri(_listener.Uri, "/frame"),
                 VideoConfig = Config,
                 FractalRendererConfig = config
             });

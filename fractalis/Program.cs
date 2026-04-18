@@ -76,7 +76,6 @@ namespace fractalis
                 //RenderIdOverride = "a9f5523e-bd93-4cd1-ac70-19d59a0e5018"
             };
 
-            //Console.WriteLine(JsonSerializer.Serialize(rendererConfig));
             DistributedVideoRenderer videoRenderer = new DistributedVideoRenderer(renderer, config);
             videoRenderer.Initialize();
 

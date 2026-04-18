@@ -1,6 +1,7 @@
 ﻿using fractalis.Core.Distributed.Contexts;
 using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Video;
+using System.Text.Json;
 
 namespace fractalis.Core.Distributed.Runtimes
 {
@@ -19,35 +20,62 @@ namespace fractalis.Core.Distributed.Runtimes
             {
                 case RenderJobListMessage jobListMessage:
                     _jobs = jobListMessage.Jobs;
+                    Console.WriteLine($"Currently available jobs: {jobListMessage.Jobs.Count}");
 
                     // Request assignment if there are jobs
                     if (_jobs.Count > 0)
                     {
                         await RequestAssignmentAsync();
                     }
-                    Console.WriteLine($"Currently available jobs: {jobListMessage.Jobs.Count}");
                     break;
 
                 case RenderJobAnnouncementMessage announcementMessage:
-                    _jobs.Add(announcementMessage.Job);
+                    Console.WriteLine("New job available");
+                    RenderJob announcedJob = announcementMessage.Job;
+
+                    _jobs.Add(announcedJob);
+                    _renderers.Add(announcedJob.Id, new VideoRenderer(new FractalRenderer(announcedJob.FractalRendererConfig), announcedJob.VideoConfig));
 
                     // Request assignment if idle
                     if (_idle)
                     {
                         await RequestAssignmentAsync();
                     }
-                    Console.WriteLine("New job available");
                     break;
 
                 case RenderAssignmentMessage assignmentMessage:
                     RenderAssignment assignment = assignmentMessage.Assignment;
+                    RenderJob? assignedJob = _jobs.FirstOrDefault(x => x.Id == assignment.JobId);
+                    if (assignedJob is null)
+                    {
+                        Console.WriteLine("No matching job found.");
+                        break;
+                    }
 
                     _idle = false;
 
-                    // Do the work
-                    Console.WriteLine($"Assignment: JobId: {assignment.JobId}, from frame {assignment.StartFrameIndex} render {assignment.FrameCount} frames and upload to {assignmentMessage.UploadUri}");
+                    Console.WriteLine($"Assignment: Id: {assignment.Id} JobId: {assignment.JobId}, from frame {assignment.StartFrameIndex} render {assignment.FrameCount} frames and upload to {assignedJob.UploadUri}");
+
+                    _renderers.TryGetValue(assignment.JobId, out VideoRenderer? renderer);
+                    if (renderer is null)
+                    {
+                        Console.WriteLine("Renderer not found");
+                        _idle = true;
+                        break;
+                    }
+
+                    renderer.RenderSegment(assignment.StartFrameIndex, assignment.FrameCount, (frameIndex, bytes) =>
+                    {
+                        _ = HttpHelper.PostAsync(assignedJob.UploadUri.ToString(), new RenderedImageMessage()
+                            {
+                                FrameIndex = frameIndex,
+                                Bytes = bytes
+                            }
+                        );
+                    });
 
                     _idle = true;
+                    await RequestAssignmentAsync();
                     break;
             }
 
