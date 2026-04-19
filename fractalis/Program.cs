@@ -4,9 +4,6 @@ using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
 using fractalis.Core.Video;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using System.Diagnostics;
-using System.Text.Json;
 
 namespace fractalis
 {
@@ -80,7 +77,9 @@ namespace fractalis
             videoRenderer.Initialize();
 
             await videoRenderer.Start(new Uri("ws://localhost:5059/ws"), rendererConfig);
-            //videoRenderer.Save();
+            //VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
+            //videoRenderer.Start();
+            videoRenderer.Save();
 #endif
         }
     }

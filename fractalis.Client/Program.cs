@@ -1,6 +1,7 @@
 ﻿using fractalis.Core;
 using fractalis.Core.Distributed.Clients;
 using fractalis.Core.Distributed.Networking;
+using fractalis.Core.Distributed.Networking.Messages;
 
 namespace fractalis.ClientApp
 {

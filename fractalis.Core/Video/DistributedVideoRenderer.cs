@@ -1,6 +1,7 @@
 ﻿using fractalis.Core.Distributed;
 using fractalis.Core.Distributed.Clients;
 using fractalis.Core.Distributed.Networking;
+using fractalis.Core.Distributed.Networking.Messages;
 using System;
 using System.Collections.Generic;
 using System.Linq;

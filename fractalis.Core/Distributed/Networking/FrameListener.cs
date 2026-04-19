@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using fractalis.Core.Distributed.Networking.Messages;
+using System.Net;
 using System.Net.Sockets;
 using WatsonWebserver;
 using WatsonWebserver.Core;
@@ -76,7 +77,7 @@ namespace fractalis.Core.Distributed.Networking
         {
             RenderedImageMessage body = req.GetData<RenderedImageMessage>();
 
-            string path = $"{_imageSequencePath}/frame-{(body.FrameIndex + 1).ToString().PadLeft(5, '0')}.png";
+            string path = $"{_imageSequencePath}/frame{(body.FrameIndex + 1).ToString().PadLeft(5, '0')}.png";
             Console.WriteLine($"Saving to {path}");
 
             File.WriteAllBytes(path, body.Bytes);

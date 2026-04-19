@@ -1,4 +1,5 @@
 ﻿using fractalis.Core.Distributed.Clients;
+using fractalis.Core.Distributed.Networking.Messages;
 using System.Net.WebSockets;
 
 namespace fractalis.Core.Distributed.Networking

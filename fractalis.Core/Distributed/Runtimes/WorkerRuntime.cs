@@ -1,5 +1,6 @@
 ﻿using fractalis.Core.Distributed.Contexts;
 using fractalis.Core.Distributed.Networking;
+using fractalis.Core.Distributed.Networking.Messages;
 using fractalis.Core.Video;
 using System.Text.Json;
 
@@ -56,6 +57,7 @@ namespace fractalis.Core.Distributed.Runtimes
 
                     Console.WriteLine($"Assignment: Id: {assignment.Id} JobId: {assignment.JobId}, from frame {assignment.StartFrameIndex} render {assignment.FrameCount} frames and upload to {assignedJob.UploadUri}");
 
+                    // Render images
                     _renderers.TryGetValue(assignment.JobId, out VideoRenderer? renderer);
                     if (renderer is null)
                     {
@@ -74,8 +76,31 @@ namespace fractalis.Core.Distributed.Runtimes
                         );
                     });
 
+                    // Report back to the orchestrator
+                    _ = _context.SendMessageToServerAsync(new RenderAssignmentStatusMessage()
+                    {
+                        AssignmentId = assignment.Id,
+                        Status = RenderStatus.Finished
+                    });
+
+                    // Request new assignment
                     _idle = true;
                     await RequestAssignmentAsync();
+                    break;
+
+                case RenderJobStatusMessage jobStatusMessage:
+                    if (jobStatusMessage.Status == RenderStatus.Finished)
+                    {
+                        RenderJob? job = _jobs.FirstOrDefault(x => x.Id == jobStatusMessage.JobId);
+                        if (job is null) break;
+
+                        _jobs.Remove(job);
+                        _renderers.Remove(job.Id);
+                    }
+                    break;
+
+                case NoAssignmentMessage:
+                    Console.WriteLine("No more assignments are available right now.");
                     break;
             }
 

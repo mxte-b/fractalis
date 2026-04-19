@@ -1,6 +1,7 @@
 ﻿using fractalis.Core.Distributed.Clients;
 using fractalis.Core.Distributed.Contexts;
 using fractalis.Core.Distributed.Networking;
+using fractalis.Core.Distributed.Networking.Messages;
 using fractalis.Core.Distributed.Runtimes;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
@@ -109,6 +110,41 @@ namespace fractalis.Core.Distributed.Orchestrator
         }
 
         /// <summary>
+        /// Marks an assignment as completed and removes it from pending assignments.
+        /// </summary>
+        /// <param name="assignmentId">Identifier of the assignment to complete.</param>
+        /// <returns>
+        /// <see langword="true"/> if the associated job is completed; otherwise <see langword="false"/>.
+        /// </returns>
+        /// <remarks>NOT THREAD SAFE YET</remarks>
+        public void CompleteAssignment(Guid assignmentId)
+        {
+            Assignments.TryRemove(assignmentId, out RenderAssignment? assignment);
+            if (assignment is null) return;
+
+            if (!Assignments.Any(a => a.Value.JobId == assignment?.JobId))
+            {
+                _ = BroadcastMessageAsync(new RenderJobStatusMessage() 
+                { 
+                    JobId = assignment.JobId, 
+                    Status = RenderStatus.Finished 
+                });
+            }
+
+            return;
+        }
+
+        /// <summary>
+        /// Attempts to cancel an existing assignment, returning it to a pending state.
+        /// </summary>
+        /// <param name="assignmentId">Identifier of the assignment to cancel.</param>
+        public void CancelAssignment(Guid assignmentId)
+        {
+            Assignments.TryGetValue(assignmentId, out RenderAssignment? assignment);
+            assignment?.TryCancel();
+        }
+
+        /// <summary>
         /// Logs a message to the dashboard.
         /// </summary>
         public void Log(string message) => _dashboard.AddLog(message);
@@ -147,7 +183,7 @@ namespace fractalis.Core.Distributed.Orchestrator
             }
 
             // Listen for incoming messages from the client
-            OrchestratorRuntime runtime = new OrchestratorRuntime(this, connection);
+            ClientSessionRuntime runtime = new ClientSessionRuntime(this, connection);
             ConnectionCloseReason reason = await connection.ListenAsync(runtime, CancellationToken.None);
 
             if (reason != ConnectionCloseReason.NormalClosure)

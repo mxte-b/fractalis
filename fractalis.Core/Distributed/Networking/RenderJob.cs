@@ -1,4 +1,6 @@
-﻿namespace fractalis.Core.Distributed.Networking
+﻿using fractalis.Core.Distributed.Networking.Messages;
+
+namespace fractalis.Core.Distributed.Networking
 {
     /// <summary>
     /// Represents a rendering job with associated configuration.
@@ -14,7 +16,7 @@
     /// <summary>
     /// Defines the possible statuses a render job can have.
     /// </summary>
-    public enum RenderJobStatus
+    public enum RenderStatus
     {
         /// <summary>
         /// Indicates that the render job is finished.

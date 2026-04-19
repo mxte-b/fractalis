@@ -1,9 +1,10 @@
 ﻿using fractalis.Core.Distributed.Contexts;
 using fractalis.Core.Distributed.Networking;
+using fractalis.Core.Distributed.Networking.Messages;
 
 namespace fractalis.Core.Distributed.Runtimes
 {
-    public class OrchestratorRuntime(IOrchestratorContext ctx, ClientConnection conn) : IRuntime
+    public class ClientSessionRuntime(IOrchestratorContext ctx, ClientConnection conn) : IRuntime
     {
         private readonly IOrchestratorContext _context = ctx;
         private readonly ClientConnection _connection = conn;
@@ -32,6 +33,21 @@ namespace fractalis.Core.Distributed.Runtimes
                 // Worker requesting work
                 case RenderAssignmentRequest:
                     await _connection.SendMessageAsync(_context.GetRenderAssignment());
+                    break;
+
+                case RenderAssignmentStatusMessage assignmentStatusMessage:
+                    switch (assignmentStatusMessage.Status)
+                    {
+                        case RenderStatus.Finished:
+                            _context.CompleteAssignment(assignmentStatusMessage.AssignmentId);
+                            break;
+
+                        case RenderStatus.Cancelled:
+                            _context.CancelAssignment(assignmentStatusMessage.AssignmentId);
+                            break;
+
+                        default: throw new Exception("Unknown render status message.");
+                    }
                     break;
 
                 // Status message for a render job

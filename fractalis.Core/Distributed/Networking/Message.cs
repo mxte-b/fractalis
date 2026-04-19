@@ -1,4 +1,5 @@
 ﻿using fractalis.Core.Distributed.Clients;
+using fractalis.Core.Distributed.Networking.Messages;
 using fractalis.Core.Video;
 using System.Text;
 using System.Text.Json;
@@ -24,150 +25,9 @@ namespace fractalis.Core.Distributed.Networking
     [JsonDerivedType(typeof(RenderedImageMessage), "renderedImage")]
     [JsonDerivedType(typeof(RenderAssignmentMessage), "jobAssignment")]
     [JsonDerivedType(typeof(RenderJobAnnouncementMessage), "jobAnnouncement")]
+    [JsonDerivedType(typeof(RenderAssignmentStatusMessage), "assignmentStatus")]
     [JsonDerivedType(typeof(RegistrationAcknowledgedMessage), "registrationAcknowledged")]
     public abstract record Message;
-
-    #region Message types
-    /// <summary>
-    /// Message sent by a client to register itself with the orchestrator.
-    /// </summary>
-    public record RegistrationMessage : Message
-    {
-        /// <summary>
-        /// The display name of the client for identification purposes.
-        /// </summary>
-        public required string          DisplayName { get; init; }
-
-        public ClientRole               Role        { get; init; } = ClientRole.Worker;
-    }
-
-    /// <summary>
-    /// Message sent by a client to reconnect using its existing client ID.
-    /// </summary>
-    public record ReconnectMessage : Message
-    {
-        /// <summary>
-        /// The unique identifier of the client attempting to reconnect.
-        /// </summary>
-        public required Guid            ClientId    { get; init; }
-    }
-
-    /// <summary>
-    /// Message sent by the orchestrator to acknowledge a client's registration.
-    /// </summary>
-    public record RegistrationAcknowledgedMessage : Message
-    {
-        /// <summary>
-        /// The unique identifier assigned to the client by the orchestrator.
-        /// </summary>
-        public required Guid            ClientId    { get; init; }
-    }
-
-    /// <summary>
-    /// Message sent by the initiator to start rendering a video using distributed compute.
-    /// </summary>
-    public record VideoRenderRequest : Message
-    {
-        /// <summary>
-        /// The URI where clients will upload the frames to.
-        /// </summary>
-        public required Uri                     UploadUri               { get; init; }
-
-        /// <summary>
-        /// Configuration of the video.
-        /// </summary>
-        public required VideoConfig             VideoConfig             { get; init; }
-
-        /// <summary>
-        /// Configuration of the fractal renderer.
-        /// </summary>
-        public required FractalRendererConfig   FractalRendererConfig   { get; init; }
-
-    }
-
-    /// <summary>
-    /// Message sent by the orchestrator to a render client that gives all currently available render jobs.
-    /// </summary>
-    public record RenderJobListMessage : Message
-    {
-        public required List<RenderJob>         Jobs                    { get; init; }   
-    }
-
-    /// <summary>
-    /// Message sent by the orchestrator to a render client when a new render job gets added.
-    /// </summary>
-    public record RenderJobAnnouncementMessage : Message
-    {
-        /// <summary>
-        /// The added job.
-        /// </summary>
-        public required RenderJob Job { get; init; }
-    }
-
-    /// <summary>
-    /// Message sent by a worker to the orchestrator to request a render job.
-    /// </summary>
-    public record RenderAssignmentRequest : Message;
-
-    /// <summary>
-    /// Message sent by the orchestrator to a render client for rendering images.
-    /// </summary>
-    public record RenderAssignmentMessage : Message
-    {
-        /// <summary>
-        /// The assignment.
-        /// </summary>
-        public required RenderAssignment Assignment { get; init; }
-    }
-
-    /// <summary>
-    /// Message sent by the orchestrator to a render client when no assignment could be provided.
-    /// </summary>
-    public record NoAssignmentMessage : Message;
-
-    /// <summary>
-    /// Message sent by the orchestrator to the initiator to report job status.
-    /// </summary>
-    public record RenderJobStatusMessage : Message
-    {
-        /// <summary>
-        /// The unique identifier of the render job.
-        /// </summary>
-        public required Guid            RenderJobId     { get; init; }
-
-        /// <summary>
-        /// The status of the render job.
-        /// </summary>
-        public required RenderJobStatus Status          { get; init; }
-    }
-
-    /// <summary>
-    /// Message containing rendered image data for a specific frame.
-    /// </summary>
-    public record RenderedImageMessage : Message
-    {
-        /// <summary>
-        /// Index of the rendered frame.
-        /// </summary>
-        public required int             FrameIndex      { get; init; }
-
-        /// <summary>
-        /// Raw image data in byte form.
-        /// </summary>
-        public required byte[]          Bytes           { get; init; }
-    }
-
-    /// <summary>
-    /// Message used for debugging purposes, containing arbitrary text content.
-    /// </summary>
-    public record DebugMessage : Message
-    {
-        /// <summary>
-        /// The debug message content.
-        /// </summary>
-        public required string          Content     { get; init; }
-    }
-    #endregion
 
     /// <summary>
     /// Provides serialization utilities for <see cref="Message"/> objects.

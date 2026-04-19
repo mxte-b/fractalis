@@ -13,6 +13,12 @@
         public bool             TryClaim()      => Interlocked.CompareExchange(ref _pending, 0, 1) == 1;
 
         /// <summary>
+        /// Attempts to cancel this assignment if it has been claimed.
+        /// </summary>
+        /// <returns><see langword="true"/> if the assignment was successfully reverted to pending; otherwise <see langword="false"/>.</returns>
+        public bool             TryCancel()     => Interlocked.CompareExchange(ref _pending, 1, 0) == 0;
+
+        /// <summary>
         /// Whether this assignment is still pending and has not been assigned.
         /// </summary>
         public bool             IsPending       => Volatile.Read(ref _pending) == 1;

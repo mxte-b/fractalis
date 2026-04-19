@@ -1,5 +1,6 @@
 ﻿using fractalis.Core.Distributed.Contexts;
 using fractalis.Core.Distributed.Networking;
+using fractalis.Core.Distributed.Networking.Messages;
 
 namespace fractalis.Core.Distributed.Runtimes
 {
