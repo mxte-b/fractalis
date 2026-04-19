@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using fractalis.Core.Distributed.Clients;
+using fractalis.Core.Distributed.Networking.Messages;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Networking
 {
     /// <summary>
     /// Represents a connection from the client to a server.
@@ -34,7 +30,7 @@ namespace fractalis.Core.Distributed
         /// <returns>
         /// A <see cref="ServerConnection"/> representing the server connection if registration succeeds; otherwise, <see langword="null"/>.
         /// </returns>
-        public static async Task<ServerConnection?> RegisterAsync(string displayName, WebSocket socket, TimeSpan timeout)
+        public static async Task<ServerConnection?> RegisterAsync(WebSocket socket, string displayName, ClientRole role, TimeSpan timeout)
         {
             ServerConnection? connection = null;
             WebSocketMessageListener messageListener = new(socket);
@@ -43,14 +39,14 @@ namespace fractalis.Core.Distributed
             source.CancelAfter(timeout);
 
             // Send registration request
-            await SendMessageInternal(new RegistrationMessage() { DisplayName = displayName }, socket, source.Token);
+            await SendMessageInternal(new RegistrationMessage() { DisplayName = displayName, Role = role }, socket, source.Token);
 
             // Listen for registration acknowledgement
-            await messageListener.ListenAsync((message, socket) =>
+            await messageListener.ListenAsync((message) =>
             {
                 if (message is RegistrationAcknowledgedMessage ack)
                 {
-                    connection = new ServerConnection() 
+                    connection = new ServerConnection()
                     {
                         Id = ack.ClientId,
                         Socket = socket
@@ -61,7 +57,7 @@ namespace fractalis.Core.Distributed
 
                 return MessageHandlingResult.Continue;
             }, source.Token);
-            
+
             return connection;
         }
     }

@@ -1,8 +1,9 @@
-﻿using Spectre.Console;
+﻿using fractalis.Core.Distributed.Networking;
+using Spectre.Console;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Orchestrator
 {
     /// <summary>
     /// Singleton dashboard for monitoring and interacting with connected clients
@@ -16,9 +17,9 @@ namespace fractalis.Core.Distributed
     internal class OrchestratorDashboard
     {
         private static readonly OrchestratorDashboard           _instance   = new();
-        private ConcurrentQueue<string>                         _logs       = new();
+        private readonly ConcurrentQueue<string>                _logs       = new();
         private ConcurrentDictionary<Guid, ClientConnection>?   _clients;
-        private Layout                                          _layout;
+        private readonly Layout                                 _layout;
         private readonly Panel                                  _header     = new Panel(Banner.V1 + "\n[bold]Orchestrator Dashboard[/]").Border(BoxBorder.Rounded);
         private static readonly int                             _maxLogs    = 8;
 
@@ -97,7 +98,7 @@ namespace fractalis.Core.Distributed
         /// <param name="message">The log message text.</param>
         public void AddLog(ClientConnection connection, string message)
         {
-            _logs.Enqueue($"[grey]{DateTime.Now:HH:mm:ss}[/] [cyan]{connection.DisplayName}[/] [grey]({connection.Id.ToString()[..8]}) [/]{message}");
+            _logs.Enqueue($"[grey]{DateTime.Now:HH:mm:ss}[/] [cyan]{connection.DisplayName}[/] [darkorange][[{connection.Role}]][/] [grey]({connection.Id.ToString()[..8]}) [/]{message}");
 
             while (_logs.Count > _maxLogs) _logs.TryDequeue(out _);
         }

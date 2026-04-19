@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
+﻿using fractalis.Core.Distributed.Clients;
+using fractalis.Core.Distributed.Networking.Messages;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Networking
 {
     /// <summary>
     /// Represents a client connected to the server via WebSocket.
@@ -20,7 +16,12 @@ namespace fractalis.Core.Distributed
         /// <summary>
         /// Display name of the connected client.
         /// </summary>
-        public required string DisplayName { get; init; }
+        public required string      DisplayName { get; init; }
+        
+        /// <summary>
+        /// Role assigned to the client, determining its permissions and behavior on the server.
+        /// </summary>
+        public required ClientRole  Role        { get; init; }
 
         private ClientConnection() { }
 
@@ -42,7 +43,7 @@ namespace fractalis.Core.Distributed
 
             try
             {
-                await messageListener.ListenAsync((message, socket) =>
+                await messageListener.ListenAsync((message) =>
                 {
                     switch (message)
                     {
@@ -52,6 +53,7 @@ namespace fractalis.Core.Distributed
                                 DisplayName = reg.DisplayName,
                                 Id = Guid.NewGuid(),
                                 Socket = socket,
+                                Role = reg.Role
                             };
                             return MessageHandlingResult.Stop;
 

@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using fractalis.Core.Distributed.Runtimes;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Networking
 {
     /// <summary>
     /// Represents a base WebSocket connection with messaging capabilities.
@@ -41,7 +37,7 @@ namespace fractalis.Core.Distributed
         /// <param name="callback">Callback invoked for each received message.</param>
         /// <param name="cancellationToken">Token to cancel the listener.</param>
         /// <returns>Reason why the connection ended.</returns>
-        public async Task<ConnectionCloseReason> ListenAsync(Func<Message?, WebSocket, Task<MessageHandlingResult>> callback, CancellationToken cancellationToken = default)
+        public async Task<ConnectionCloseReason> ListenAsync(Func<Message?, Task<MessageHandlingResult>> callback, CancellationToken cancellationToken = default)
         {
             _messageListener = new WebSocketMessageListener(Socket);
 
@@ -61,12 +57,37 @@ namespace fractalis.Core.Distributed
             return ConnectionCloseReason.NormalClosure;
         }
 
+        public async Task<ConnectionCloseReason> ListenAsync(IRuntime runtime, CancellationToken cancellationToken = default)
+        {
+            _messageListener = new WebSocketMessageListener(Socket);
+
+            try
+            {
+                await _messageListener.ListenAsync(async (message) =>
+                {
+                    if (message is null) return MessageHandlingResult.Continue;
+
+                    return await runtime.HandleMessage(message);
+                }, cancellationToken);
+            }
+            catch (WebSocketException)
+            {
+                return ConnectionCloseReason.Error;
+            }
+            catch (OperationCanceledException)
+            {
+                return ConnectionCloseReason.Cancelled;
+            }
+
+            return ConnectionCloseReason.NormalClosure;
+        }
+
         /// <summary>
         /// Overload of <see cref="ListenAsync(Func{Message?,WebSocket,Task{MessageHandlingResult}},CancellationToken)"/> for synchronous callbacks.
         /// </summary>
-        public async Task<ConnectionCloseReason> ListenAsync(Func<Message?, WebSocket, MessageHandlingResult> callback, CancellationToken cancellationToken = default)
+        public async Task<ConnectionCloseReason> ListenAsync(Func<Message?, MessageHandlingResult> callback, CancellationToken cancellationToken = default)
         {
-            return await ListenAsync((message, socket) => Task.FromResult(callback(message, socket)), cancellationToken);
+            return await ListenAsync((message) => Task.FromResult(callback(message)), cancellationToken);
         }
 
         /// <summary>

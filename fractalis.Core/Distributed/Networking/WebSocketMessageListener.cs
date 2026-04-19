@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.WebSockets;
+﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Networking
 {
     /// <summary>
     /// Listens to incoming messages on a <see cref="WebSocket"/> and invokes callbacks for each message.
@@ -33,32 +28,38 @@ namespace fractalis.Core.Distributed
         /// Returning <see cref="MessageHandlingResult.Stop"/> will end the listener.
         /// </param>
         /// <param name="cancellationToken">Token to cancel the listener.</param>
-        public async Task ListenAsync(Func<Message?, WebSocket, Task<MessageHandlingResult>> callback, CancellationToken cancellationToken)
+        public async Task ListenAsync(Func<Message?, Task<MessageHandlingResult>> callback, CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[1024];
+            using MemoryStream ms = new();
 
             while (_socket.State == WebSocketState.Open)
             {
-                var result = await _socket.ReceiveAsync(buffer, cancellationToken);
+                ms.SetLength(0);
+
+                WebSocketReceiveResult result;
+                do
+                {
+                    result = await _socket.ReceiveAsync(buffer, cancellationToken);
+                    ms.Write(buffer, 0, result.Count);
+                }
+                while (!result.EndOfMessage);
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     await CloseConnection(_socket, result);
                     break;
                 }
-                else
-                {
-                    try
-                    {
-                        string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                        Message? parsed = JsonSerializer.Deserialize<Message>(message);
 
-                        if (await callback.Invoke(parsed, _socket) == MessageHandlingResult.Stop) break;
-                    }
-                    catch (JsonException)
-                    {
-                        // Ignore non-JSON messages
-                    }
+                try
+                {
+                    string message = Encoding.UTF8.GetString(ms.ToArray());
+                    Message? parsed = MessageSerializer.Deserialize(message);
+                    if (await callback.Invoke(parsed) == MessageHandlingResult.Stop) break;
+                }
+                catch (JsonException)
+                {
+                    // Ignore non-JSON messages
                 }
             }
         }
@@ -66,9 +67,9 @@ namespace fractalis.Core.Distributed
         /// <summary>
         /// Overload of <see cref="ListenAsync(Func{Message?,WebSocket,Task{MessageHandlingResult}},CancellationToken)"/> for synchronous callbacks.
         /// </summary>
-        public async Task ListenAsync(Func<Message?, WebSocket, MessageHandlingResult> callback, CancellationToken cancellationToken)
+        public async Task ListenAsync(Func<Message?, MessageHandlingResult> callback, CancellationToken cancellationToken)
         {
-            await ListenAsync((message, socket) => Task.FromResult(callback(message, socket)), cancellationToken);
+            await ListenAsync((message) => Task.FromResult(callback(message)), cancellationToken);
         }
 
         /// <summary>

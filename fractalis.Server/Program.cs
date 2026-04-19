@@ -1,11 +1,12 @@
-using fractalis.Core.Distributed;
+using fractalis.Core.Distributed.Orchestrator;
 
-namespace fractalis.Server
+namespace fractalis.ServerApp
 {
     public class Program
     {
         public static void Main(string[] args)
         {
+            
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             Orchestrator orchestrator = new Orchestrator();

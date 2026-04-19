@@ -4,9 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core
 {
-    internal class StorageNode
+    public enum AntiAliasing
     {
+        NoAntialiasing = 0,
+        X2 = 2,
+        X4 = 4,
+        X8 = 8
     }
 }

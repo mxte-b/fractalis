@@ -4,14 +4,12 @@ using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
 using fractalis.Core.Video;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using System.Diagnostics;
 
 namespace fractalis
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine(Banner.V1);
 #if BENCHMARK
@@ -74,11 +72,14 @@ namespace fractalis
                 //StartFrame = 17393,
                 //RenderIdOverride = "a9f5523e-bd93-4cd1-ac70-19d59a0e5018"
             };
-            VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
 
+            DistributedVideoRenderer videoRenderer = new DistributedVideoRenderer(renderer, config);
+            videoRenderer.Initialize();
 
+            await videoRenderer.Start(new Uri("ws://localhost:5059/ws"), rendererConfig);
+            //VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
             //videoRenderer.Start();
-            //videoRenderer.Save();
+            videoRenderer.Save();
 #endif
         }
     }

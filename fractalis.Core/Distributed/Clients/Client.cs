@@ -1,24 +1,22 @@
-﻿using System;
-using System.Net.Sockets;
+﻿using fractalis.Core.Distributed.Contexts;
+using fractalis.Core.Distributed.Networking;
+using fractalis.Core.Distributed.Runtimes;
 using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace fractalis.Core.Distributed
+namespace fractalis.Core.Distributed.Clients
 {
     /// <summary>
     /// Represents a client that connects to the orchestrator server to send and receive messages.
     /// </summary>
+    /// <param name="runtime">The client runtime which will handle incoming messages.</param>
     /// <remarks>
     /// Manages connection registration, message listening, sending, and graceful disconnection.
     /// Uses <see cref="ClientRuntime"/> to handle incoming messages.
     /// </remarks>
-    public class RenderClient
+    public class Client(IRuntime runtime) : IClientContext
     {
         private ServerConnection?           _connection;
-        private readonly ClientRuntime      _runtime = new ClientRuntime();
+        private readonly IRuntime           _runtime            = runtime;
         private static readonly TimeSpan    RegistrationTimeout = TimeSpan.FromSeconds(10);
 
         /// <summary>
@@ -35,7 +33,7 @@ namespace fractalis.Core.Distributed
         /// <remarks>
         /// If the WebSocket fails to open or registration fails, <see cref="Connected"/> remains false.
         /// </remarks>
-        public async Task Connect(Uri uri, string displayName)
+        public async Task Connect(Uri uri, string displayName, ClientRole role = ClientRole.Worker)
         {
             ClientWebSocket ws = new ClientWebSocket();
 
@@ -45,7 +43,7 @@ namespace fractalis.Core.Distributed
                 return;
             }
 
-            _connection = await ServerConnection.RegisterAsync(displayName, ws, RegistrationTimeout);
+            _connection = await ServerConnection.RegisterAsync(ws, displayName, role, RegistrationTimeout);
             if (_connection != null)
             {
                 Connected = true;
@@ -61,20 +59,12 @@ namespace fractalis.Core.Distributed
         /// </exception>
         public async Task Start()
         {
-            if (!Connected)
+            if (!Connected || _connection is null)
             {
                 throw new InvalidOperationException("Cannot start client because it is not connected.");
             }
 
-            await _connection!.ListenAsync(async (message, _) =>
-            {
-                if (message != null)
-                {
-                    await _runtime.HandleMessage(message);
-                }
-
-                return MessageHandlingResult.Continue;
-            }, CancellationToken.None);
+            await _connection.ListenAsync(_runtime, CancellationToken.None);
         }
 
         /// <summary>
