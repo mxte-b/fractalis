@@ -103,175 +103,7 @@ namespace fractalis.Core.Fractals
             return new IterationResult(i, escapeMag);
         }
 
-        /// <summary>
-        /// Performs SIMD-accelerated Mandelbrot iterations for four points simultaneously.
-        /// </summary>
-        /// <param name="cr">Vector of real components.</param>
-        /// <param name="ci">Vector of imaginary components.</param>
-        /// <param name="maxIterations">Maximum iterations per point.</param>
-        /// <returns>Tuple of <see cref="IterationResult"/> for each point.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationSIMD(Vector256<double> cr, Vector256<double> ci, int maxIterations)
-        {
-            Vector256<double> zr            = Vector256<double>.Zero;
-            Vector256<double> zi            = Vector256<double>.Zero;
-            Vector256<double> iterations    = Vector256<double>.Zero;
-            Vector256<double> escapeMags    = Vector256<double>.Zero;
-            Vector256<double> active        = Vector256<double>.AllBitsSet;
-            Vector256<double> one           = Vector256.Create(1.0);
-            Vector256<double> two           = Vector256.Create(2.0);
-            Vector256<double> bailout       = Vector256.Create(BAILOUT_DOUBLE);
-
-            for (int i = 0; i < maxIterations; i++)
-            {
-                Vector256<double> newzi = Fma.MultiplyAdd(two * zr, zi, ci);
-                Vector256<double> newzr = Fma.MultiplyAdd(zr, zr, Fma.MultiplyAddNegated(zi, zi, cr));
-
-                // Only apply it to non-escaped points
-                zr = Avx.BlendVariable(zr, newzr, active);
-                zi = Avx.BlendVariable(zi, newzi, active);
-
-                // Bailout if every point escaped
-                Vector256<double> zmag          = Fma.MultiplyAdd(zr, zr, zi * zi);
-                Vector256<double> prevActive    = active;
-
-                active      = Avx.Compare(zmag, bailout, FloatComparisonMode.OrderedLessThanNonSignaling);
-                escapeMags  = Avx.BlendVariable(escapeMags, zmag, Avx.AndNot(active, prevActive));
-
-                if (Avx.TestZ(active, active)) break;
-
-                // Increment iterations
-                iterations = Avx.Add(iterations, Avx.And(active, one));
-            }
-
-            double* magnitudeBuffer = stackalloc double[4];
-            double* iterationBuffer = stackalloc double[4];
-
-            Avx.Store(magnitudeBuffer, escapeMags);
-            Avx.Store(iterationBuffer, iterations);
-
-            int i0 = (int)iterationBuffer[0];
-            int i1 = (int)iterationBuffer[1];
-            int i2 = (int)iterationBuffer[2];
-            int i3 = (int)iterationBuffer[3];
-
-            double z0 = magnitudeBuffer[0];
-            double z1 = magnitudeBuffer[1];
-            double z2 = magnitudeBuffer[2];
-            double z3 = magnitudeBuffer[3];
-
-            static IterationResult Make(int i, double z, int m) => new(i, z, i < m);
-
-            return (Make(i0, z0, maxIterations), Make(i1, z1, maxIterations), Make(i2, z2, maxIterations), Make(i3, z3, maxIterations));
-        }
-
-        /// <summary>
-        /// Performs SIMD-accelerated, perturbation-based iteration for four points.
-        /// </summary>
-        /// <param name="ndcX">Normalized X coordinates vector.</param>
-        /// <param name="ndcY">Normalized Y coordinate.</param>
-        /// <param name="pixelSpacing">Distance between pixels in fractal space.</param>
-        /// <param name="maxIterations">Maximum iterations per point.</param>
-        /// <param name="referenceOrbit">Reference orbit for perturbation.</param>
-        /// <returns>Tuple of <see cref="IterationResult"/> for each point.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationPerturbedSIMD(Vector256<double> ndcX, double ndcY, double pixelSpacing, int maxIterations, in ReferenceOrbit referenceOrbit)
-        {
-            Vector256<double> dzr           = Vector256<double>.Zero;
-            Vector256<double> dzi           = Vector256<double>.Zero;
-            Vector256<double> iterations    = Vector256<double>.Zero;
-            Vector256<double> escapeMags    = Vector256<double>.Zero;
-            Vector256<double> active        = Vector256<double>.AllBitsSet;
-            Vector256<double> one           = Vector256.Create(1.0);
-            Vector256<double> two           = Vector256.Create(2.0);
-            Vector256<double> bailout       = Vector256.Create(BAILOUT_DOUBLE);
-            Vector256<double> dr            = Vector256.Multiply(pixelSpacing, ndcX);
-            Vector256<double> di            = Vector256.Create(ndcY * pixelSpacing);
-
-            int escape = referenceOrbit.EscapeIteration - 1;
-
-            // Get pointer to reference orbit, without GC
-            fixed (double* refR = referenceOrbit.PointsR)
-            fixed (double* refI = referenceOrbit.PointsI)
-            {
-                int refIteration = 0;
-
-                for (int i = 0; i < maxIterations; i++)
-                {
-                    // Read out reference point
-                    Vector256<double> zr_ref = Vector256.Create(refR[refIteration]);
-                    Vector256<double> zi_ref = Vector256.Create(refI[refIteration]);
-                    refIteration++;
-
-                    // 2 * z_ref + delta
-                    Vector256<double> ar = Fma.MultiplyAdd(two, zr_ref, dzr);
-                    Vector256<double> ai = Fma.MultiplyAdd(two, zi_ref, dzi);
-
-                    // delta = (2 * z_ref * dz) * dz + dz + delta
-                    Vector256<double> newdzr = Fma.MultiplyAdd(ar, dzr, Fma.MultiplyAddNegated(ai, dzi, dr));
-                    Vector256<double> newdzi = Fma.MultiplyAdd(ar, dzi, Fma.MultiplyAdd(ai, dzr, di));
-
-                    // Only apply it to non-escaped points
-                    dzr = Avx.BlendVariable(dzr, newdzr, active);
-                    dzi = Avx.BlendVariable(dzi, newdzi, active);
-
-                    // Calulate next z
-                    // z = z_ref + dz
-                    Vector256<double> zr            = Vector256.Create(refR[refIteration]) + dzr;
-                    Vector256<double> zi            = Vector256.Create(refI[refIteration]) + dzi;
-                    Vector256<double> zmag          = Fma.MultiplyAdd(zr, zr, zi * zi);
-                    Vector256<double> prevActive    = active;
-
-                    // Bailout if every point escaped
-                    active = Avx.Compare(zmag, bailout, FloatComparisonMode.OrderedLessThanNonSignaling);
-
-                    // Store magnitudes for points that just escaped
-                    escapeMags = Avx.BlendVariable(escapeMags, zmag, Avx.AndNot(active, prevActive));
-                    if (Avx.TestZ(active, active)) break;
-
-                    // Prevent delta from straying off and causing visual glitches
-                    bool needsRebase = false;
-
-                    // For performance, only check glitches every 4th iteration
-                    // NEEDS TESTING FOR GLITCHES
-                    if ((i & 3) == 0)
-                    {
-                        Vector256<double> dzmag = Fma.MultiplyAdd(dzr, dzr, dzi * dzi);
-                        Vector256<double> cmp = Avx.Compare(zmag, dzmag, FloatComparisonMode.OrderedLessThanNonSignaling);
-                        needsRebase = !Avx.TestZ(cmp, cmp);
-                    }
-
-                    if (needsRebase || refIteration == escape)
-                    {
-                        dzr = zr; dzi = zi; refIteration = 0;
-                    }
-
-                    // Increment iterations
-                    iterations = Avx.Add(iterations, Avx.And(active, one));
-                }
-            }
-
-            double* magnitudeBuffer = stackalloc double[4];
-            double* iterationBuffer = stackalloc double[4];
-
-            Avx.Store(magnitudeBuffer, escapeMags);
-            Avx.Store(iterationBuffer, iterations);
-
-            int i0 = (int)iterationBuffer[0];
-            int i1 = (int)iterationBuffer[1];
-            int i2 = (int)iterationBuffer[2];
-            int i3 = (int)iterationBuffer[3];
-
-            double z0 = magnitudeBuffer[0];
-            double z1 = magnitudeBuffer[1];
-            double z2 = magnitudeBuffer[2];
-            double z3 = magnitudeBuffer[3];
-
-            static IterationResult Make(int i, double z, int m) => new(i, z, i < m);
-
-            return (Make(i0, z0, maxIterations), Make(i1, z1, maxIterations), Make(i2, z2, maxIterations), Make(i3, z3, maxIterations));
-        }
-
+        
         /// <summary>
         /// Performs perturbation-based iteration for a single point.
         /// </summary>
@@ -323,6 +155,177 @@ namespace fractalis.Core.Fractals
             if (i == maxIterations) return new IterationResult(i, double.NaN, false);
             return new IterationResult(i, zmag);
         }
+
+        #region SIMD-accelerated iterations
+        /// <summary>
+        /// Performs SIMD-accelerated Mandelbrot iterations for four points simultaneously.
+        /// </summary>
+        /// <param name="cr">Vector of real components.</param>
+        /// <param name="ci">Vector of imaginary components.</param>
+        /// <param name="maxIterations">Maximum iterations per point.</param>
+        /// <returns>Tuple of <see cref="IterationResult"/> for each point.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationSIMD(Vec256d cr, Vec256d ci, int maxIterations)
+        {
+            Vec256d zr = SimdAgnostic.Zero;
+            Vec256d zi = SimdAgnostic.Zero;
+            Vec256d iterations = SimdAgnostic.Zero;
+            Vec256d escapeMags = SimdAgnostic.Zero;
+            Vec256d active = SimdAgnostic.AllBitsSet;
+            Vec256d one = SimdAgnostic.Create(1.0);
+            Vec256d two = SimdAgnostic.Create(2.0);
+            Vec256d bailout = SimdAgnostic.Create(BAILOUT_DOUBLE);
+
+            for (int i = 0; i < maxIterations; i++)
+            {
+                Vec256d newzi = SimdAgnostic.MultiplyAdd(SimdAgnostic.Multiply(two, zr), zi, ci);
+                Vec256d newzr = SimdAgnostic.MultiplyAdd(zr, zr, SimdAgnostic.MultiplyAddNegated(zi, zi, cr));
+
+                // Only apply it to non-escaped points
+                zr = SimdAgnostic.BlendVariable(zr, newzr, active);
+                zi = SimdAgnostic.BlendVariable(zi, newzi, active);
+
+                // Bailout if every point escaped
+                Vec256d zmag = SimdAgnostic.MultiplyAdd(zr, zr, SimdAgnostic.Multiply(zi, zi));
+                Vec256d prevActive = active;
+
+                active = SimdAgnostic.CompareLessThan(zmag, bailout);
+                escapeMags = SimdAgnostic.BlendVariable(escapeMags, zmag, SimdAgnostic.AndNot(active, prevActive));
+
+                if (SimdAgnostic.TestZ(active, active)) break;
+
+                // Increment iterations
+                iterations = SimdAgnostic.Add(iterations, SimdAgnostic.And(active, one));
+            }
+
+            double* magnitudeBuffer = stackalloc double[4];
+            double* iterationBuffer = stackalloc double[4];
+
+            SimdAgnostic.Store(magnitudeBuffer, escapeMags);
+            SimdAgnostic.Store(iterationBuffer, iterations);
+
+            int i0 = (int)iterationBuffer[0];
+            int i1 = (int)iterationBuffer[1];
+            int i2 = (int)iterationBuffer[2];
+            int i3 = (int)iterationBuffer[3];
+
+            double z0 = magnitudeBuffer[0];
+            double z1 = magnitudeBuffer[1];
+            double z2 = magnitudeBuffer[2];
+            double z3 = magnitudeBuffer[3];
+
+            static IterationResult Make(int i, double z, int m) => new(i, z, i < m);
+
+            return (Make(i0, z0, maxIterations), Make(i1, z1, maxIterations), Make(i2, z2, maxIterations), Make(i3, z3, maxIterations));
+        }
+
+        /// <summary>
+        /// Performs SIMD-accelerated, perturbation-based iteration for four points.
+        /// </summary>
+        /// <param name="ndcX">Normalized X coordinates vector.</param>
+        /// <param name="ndcY">Normalized Y coordinate.</param>
+        /// <param name="pixelSpacing">Distance between pixels in fractal space.</param>
+        /// <param name="maxIterations">Maximum iterations per point.</param>
+        /// <param name="referenceOrbit">Reference orbit for perturbation.</param>
+        /// <returns>Tuple of <see cref="IterationResult"/> for each point.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationPerturbedSIMD(Vec256d ndcX, double ndcY, double pixelSpacing, int maxIterations, in ReferenceOrbit referenceOrbit)
+        {
+            Vec256d dzr = SimdAgnostic.Zero;
+            Vec256d dzi = SimdAgnostic.Zero;
+            Vec256d iterations = SimdAgnostic.Zero;
+            Vec256d escapeMags = SimdAgnostic.Zero;
+            Vec256d active = SimdAgnostic.AllBitsSet;
+            Vec256d one = SimdAgnostic.Create(1.0);
+            Vec256d two = SimdAgnostic.Create(2.0);
+            Vec256d bailout = SimdAgnostic.Create(BAILOUT_DOUBLE);
+            Vec256d dr = SimdAgnostic.Multiply(pixelSpacing, ndcX);
+            Vec256d di = SimdAgnostic.Create(ndcY * pixelSpacing);
+
+            int escape = referenceOrbit.EscapeIteration - 1;
+
+            // Get pointer to reference orbit, without GC
+            fixed (double* refR = referenceOrbit.PointsR)
+            fixed (double* refI = referenceOrbit.PointsI)
+            {
+                int refIteration = 0;
+
+                for (int i = 0; i < maxIterations; i++)
+                {
+                    // Read out reference point
+                    Vec256d zr_ref = SimdAgnostic.Create(refR[refIteration]);
+                    Vec256d zi_ref = SimdAgnostic.Create(refI[refIteration]);
+                    refIteration++;
+
+                    // 2 * z_ref + delta
+                    Vec256d ar = SimdAgnostic.MultiplyAdd(two, zr_ref, dzr);
+                    Vec256d ai = SimdAgnostic.MultiplyAdd(two, zi_ref, dzi);
+
+                    // delta = (2 * z_ref * dz) * dz + dz + delta
+                    Vec256d newdzr = SimdAgnostic.MultiplyAdd(ar, dzr, SimdAgnostic.MultiplyAddNegated(ai, dzi, dr));
+                    Vec256d newdzi = SimdAgnostic.MultiplyAdd(ar, dzi, SimdAgnostic.MultiplyAdd(ai, dzr, di));
+
+                    // Only apply it to non-escaped points
+                    dzr = SimdAgnostic.BlendVariable(dzr, newdzr, active);
+                    dzi = SimdAgnostic.BlendVariable(dzi, newdzi, active);
+
+                    // Calulate next z
+                    // z = z_ref + dz
+                    Vec256d zr = SimdAgnostic.Add(SimdAgnostic.Create(refR[refIteration]), dzr);
+                    Vec256d zi = SimdAgnostic.Add(SimdAgnostic.Create(refI[refIteration]), dzi);
+                    Vec256d zmag = SimdAgnostic.MultiplyAdd(zr, zr, SimdAgnostic.Multiply(zi, zi));
+                    Vec256d prevActive = active;
+
+                    // Bailout if every point escaped
+                    active = SimdAgnostic.CompareLessThan(zmag, bailout);
+
+                    // Store magnitudes for points that just escaped
+                    escapeMags = SimdAgnostic.BlendVariable(escapeMags, zmag, SimdAgnostic.AndNot(active, prevActive));
+                    if (SimdAgnostic.TestZ(active, active)) break;
+
+                    // Prevent delta from straying off and causing visual glitches
+                    bool needsRebase = false;
+
+                    // For performance, only check glitches every 4th iteration
+                    // NEEDS TESTING FOR GLITCHES
+                    if ((i & 3) == 0)
+                    {
+                        Vec256d dzmag = SimdAgnostic.MultiplyAdd(dzr, dzr, SimdAgnostic.Multiply(dzi, dzi));
+                        Vec256d cmp = SimdAgnostic.CompareLessThan(zmag, dzmag);
+                        needsRebase = !SimdAgnostic.TestZ(cmp, cmp);
+                    }
+
+                    if (needsRebase || refIteration == escape)
+                    {
+                        dzr = zr; dzi = zi; refIteration = 0;
+                    }
+
+                    // Increment iterations
+                    iterations = SimdAgnostic.Add(iterations, SimdAgnostic.And(active, one));
+                }
+            }
+
+            double* magnitudeBuffer = stackalloc double[4];
+            double* iterationBuffer = stackalloc double[4];
+
+            SimdAgnostic.Store(magnitudeBuffer, escapeMags);
+            SimdAgnostic.Store(iterationBuffer, iterations);
+
+            int i0 = (int)iterationBuffer[0];
+            int i1 = (int)iterationBuffer[1];
+            int i2 = (int)iterationBuffer[2];
+            int i3 = (int)iterationBuffer[3];
+
+            double z0 = magnitudeBuffer[0];
+            double z1 = magnitudeBuffer[1];
+            double z2 = magnitudeBuffer[2];
+            double z3 = magnitudeBuffer[3];
+
+            static IterationResult Make(int i, double z, int m) => new(i, z, i < m);
+
+            return (Make(i0, z0, maxIterations), Make(i1, z1, maxIterations), Make(i2, z2, maxIterations), Make(i3, z3, maxIterations));
+        }
+        #endregion
 
         /// <summary>
         /// Calculates a reference orbit for a given center in the Mandelbrot set.

@@ -221,13 +221,13 @@ namespace fractalis.Core
             int x = 0;
             for (; x <= Width - 4; x += 4)
             {
-                var ndcX = Fma.MultiplyAdd(
-                    Vector256.Create(x, x + 1.0, x + 2.0, x + 3.0),
-                    Vector256.Create(ndcStepX),
-                    Vector256.Create(-_aspectRatio));
+                var ndcX = SimdAgnostic.MultiplyAdd(
+                    SimdAgnostic.Create(x, x + 1.0, x + 2.0, x + 3.0),
+                    SimdAgnostic.Create(ndcStepX),
+                    SimdAgnostic.Create(-_aspectRatio));
 
-                var cr = Fma.MultiplyAdd(ndcX, Vector256.Create(_pixelSpacingDouble), Vector256.Create(_centerDouble.Real));
-                var (r0, r1, r2, r3) = simd.IterationSIMD(cr, Vector256.Create(ci), Iterations);
+                var cr = SimdAgnostic.MultiplyAdd(ndcX, SimdAgnostic.Create(_pixelSpacingDouble), SimdAgnostic.Create(_centerDouble.Real));
+                var (r0, r1, r2, r3) = simd.IterationSIMD(cr, SimdAgnostic.Create(ci), Iterations);
 
                 image[x, y]     = Sample(r0);
                 image[x + 1, y] = Sample(r1);
@@ -274,10 +274,10 @@ namespace fractalis.Core
 
             for (; x <= Width - 4; x += 4)
             {
-                var ndcX = Fma.MultiplyAdd(
-                    Vector256.Create(x, x + 1.0, x + 2.0, x + 3.0),
-                    Vector256.Create(ndcStepX),
-                    Vector256.Create(-_aspectRatio));
+                var ndcX = SimdAgnostic.MultiplyAdd(
+                    SimdAgnostic.Create(x, x + 1.0, x + 2.0, x + 3.0),
+                    SimdAgnostic.Create(ndcStepX),
+                    SimdAgnostic.Create(-_aspectRatio));
 
                 var (r0, r1, r2, r3) = simd.IterationPerturbedSIMD(ndcX, ndcY, _pixelSpacingDouble, Iterations, in _referenceOrbit);
                 
