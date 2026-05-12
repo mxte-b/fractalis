@@ -2,10 +2,15 @@
 
 namespace fractalis.Core.Distributed.Clients
 {
-    public class WorkerClient : ClientWrapper<WorkerRuntime>
+    public record WorkerClientOptions
     {
-        public WorkerClient() : base(ctx => new WorkerRuntime(ctx)) { }
+        public static WorkerClientOptions Default { get; } = new WorkerClientOptions();
+        public double ProcessorUsageLimit { get; init; } = 1;
+    }
 
+    public class WorkerClient(WorkerClientOptions? options = null)
+        : ClientWrapper<WorkerRuntime>(ctx => new WorkerRuntime(ctx, options ?? WorkerClientOptions.Default))
+    {
         public Task Connect(Uri uri, string displayName) => Connect(uri, displayName, ClientRole.Worker);
     }
 }

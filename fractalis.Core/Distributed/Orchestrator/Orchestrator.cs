@@ -83,6 +83,19 @@ namespace fractalis.Core.Distributed.Orchestrator
             }
         }
 
+        private static async Task<bool> IsHealthy(string url)
+        {
+            try
+            {
+                await HttpHelper.GetAsync(url);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         #region Context-revealed methods
         /// <summary>
         /// Adds a job, splits it into assignments, and notifies worker clients.

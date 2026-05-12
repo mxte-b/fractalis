@@ -83,7 +83,7 @@ namespace fractalis.Core.Fractals
         /// A tuple of <see cref="IterationResult"/> for each point.
         /// </returns>
         (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3)
-            IterationSIMD(Vector256<double> cr, Vector256<double> ci, int maxIterations);
+            IterationSIMD(Vec256d cr, Vec256d ci, int maxIterations);
     }
 
     /// <summary>
@@ -103,6 +103,6 @@ namespace fractalis.Core.Fractals
         /// A tuple of <see cref="IterationResult"/> for each point.
         /// </returns>
         (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3)
-            IterationPerturbedSIMD(Vector256<double> ndcX, double ndcY, double pixelSpacing, int maxIterations, in ReferenceOrbit referenceOrbit);
+            IterationPerturbedSIMD(Vec256d ndcX, double ndcY, double pixelSpacing, int maxIterations, in ReferenceOrbit referenceOrbit);
     }
 }

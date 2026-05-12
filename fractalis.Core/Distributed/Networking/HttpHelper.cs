@@ -29,5 +29,20 @@ namespace fractalis.Core.Distributed.Networking
 
             return await response.Content.ReadAsStringAsync();
         }
+
+        /// <summary>
+        /// Sends a GET request to the specified URL.
+        /// </summary>
+        /// <param name="url">Target endpoint URL.</param>
+        /// <returns>The response body as a string.</returns>
+        /// <exception cref="HttpRequestException">Thrown if the response indicates failure.</exception>
+        public static async Task<string> GetAsync(string url)
+        {
+            HttpResponseMessage response = await _client.GetAsync(url);
+
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync();
+        }
     }
 }

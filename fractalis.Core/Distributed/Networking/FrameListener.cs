@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using WatsonWebserver;
 using WatsonWebserver.Core;
+using WatsonWebserver.Core.Health;
 
 namespace fractalis.Core.Distributed.Networking
 {
@@ -34,6 +35,7 @@ namespace fractalis.Core.Distributed.Networking
             _listener = new Webserver(settings, DefaultRoute);
 
             // Endpoints
+            _listener.UseHealthCheck();
             _listener.Post<RenderedImageMessage>("/frame", PostFrame);
         }
 
