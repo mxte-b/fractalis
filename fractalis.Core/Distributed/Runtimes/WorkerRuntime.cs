@@ -2,11 +2,11 @@
 using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Distributed.Networking.Messages;
 using fractalis.Core.Video;
-using System.Text.Json;
+using fractalis.Core.Distributed.Clients;
 
 namespace fractalis.Core.Distributed.Runtimes
 {
-    public class WorkerRuntime(IClientContext context) : IRuntime
+    public class WorkerRuntime(IClientContext context, WorkerClientOptions options) : IRuntime
     {
         private readonly IClientContext                     _context    = context;
         private bool                                        _idle       = true;
@@ -15,12 +15,27 @@ namespace fractalis.Core.Distributed.Runtimes
 
         private async Task RequestAssignmentAsync() => await _context.SendMessageToServerAsync(new RenderAssignmentRequest());
 
+        private VideoRenderer CreateRenderer(FractalRendererConfig rendererConfig, VideoConfig videoConfig)
+        {
+            return new VideoRenderer(new FractalRenderer(rendererConfig with
+            {
+                ProcessorUsageLimit = options.ProcessorUsageLimit
+            }), videoConfig);
+        }
+
         public async Task<MessageHandlingResult> HandleMessage(Message message)
         {
             switch (message)
             {
                 case RenderJobListMessage jobListMessage:
                     _jobs = jobListMessage.Jobs;
+                    _renderers.Clear();
+
+                    foreach (var job in _jobs)
+                    {
+                        _renderers.Add(job.Id, CreateRenderer(job.FractalRendererConfig, job.VideoConfig));
+                    }
+                    
                     Console.WriteLine($"Currently available jobs: {jobListMessage.Jobs.Count}");
 
                     // Request assignment if there are jobs
@@ -33,9 +48,10 @@ namespace fractalis.Core.Distributed.Runtimes
                 case RenderJobAnnouncementMessage announcementMessage:
                     Console.WriteLine("New job available");
                     RenderJob announcedJob = announcementMessage.Job;
+                    
 
                     _jobs.Add(announcedJob);
-                    _renderers.Add(announcedJob.Id, new VideoRenderer(new FractalRenderer(announcedJob.FractalRendererConfig), announcedJob.VideoConfig));
+                    _renderers.Add(announcedJob.Id, CreateRenderer(announcedJob.FractalRendererConfig, announcedJob.VideoConfig));
 
                     // Request assignment if idle
                     if (_idle)

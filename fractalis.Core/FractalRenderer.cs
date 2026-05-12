@@ -17,29 +17,36 @@ namespace fractalis.Core
     public record FractalRendererConfig
     {
         /// <summary>Fractal instance to render.</summary>
-        public required IFractal    Fractal         { get; init; }
+        public required IFractal    Fractal             { get; init; }
 
         /// <summary>Maximum number of iterations for escape-time calculation.</summary>
-        public required int         Iterations      { get; init; }
+        public required int         Iterations          { get; init; }
 
         /// <summary>Width of the output image in pixels.</summary>
-        public required int         Width           { get; init; }
+        public required int         Width               { get; init; }
 
         /// <summary>Height of the output image in pixels.</summary>
-        public required int         Height          { get; init; }
+        public required int         Height              { get; init; }
 
         /// <summary>Zoom level for the fractal view.</summary>
         [JsonConverter(typeof(BigFloatJsonConverter))]
-        public required BigFloat    Zoom            { get; init; }
+        public required BigFloat    Zoom                { get; init; }
 
         /// <summary>Center coordinate in the complex plane.</summary>
-        public required BigComplex  Center          { get; init; }
+        public required BigComplex  Center              { get; init; }
 
-        /// <summary>Antialiasing (supersampling) level</summary>
-        public AntiAliasing         AntiAliasing    { get; init; } = AntiAliasing.NoAntialiasing;
+        /// <summary>Antialiasing (supersampling) level.</summary>
+        public AntiAliasing         AntiAliasing        { get; init; } = AntiAliasing.NoAntialiasing;
+        
+        /// <summary>Maximum usage percentage while rendering (uses available CPU core count).</summary>
+        /// <remarks>
+        /// When this field is defined while using distributed video rendering,
+        /// the value will be overwritten by the worker's runtime preferences.
+        /// </remarks>
+        public double               ProcessorUsageLimit { get; init; } = 1;
 
         /// <summary>Color palette used for rendering.</summary>
-        public ColorPalette         ColorPalette    { get; init; } = ColorPalette.FromPreset(PalettePreset.BB);
+        public ColorPalette         ColorPalette        { get; init; } = ColorPalette.FromPreset(PalettePreset.BB);
     }
 
     /// <summary>
@@ -155,6 +162,9 @@ namespace fractalis.Core
                 else return RenderMode.Default;
             }
         }
+        
+        /// <summary>Number of available CPU cores adhering to the maximum usage defined in the config.</summary>
+        public int AvailableCores => (int)Math.Round(Environment.ProcessorCount * config.ProcessorUsageLimit); 
 
         /// <summary>
         /// Renders the fractal to an image.
@@ -296,11 +306,13 @@ namespace fractalis.Core
 
         private void RenderRows(Action<int> renderRow, bool showProgress, RenderMode mode)
         {
+            Console.WriteLine($"Rendering the image with maximum processor count of {AvailableCores}");
             var rows = Partitioner.Create(Enumerable.Range(0, Height), EnumerablePartitionerOptions.NoBuffering);
-
+            var options = new ParallelOptions { MaxDegreeOfParallelism = AvailableCores };
+            
             if (!showProgress) 
             { 
-                Parallel.ForEach(rows, renderRow);
+                Parallel.ForEach(rows, options, renderRow);
                 return;
             }
 
@@ -317,7 +329,7 @@ namespace fractalis.Core
             .Start(ctx =>
             {
                 var task = ctx.AddTask($"<#> Rendering", maxValue: Height);
-                Parallel.ForEach(rows, y => 
+                Parallel.ForEach(rows, options,y => 
                 { 
                     renderRow(y); 
                     task.Increment(1); 
