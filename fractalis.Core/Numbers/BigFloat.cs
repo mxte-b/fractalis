@@ -1,4 +1,6 @@
-﻿using Sdcb.Arithmetic.Gmp;
+﻿using System.ComponentModel;
+using System.Globalization;
+using Sdcb.Arithmetic.Gmp;
 using Sdcb.Arithmetic.Mpfr;
 using System.Text.Json.Serialization;
 using System.Text.Json;
@@ -13,6 +15,7 @@ namespace fractalis.Core.Numbers
     /// do not provide sufficient precision, such as in deep fractal computations
     /// or numerical simulations requiring hundreds or thousands of digits of accuracy.
     /// </remarks>
+    [TypeConverter(typeof(BigFloatConverter))]
     public class BigFloat
     {
         private readonly MpfrFloat _value;
@@ -62,6 +65,21 @@ namespace fractalis.Core.Numbers
 
         /// <summary>Gets the sign of the value (-1, 0, or 1).</summary>
         public int Sign => _value.Sign;
+
+        public static bool TryParse(string s, out BigFloat? value)
+        {
+            value = null;
+            
+            try
+            {
+                value = new BigFloat(s);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         /// <summary>
         /// Determines whether this value is approximately equal to another <see cref="BigFloat"/> 
@@ -173,6 +191,21 @@ namespace fractalis.Core.Numbers
         public override bool Equals(object? obj) => obj is BigFloat other && _value.Equals(other._value);
 
         public override int GetHashCode() => _value.GetHashCode();
+    }
+
+    public class BigFloatConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
+        {
+            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+        }
+
+        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
+        {
+            if (value is not string s) return base.ConvertFrom(context, culture, value);
+            
+            return BigFloat.TryParse(s, out var result) ? result : throw new FormatException($"'{s}' is not a valid BigFloat.");
+        }
     }
 
     public class BigFloatJsonConverter : JsonConverter<BigFloat>

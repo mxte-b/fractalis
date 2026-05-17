@@ -4,9 +4,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Spectre.Console;
 using System.Collections.Concurrent;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace fractalis.Core
@@ -66,13 +63,13 @@ namespace fractalis.Core
     public struct ReferenceOrbit(int maxIterations)
     {
         /// <summary>Real components of orbit points.</summary>
-        public double[]             PointsR         = new double[maxIterations];
+        public readonly double[]             PointsR         = new double[maxIterations];
 
         /// <summary>Imaginary components of orbit points.</summary>
-        public double[]             PointsI         = new double[maxIterations];
+        public readonly double[]             PointsI         = new double[maxIterations];
 
         /// <summary>Scaled complex points for high-precision rendering.</summary>
-        public ScaledComplex[]      ScaledPoints    = new ScaledComplex[maxIterations];
+        public readonly ScaledComplex[]      ScaledPoints    = new ScaledComplex[maxIterations];
 
         /// <summary>The iteration at which escape occurred, or 0 if not escaped.</summary>
         public int                  EscapeIteration = 0;
@@ -87,7 +84,7 @@ namespace fractalis.Core
         private ReferenceOrbit              _referenceOrbit;
         private BigFloat                    _zoom                   = config.Zoom;
         private double                      _zoomDouble             = config.Zoom.ToDouble();
-        private double                      _aspectRatio            = (double)config.Width / config.Height;
+        private readonly double             _aspectRatio            = (double)config.Width / config.Height;
         private BigComplex                  _center                 = config.Center;
         private Complex                     _centerDouble           = config.Center.ToComplex();
         private FloatExp                    _pixelSpacing           = FloatExp.One / (FloatExp)config.Zoom;

@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using fractalis.Core;
 using fractalis.Core.Fractals;
+using fractalis.Core.Miscellaneous;
 using fractalis.Core.Numbers;
 using fractalis.Core.Video;
 using SixLabors.ImageSharp;
@@ -15,6 +16,7 @@ namespace fractalis
         static async Task Main(string[] args)
         {
             Console.WriteLine(Banner.V1);
+            AppSettings settings = AppConfigurator.Configure();
 #if BENCHMARK
             int w = 400;
             int h = 400;
@@ -26,8 +28,8 @@ namespace fractalis
             int w = 1920;
             int h = 1080;
 
-            BigComplex center = Sights.MagnumOpusEx;
-            BigFloat zoom = new BigFloat("1e170");
+            BigComplex center = Sights.HardestTrip.Location;
+            BigFloat zoom = new BigFloat("1e20");
             int iterations = 16000;
 #endif
 
