@@ -1,6 +1,5 @@
 ﻿// #define BENCHMARK
 
-using System.Diagnostics;
 using fractalis.Core;
 using fractalis.Core.Fractals;
 using fractalis.Core.Miscellaneous;
@@ -8,6 +7,8 @@ using fractalis.Core.Numbers;
 using fractalis.Core.Video;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using System.Diagnostics;
+using System.Text;
 
 namespace fractalis
 {
@@ -15,77 +16,57 @@ namespace fractalis
     {
         static async Task Main(string[] args)
         {
+            Console.OutputEncoding = Encoding.UTF8;
             Console.WriteLine(Banner.V1);
-            AppSettings settings = AppConfigurator.Configure();
-#if BENCHMARK
-            int w = 400;
-            int h = 400;
+            AppSettings settings = AppConfigurator.Configure(args);
+            FractalRenderer renderer = new(settings.FractalRendererConfig);
 
-            BigComplex center = Sights.Test;
-            BigFloat zoom = new BigFloat("1e300");
-            int iterations = 80000;
-#else
-            int w = 1920;
-            int h = 1080;
-
-            BigComplex center = Sights.HardestTrip.Location;
-            BigFloat zoom = new BigFloat("1e20");
-            int iterations = 16000;
-#endif
-
-            ColorPalette palette = ColorPalette.FromPreset(PalettePreset.PurpleFlame);
-            palette.InteriorColor = Color.Black;
-            palette.Frequency = 200;
-            palette.Offset = 0.4f;
-
-            FractalRendererConfig rendererConfig = new FractalRendererConfig()
+            switch (settings.Mode)
             {
-                Fractal = new Mandelbrot(),
-                Iterations = iterations,
-                Width = w,
-                Height = h,
-                Zoom = zoom,
-                Center = center,
-                ColorPalette = palette,
-            };
-            FractalRenderer renderer = new FractalRenderer(rendererConfig);
-#if BENCHMARK
-            FractalBenchmark bench = new FractalBenchmark(rendererConfig);
-            bench.Run("Baseline", 10);
-#else
-            Image<Rgb24> image = renderer.Render(true);
-            image.Save("render.png");
-            Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
+                case AppMode.Image:
+                    Image<Rgb24> image = renderer.Render();
+                    image.Save("render.png");
 
-            // VideoConfig config = new VideoConfig()
-            // {
-            //     Duration = 1 * 60,
-            //     FPS = 30,
-            //     ZoomStart = new BigFloat("0.5"),
-            //     ZoomEnd = new BigFloat("1e15"),
-            //     StartAnimation = new AnimationSettings()
-            //     {
-            //         Duration = 3,
-            //         Exponent = 2.5
-            //     },
-            //     StopAnimation = new AnimationSettings()
-            //     {
-            //         Duration = 3
-            //     },
-            //
-            //     // For the ability to split the work into multiple sessions
-            //     //StartFrame = 17393,
-            //     //RenderIdOverride = "a9f5523e-bd93-4cd1-ac70-19d59a0e5018"
-            // };
-            //
-            // DistributedVideoRenderer videoRenderer = new DistributedVideoRenderer(renderer, config);
-            // videoRenderer.Initialize();
-            //
-            // await videoRenderer.Start(new Uri("ws://localhost:5059/ws"), rendererConfig);
-            // //VideoRenderer videoRenderer = new VideoRenderer(renderer, config);
-            // //videoRenderer.Start();
-            // videoRenderer.Save();
-#endif
+                    if (settings.OpenRenderedImage)
+                    {
+                        Process.Start(new ProcessStartInfo("render.png") { UseShellExecute = true });
+                    }
+                    break;
+
+                case AppMode.Video:
+                    if (settings.VideoConfig is null) throw new Exception("VideoConfig is null.");
+                    
+                    switch (settings.VideoMode)
+                    {
+                        // Distributed video rendering using network devices
+                        case VideoMode.Distributed:
+                            var distributedSettings = settings.DistributedRendererSettings
+                                ?? throw new Exception("DistributedRendererConfig is null.");
+
+                            DistributedVideoRenderer distributed = new(settings.FractalRendererConfig, settings.VideoConfig);
+                            distributed.Initialize(distributedSettings.FrameListenerPort);
+                            await distributed.Start(distributedSettings.OrchestratorUri);
+
+                            distributed.Save();
+                            break;
+
+                        // Local video rendering using local compute
+                        case VideoMode.Local:
+                            VideoRenderer local = new(renderer, settings.VideoConfig);
+                            local.Start();
+                            local.Save();
+                            break;
+
+                        default: throw new Exception($"Unknown video mode encountered: {settings.VideoConfig}");
+                    }
+
+                    break;
+
+                case AppMode.Benchmark:
+                    FractalBenchmark benchmark = new(settings.FractalRendererConfig);
+                    benchmark.Run("Before buffer", 100);
+                    break;
+            }
         }
     }
 }

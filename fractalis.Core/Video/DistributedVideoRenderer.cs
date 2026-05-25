@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Video
 {
-    public class DistributedVideoRenderer(FractalRenderer renderer, VideoConfig config) : VideoRenderer(renderer, config)
+    public class DistributedVideoRenderer(FractalRendererConfig rendererConfig, VideoConfig videoConfig) : VideoRendererBase(videoConfig)
     {
         private FrameListener? _listener;
 
@@ -25,7 +25,7 @@ namespace fractalis.Core.Video
         /// </summary>
         /// <param name="uri">URI of the network orchestrator.</param>
         /// <param name="config">Fractal renderer config to use.</param>
-        public async Task Start(Uri uri, FractalRendererConfig config)
+        public async Task Start(Uri orchestratorUri)
         {
             if (_listener is null)
             {
@@ -40,14 +40,14 @@ namespace fractalis.Core.Video
 
             // Connecting to the orchestrator
             InitiatorClient client = new InitiatorClient();
-            await client.Connect(uri, "Administrator");
+            await client.Connect(orchestratorUri, "Administrator");
 
             // Sending render request to the orchestrator
             await client.SendMessageToServerAsync(new VideoRenderRequest()
             {
                 UploadUri = new Uri(_listener.Uri, "/frame"),
                 VideoConfig = Config,
-                FractalRendererConfig = config
+                FractalRendererConfig = rendererConfig,
             });
 
             // Wait until the job has been completed

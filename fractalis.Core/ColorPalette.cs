@@ -66,7 +66,7 @@ namespace fractalis.Core
         /// <summary>
         /// The number of iterations over which the palette repeats.
         /// </summary>
-        public int                          Frequency       { get; set; }
+        public int                          Frequency       { get; set; } = 200;
 
         /// <summary>
         /// Offset applied to the palette sampling for shifting the gradient.
@@ -77,7 +77,7 @@ namespace fractalis.Core
         /// Color used for points inside the fractal.
         /// </summary>
         [JsonConverter(typeof(ColorJsonConverter))]
-        public Color                        InteriorColor   { get; set; }
+        public Color                        InteriorColor   { get; set; } = Color.Black;
 
         /// <summary>
         /// Resolution of the internal lookup table (LUT) used for fast gradient sampling.

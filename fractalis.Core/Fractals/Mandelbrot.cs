@@ -54,7 +54,7 @@ namespace fractalis.Core.Fractals
                 if (z.MagnitudeSquared > 100) break;
             }
 
-            if (i == maxIterations) return new IterationResult(i, double.NaN, false);
+            if (i == maxIterations) return new IterationResult(i, double.NaN);
 
             return new IterationResult(i, z.MagnitudeSquared);
         }
@@ -98,7 +98,7 @@ namespace fractalis.Core.Fractals
                 }
             }
 
-            if (i == maxIterations) return new IterationResult(i, double.NaN, false);
+            if (i == maxIterations) return new IterationResult(i, double.NaN);
 
             return new IterationResult(i, escapeMag);
         }
@@ -152,7 +152,7 @@ namespace fractalis.Core.Fractals
                 }
             }
 
-            if (i == maxIterations) return new IterationResult(i, double.NaN, false);
+            if (i == maxIterations) return new IterationResult(i, double.NaN);
             return new IterationResult(i, zmag);
         }
 
@@ -214,7 +214,7 @@ namespace fractalis.Core.Fractals
             double z2 = magnitudeBuffer[2];
             double z3 = magnitudeBuffer[3];
 
-            static IterationResult Make(int i, double z, int m) => new(i, z, i < m);
+            static IterationResult Make(int i, double z, int m) => new(i, i < m ? z : double.NaN);
 
             return (Make(i0, z0, maxIterations), Make(i1, z1, maxIterations), Make(i2, z2, maxIterations), Make(i3, z3, maxIterations));
         }
@@ -321,7 +321,7 @@ namespace fractalis.Core.Fractals
             double z2 = magnitudeBuffer[2];
             double z3 = magnitudeBuffer[3];
 
-            static IterationResult Make(int i, double z, int m) => new(i, z, i < m);
+            static IterationResult Make(int i, double z, int m) => new(i, i < m ? z : double.NaN);
 
             return (Make(i0, z0, maxIterations), Make(i1, z1, maxIterations), Make(i2, z2, maxIterations), Make(i3, z3, maxIterations));
         }
@@ -384,10 +384,11 @@ namespace fractalis.Core.Fractals
         /// </summary>
         /// <param name="result">The iteration result from a Mandelbrot calculation.</param>
         /// <returns>A double representing the continuous iteration value for coloring.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetContinousValue(IterationResult result)
         {
             if (!result.Escaped) return result.Iteration;
-            return result.Iteration + 1 - Math.Log(Math.Log(Math.Sqrt(result.MagnitudeSquared))) * ILOG2;
+            return result.Iteration + 1 - Math.Log(Math.Log(result.MagnitudeSquared) * 0.5) * ILOG2;
         }
     }
 }

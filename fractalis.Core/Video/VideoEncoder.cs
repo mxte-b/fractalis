@@ -51,7 +51,7 @@ namespace fractalis.Core.Video
 
             string inputPattern = Path.Combine(path, "frame%05d.png");
 
-            ProcessStartInfo startInfo = new ProcessStartInfo
+            ProcessStartInfo startInfo = new()
             {
                 FileName = "ffmpeg.exe",
                 Arguments = $"-y -framerate {fps} -i \"{inputPattern}\" -c:v libx264 -pix_fmt yuv420p \"{outputPath}.mp4\"",

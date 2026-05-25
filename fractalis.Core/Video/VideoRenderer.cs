@@ -14,27 +14,12 @@ namespace fractalis.Core.Video
     /// </summary>
     /// <param name="renderer">The fractal renderer to use to generate the frames with.</param>
     /// <param name="config">Configuration of the video.</param>
-    public class VideoRenderer(FractalRenderer renderer, VideoConfig config)
+    public class VideoRenderer(FractalRenderer renderer, VideoConfig config) : VideoRendererBase(config)
     {
-        /// <summary>
-        /// Unique ID for this render session (can be overridden in <paramref name="config"/>).
-        /// </summary>
-        protected readonly string   _renderId               = config.RenderIdOverride ?? Guid.NewGuid().ToString();
-
-        /// <summary>
-        /// Configuration of the video.
-        /// </summary>
-        protected VideoConfig       Config                  { get; set; } = config;
-
         /// <summary>
         /// The fractal renderer to use to generate the frames with.
         /// </summary>
-        protected FractalRenderer   Renderer                { get; set; } = renderer;
-
-        /// <summary>
-        /// Path of the output directory for the frames.
-        /// </summary>
-        protected string            ImageSequencePath       => $"render-{_renderId}";
+        private FractalRenderer Renderer { get; set; } = renderer;
 
         /// <summary>
         /// Delta controls linear scaling of time across the animation. 
@@ -107,16 +92,6 @@ namespace fractalis.Core.Video
         }
 
         /// <summary>
-        /// Merges the rendered image sequence into an MP4 video file with ffmpeg, then removes the image sequence directory.
-        /// </summary>
-        /// <param name="fileName">The filename of the video.</param>
-        public void Save(string fileName = "render")
-        {
-            VideoEncoder.MergeImageSequence($"render-{_renderId}", Config.FPS, fileName);
-            RemoveOutputDirectory();
-        }
-
-        /// <summary>
         /// Normalizes a frame index into a [0,1] range over a given segment.
         /// </summary>
         /// <param name="from">Start of the segment.</param>
@@ -181,8 +156,5 @@ namespace fractalis.Core.Video
             BigFloat zoom = (Config.ZoomEnd / Config.ZoomStart) ^ (Time(frameId) / Config.FrameCount);
             return Config.ZoomStart * zoom;
         }
-
-        protected void CreateOutputDirectory() => Directory.CreateDirectory($"render-{_renderId}");
-        private void RemoveOutputDirectory() => Directory.Delete(ImageSequencePath, true);
     }
 }

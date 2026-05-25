@@ -1,100 +1,83 @@
 using fractalis.Core.Fractals;
-using fractalis.Core.Numbers;
+using fractalis.Core.Miscellaneous.Phases;
 using Spectre.Console;
+using System.Text.Json;
 
-namespace fractalis.Core.Miscellaneous;
-
-public static class AppConfigurator
+namespace fractalis.Core.Miscellaneous
 {
-    private static void Welcome()
+    public static class AppConfigurator
     {
-        AnsiConsole.MarkupLine("[bold yellow]Welcome to the Fractalis Configurator![/]");
-    }
-
-    private static AppMode PromptAppMode()
-    {
-        var choice = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-            .AddChoices("Image rendering", "Video rendering", "Benchmarking")
-            .Title("What would you like to [green]do[/]?")
-            );
-            
-        return choice switch
+        private static readonly JsonSerializerOptions JsonOptions = new()
         {
-            "Image rendering" => AppMode.Image,
-            "Video rendering" => AppMode.Video,
-            "Benchmarking" => AppMode.Benchmark,
-            _ => AppMode.Image
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
-    }
 
-    private static IFractal CreateFractal(FractalType type)
-    {
-        return type switch
+        private static AppMode PromptAppMode() 
+            => Prompts.Selection($"What would you like to [bold {ThemeColor.Accent}]do[/]?", 
+                ["Image rendering", "Video rendering", "Benchmarking"])
+            .Convert(choice => choice switch
+            {
+                "Image rendering" => AppMode.Image,
+                "Video rendering" => AppMode.Video,
+                "Benchmarking" => AppMode.Benchmark,
+                _ => AppMode.Image
+            });
+
+        public static AppSettings Configure(string[] args)
         {
-            FractalType.Mandelbrot => new Mandelbrot(),
-            _ => throw new Exception("Unknown fractal type: " + type)
-        };
-    }
+            AnsiConsole.MarkupLine($"[bold {ThemeColor.Title}]Welcome to the Fractalis Configurator![/]");
+            AnsiConsole.WriteLine();
 
-    private static FractalRendererConfig ConfigureRenderer()
-    {
-        var type = AnsiConsole.Prompt(
-            new SelectionPrompt<FractalType>()
-            .AddChoices(Enum.GetValues(typeof(FractalType)).Cast<FractalType>())
-            .Title("What [green]fractal[/] would you like to render?")
-        );
+            var mode = PromptAppMode();
+            var rendererConfig = ConfigureRenderer(mode == AppMode.Video);
+            var video = mode == AppMode.Video ? ConfigureVideo() : null;
 
-        var resolution = AnsiConsole.Prompt(
-            new SelectionPrompt<ResolutionPreset>()
-                .UseConverter(x => x.Name)
-                .AddChoices(Resolution.CommonResolutions)
-                .Title("What [green]resolution[/] should the renderer use?")).Resolution;
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("[bold DarkOliveGreen2]Configuration complete[/]");
+            AnsiConsole.WriteLine();
 
-        var sight = AnsiConsole.Prompt(
-            new SelectionPrompt<Sight>()
-            .AddChoices(Sights.All.Where(x => x.FractalType == type))
-            .UseConverter(x => x.Name)
-            .EnableSearch()
-            .Title("What [green]location[/] should be in the center?") );
+            AppSettings settings = new()
+            {
+                Mode = mode,
+                FractalRendererConfig = rendererConfig,
+                VideoMode = video?.VideoMode,
+                VideoConfig = video?.VideoConfig,
+                DistributedRendererSettings = video?.DistributedRendererSettings,
+            };
 
-        var palettePreset = AnsiConsole.Prompt(
-            new SelectionPrompt<PalettePreset>()
-                .Title("What [green]color palette[/] should the renderer use?")
-                .AddChoices(Enum.GetValues(typeof(PalettePreset)).Cast<PalettePreset>()));
+            if (Prompts.Confirm("Save this configuration to a JSON file for later reuse?"))
+            {
+                var path = Prompts.Text("Save path:", defaultValue: "config.json");
+                File.WriteAllText(path, JsonSerializer.Serialize(settings, JsonOptions));
+                Prompts.Success($"Config saved to [cyan]{path}[/]");
+            }
 
-        var zoom = AnsiConsole.Prompt(
-        new TextPrompt<BigFloat>("What should [green]zoom[/] level be?"));
+            return settings;
+        }
 
-        var iterations = AnsiConsole.Prompt<int>(
-        new TextPrompt<int>("Number of fractal [green]iterations[/]:"));
-
-        return new FractalRendererConfig()
+        private static FractalRendererConfig ConfigureRenderer(bool isVideo)
         {
-            Fractal = CreateFractal(type),
-            Width = resolution.Width,
-            Height = resolution.Height,
-            Center = sight.Location,
-            Zoom = zoom,
-            Iterations = iterations,
-            ColorPalette = ColorPalette.FromPreset(palettePreset),
-        };
-    }
-    
-    public static AppSettings Configure()
-    {
-        Welcome();
-        
-        var mode = PromptAppMode();
-        
-        var rendererConfig = ConfigureRenderer();
-        
-        if (mode != AppMode.Video) return new AppSettings()
+            var fractal     = new FractalPhase().Run();
+            var location    = new LocationPhase(fractal.Type, isVideo).Run();
+            var output      = new OutputPhase().Run();
+            var appearance  = new AppearancePhase().Run();
+
+            return new FractalRendererConfig()
+            {
+                Fractal = IFractal.Create(fractal.Type),
+                Iterations = fractal.Iterations,
+                Width = output.Resolution.Width,
+                Height = output.Resolution.Height,
+                Center = location.Sight.Location,
+                Zoom = location.Zoom,
+                ColorPalette = ColorPalette.FromPreset(appearance.Palette),
+            };
+        }
+
+        private static VideoPhaseResult? ConfigureVideo()
         {
-            Mode = mode,
-            FractalRendererConfig =  rendererConfig
-        };
-        
-        throw new NotImplementedException();
+            return new VideoPhase().Run();
+        }
     }
 }

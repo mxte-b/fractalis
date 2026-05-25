@@ -58,21 +58,25 @@ namespace fractalis.Core.Video
         /// <summary>
         /// Frame count of the start phase.
         /// </summary>
+        [JsonIgnore]
         public int                  StartAnimationFrames => (int)Math.Round(StartAnimation.Duration * FPS);
 
         /// <summary>
         /// Frame count of the stop phase.
         /// </summary>
+        [JsonIgnore]
         public int                  StopAnimationFrames => (int)Math.Round(StopAnimation.Duration * FPS);
 
         /// <summary>
         /// Total frame count of the video.
         /// </summary>
+        [JsonIgnore]
         public int                  FrameCount => (int)Math.Floor(Duration * FPS);
 
         /// <summary>
         /// Start frame index of the stop phase.
         /// </summary>
+        [JsonIgnore]
         public int                  StopAnimationStartFrame => FrameCount - StopAnimationFrames;
     }
 }

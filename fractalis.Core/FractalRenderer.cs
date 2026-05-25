@@ -85,13 +85,14 @@ namespace fractalis.Core
         private BigFloat                    _zoom                   = config.Zoom;
         private double                      _zoomDouble             = config.Zoom.ToDouble();
         private readonly double             _aspectRatio            = (double)config.Width / config.Height;
+        private readonly int                _aaSamples              = (int)config.AntiAliasing;
         private BigComplex                  _center                 = config.Center;
         private Complex                     _centerDouble           = config.Center.ToComplex();
         private FloatExp                    _pixelSpacing           = FloatExp.One / (FloatExp)config.Zoom;
         private double                      _pixelSpacingDouble     = 1 / config.Zoom.ToDouble();
 
-        private static readonly FloatExp    HIGHPRECISION_THRESHOLD = new FloatExp(1, -40);
-        private static readonly FloatExp    FLOATEXP_THRESHOLD      = new FloatExp(1, -1070);
+        private static readonly FloatExp    HIGHPRECISION_THRESHOLD = new(1, -40);
+        private static readonly FloatExp    FLOATEXP_THRESHOLD      = new(1, -1070);
 
         /// <summary>The fractal to render.</summary>
         public readonly IFractal            Fractal                 = config.Fractal;
@@ -170,7 +171,7 @@ namespace fractalis.Core
         /// <returns>The rendered image.</returns>
         public Image<Rgb24> Render(bool showProgress = true)
         {
-            Image<Rgb24> image  = new Image<Rgb24>(Width, Height);
+            Image<Rgb24> image  = new(Width, Height);
             RenderMode mode     = RenderMode;
 
             if (mode != RenderMode.Default && Fractal is IPerturbableFractal perturbable && _referenceOrbit.PointsR == null)
@@ -192,7 +193,13 @@ namespace fractalis.Core
         }
 
         #region Helper functions
-        private double NdcY(int y)              => -(((double)y / Height) - 0.5) * 2.0;
+        private double NdcY(int y)
+        {
+            double ndc = -(((double)y / Height) - 0.5) * 2.0;
+            if (ndc == 0.0) ndc += 0.2 / Height;
+            return ndc;
+        }
+
         private double NdcX(int x)              => x * (2.0 / Height) - _aspectRatio;
         private Rgb24 Sample(IterationResult r)
         {
@@ -225,8 +232,7 @@ namespace fractalis.Core
             double ci = ndcY * _pixelSpacingDouble + _centerDouble.Imaginary;
             double ndcStepX = 2.0 / Height;
 
-            int x = 0;
-            for (; x <= Width - 4; x += 4)
+            for (int x = 0; x < Width; x += 4)
             {
                 var ndcX = SimdAgnostic.MultiplyAdd(
                     SimdAgnostic.Create(x, x + 1.0, x + 2.0, x + 3.0),
@@ -236,17 +242,13 @@ namespace fractalis.Core
                 var cr = SimdAgnostic.MultiplyAdd(ndcX, SimdAgnostic.Create(_pixelSpacingDouble), SimdAgnostic.Create(_centerDouble.Real));
                 var (r0, r1, r2, r3) = simd.IterationSIMD(cr, SimdAgnostic.Create(ci), Iterations);
 
-                image[x, y]     = Sample(r0);
-                image[x + 1, y] = Sample(r1);
-                image[x + 2, y] = Sample(r2);
-                image[x + 3, y] = Sample(r3);
-            }
-
-            for (; x < Width; x++)
-            {
-                double ndcX = NdcX(x);
-                IterationResult result = Fractal.Iteration(PixelCoordinates(ndcX, ndcY), Iterations);
-                image[x, y] = Sample(result);
+                switch (Width - x)
+                {
+                    default:        image[x + 3, y] = Sample(r3); goto case 3;
+                    case 3:         image[x + 2, y] = Sample(r2); goto case 2;
+                    case 2:         image[x + 1, y] = Sample(r1); goto case 1;
+                    case 1:         image[x,     y] = Sample(r0); break;
+                }
             }
         }
 
@@ -267,7 +269,7 @@ namespace fractalis.Core
             for (int x = 0; x < Width; x++)
             {
                 double ndcX = NdcX(x);
-                ScaledComplex delta = new ScaledComplex(ndcX * _pixelSpacing, ndcY * _pixelSpacing);
+                ScaledComplex delta = new(ndcX * _pixelSpacing, ndcY * _pixelSpacing);
                 IterationResult result = p.IterationFloatExp(delta, Iterations, in _referenceOrbit);
                 image[x, y] = Sample(result);
             }
@@ -277,9 +279,8 @@ namespace fractalis.Core
         {
             double ndcY = NdcY(y);
             double ndcStepX = 2.0 / Height;
-            int x = 0;
 
-            for (; x <= Width - 4; x += 4)
+            for (int x = 0; x < Width; x += 4)
             {
                 var ndcX = SimdAgnostic.MultiplyAdd(
                     SimdAgnostic.Create(x, x + 1.0, x + 2.0, x + 3.0),
@@ -288,22 +289,18 @@ namespace fractalis.Core
 
                 var (r0, r1, r2, r3) = simd.IterationPerturbedSIMD(ndcX, ndcY, _pixelSpacingDouble, Iterations, in _referenceOrbit);
                 
-                image[x, y]     = Sample(r0);
-                image[x + 1, y] = Sample(r1);
-                image[x + 2, y] = Sample(r2);
-                image[x + 3, y] = Sample(r3);
-            }
-            for (; x < Width; x++)
-            {
-                double ndcX = NdcX(x);
-                IterationResult result = simd.IterationPerturbed(ndcX * _pixelSpacingDouble, ndcY * _pixelSpacingDouble, Iterations, in _referenceOrbit);
-                image[x, y] = Sample(result);
+                switch (Width - x)
+                {
+                    default:        image[x + 3, y] = Sample(r3); goto case 3;
+                    case 3:         image[x + 2, y] = Sample(r2); goto case 2;
+                    case 2:         image[x + 1, y] = Sample(r1); goto case 1;
+                    case 1:         image[x,     y] = Sample(r0); break;
+                }
             }
         }
 
         private void RenderRows(Action<int> renderRow, bool showProgress, RenderMode mode)
         {
-            Console.WriteLine($"Rendering the image with maximum processor count of {AvailableCores}");
             var rows = Partitioner.Create(Enumerable.Range(0, Height), EnumerablePartitionerOptions.NoBuffering);
             var options = new ParallelOptions { MaxDegreeOfParallelism = AvailableCores };
             
@@ -326,7 +323,7 @@ namespace fractalis.Core
             .Start(ctx =>
             {
                 var task = ctx.AddTask($"<#> Rendering", maxValue: Height);
-                Parallel.ForEach(rows, options,y => 
+                Parallel.ForEach(rows, options, y => 
                 { 
                     renderRow(y); 
                     task.Increment(1); 

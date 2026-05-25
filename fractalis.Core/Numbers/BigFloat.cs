@@ -36,6 +36,9 @@ namespace fractalis.Core.Numbers
             set => _precision = (int)Math.Ceiling(value * LOG2_10);
         }
 
+        public static readonly BigFloat One = new(1);
+        public static readonly BigFloat Ten = new(10);
+
         /// <summary>
         /// Initializes a new <see cref="BigFloat"/> from a string representation.
         /// </summary>
@@ -141,6 +144,7 @@ namespace fractalis.Core.Numbers
         public static BigFloat Log(BigFloat value) => new(MpfrFloat.Log(value._value, _precision, MpfrRounding.ToEven));
         public static BigFloat Log2(BigFloat value) => new(MpfrFloat.Log2(value._value, _precision, MpfrRounding.ToEven));
         public static BigFloat Log10(BigFloat value) => new(MpfrFloat.Log10(value._value, _precision, MpfrRounding.ToEven));
+        public static BigFloat Pow(BigFloat baseValue, BigFloat power) => new(MpfrFloat.PowerR(baseValue._value, power._value, _precision, MpfrRounding.ToEven));
         public static BigFloat Exp(BigFloat value) => new(MpfrFloat.Exp(value._value, _precision, MpfrRounding.ToEven));
         public static BigFloat Sin(BigFloat value) => new(MpfrFloat.Sin(value._value, _precision, MpfrRounding.ToEven));
         public static BigFloat Cos(BigFloat value) => new(MpfrFloat.Cos(value._value, _precision, MpfrRounding.ToEven));

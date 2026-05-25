@@ -33,6 +33,13 @@ namespace fractalis.Core.Fractals
         /// A double representing the continuous iteration value.
         /// </returns>
         double GetContinousValue(IterationResult result);
+
+
+        public static IFractal Create(FractalType type) => type switch
+        {
+            FractalType.Mandelbrot => new Mandelbrot(),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown fractal type")
+        };
     }
 
     /// <summary>
