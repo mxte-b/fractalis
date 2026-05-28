@@ -71,7 +71,7 @@ namespace fractalis.Core
         /// <summary>
         /// Offset applied to the palette sampling for shifting the gradient.
         /// </summary>
-        public float                        Offset          { get; set; }
+        public float                        Offset          { get; set; } = 0.4f;
 
         /// <summary>
         /// Color used for points inside the fractal.

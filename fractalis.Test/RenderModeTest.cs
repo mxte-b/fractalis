@@ -1,6 +1,7 @@
 using fractalis.Core;
 using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
+using fractalis.Core.Renderers;
 using Microsoft.VisualStudio.TestPlatform.Common.DataCollection;
 
 namespace fractalis.Test
@@ -9,7 +10,7 @@ namespace fractalis.Test
     {
         private static FractalRenderer CreateRenderer(BigFloat zoom, int width, int height)
         {
-            FractalRendererConfig rendererConfig = new FractalRendererConfig()
+            FractalRendererConfig rendererConfig = new()
             {
                 Fractal = new Mandelbrot(),
                 Iterations = 150,

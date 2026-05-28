@@ -109,10 +109,10 @@ namespace fractalis.Core.Miscellaneous
         /// </summary>
         /// <param name="title">The title of the section.</param>
         /// <param name="index">The phase or section index displayed in the header.</param>
-        public static void Section(string title, int index)
+        public static void Section(string title)
         {
             AnsiConsole.Write(
-                new Rule($"[bold {ThemeColor.Primary}]Phase {index}: {title}[/]")
+                new Rule($"[bold {ThemeColor.Primary}]{title}[/]")
                     .RuleStyle(ThemeColor.Muted)
                     .LeftJustified()
             );
@@ -140,5 +140,11 @@ namespace fractalis.Core.Miscellaneous
             AnsiConsole.MarkupLine("[DarkOliveGreen2]✓ Done[/]");
             AnsiConsole.WriteLine();
         }
+
+        /// <summary>
+        /// Prints an informational message to the console.
+        /// </summary>
+        /// <param name="message">The message to display.</param>
+        public static void Info(string message) => AnsiConsole.MarkupLine($"[{ThemeColor.Info}]ℹ  {message}[/]");
     }
 }

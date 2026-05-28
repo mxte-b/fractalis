@@ -1,6 +1,13 @@
-namespace fractalis.Core.Fractals;
-
-public enum FractalType
+namespace fractalis.Core.Fractals
 {
-    Mandelbrot
+    /// <summary>
+    /// Represents the supported fractal algorithms.
+    /// </summary>
+    public enum FractalType
+    {
+        /// <summary>
+        /// The Mandelbrot set fractal.
+        /// </summary>
+        Mandelbrot,
+    }
 }

@@ -87,6 +87,14 @@ namespace fractalis.Core
             FractionalDigits = 1494,
         };
 
+        public static readonly Sight CoolDeep = new()
+        {
+            Name = "Cool Deep",
+            Location = new BigComplex("0.307208440393", "-0.4839543604205"),
+            FractalType = FractalType.Mandelbrot,
+            FractionalDigits = 13
+        };
+
         public static readonly IReadOnlyList<Sight> All =
         [
             HardestTrip,
@@ -94,7 +102,8 @@ namespace fractalis.Core
             TripToInfinity,
             Flake,
             MagnumOpusEx,
-            Test
+            Test,
+            CoolDeep
         ];
     }
 }

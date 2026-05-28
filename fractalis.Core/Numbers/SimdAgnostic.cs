@@ -59,7 +59,6 @@ namespace fractalis.Core.Numbers
 
         /// <summary>
         /// All bits set in every lane.
-        /// x86: <c>vpternlogd</c> or <c>vpcmpeqd</c>  |  ARM: <c>movi v0.16b, #0xFF</c> × 2
         /// </summary>
         public static Vec256d AllBitsSet
         {
@@ -73,6 +72,9 @@ namespace fractalis.Core.Numbers
                 return Vec256d.FromLoHi(half, half);
             }
         }
+
+        /// <summary>Whether the current hardware supports AVX or NEON.</summary>
+        public static bool IsSupported => Avx.IsSupported || AdvSimd.IsSupported;
         #endregion
 
         #region Create methods

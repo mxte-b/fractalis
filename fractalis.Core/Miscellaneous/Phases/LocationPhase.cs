@@ -9,7 +9,7 @@ namespace fractalis.Core.Miscellaneous.Phases
     {
         public LocationPhaseResult Run()
         {
-            Prompts.Section("Location", 2);
+            Prompts.Section("Location");
 
             var sight = Prompts.Selection(
                 $"What [{ThemeColor.Accent}]location[/] should be in the center?",

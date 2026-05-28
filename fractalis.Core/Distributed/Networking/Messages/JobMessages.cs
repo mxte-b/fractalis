@@ -1,4 +1,5 @@
-﻿using fractalis.Core.Video;
+﻿using fractalis.Core.Renderers;
+using fractalis.Core.Video;
 using System;
 using System.Collections.Generic;
 using System.Linq;

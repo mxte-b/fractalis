@@ -44,6 +44,16 @@ namespace fractalis.Core.Numbers
         }
 
         /// <summary>
+        /// Initializes a new <see cref="FloatExp"/> with a given double value.
+        /// </summary>
+        public FloatExp(double value)
+        {
+            Mantissa = value;
+            Exponent = 0;
+            Normalize();
+        }
+
+        /// <summary>
         /// Normalizes the value so the mantissa is within a standard range.
         /// </summary>
         /// <remarks>
@@ -229,6 +239,12 @@ namespace fractalis.Core.Numbers
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator double(FloatExp x) => Math.ScaleB(x.Mantissa, x.Exponent);
+
+        /// <summary>
+        /// Converts the <see langword="double"/> to a <see cref="FloatExp"/>.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator FloatExp(double x) => new(x);
 
         #endregion
 

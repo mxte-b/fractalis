@@ -9,7 +9,7 @@ namespace fractalis.Core.Miscellaneous.Phases
     {
         public FractalPhaseResult Run()
         {
-            Prompts.Section("Fractal", 1);
+            Prompts.Section("Fractal");
 
             var type = Prompts.Selection(
                 $"What [{ThemeColor.Accent}]fractal[/] would you like to render?",

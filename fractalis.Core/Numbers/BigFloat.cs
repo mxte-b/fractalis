@@ -72,7 +72,7 @@ namespace fractalis.Core.Numbers
         public static bool TryParse(string s, out BigFloat? value)
         {
             value = null;
-            
+
             try
             {
                 value = new BigFloat(s);
@@ -189,8 +189,35 @@ namespace fractalis.Core.Numbers
         public double ToDouble() => _value.ToDouble(MpfrRounding.ToEven);
         #endregion
 
-        /// <summary>Returns a string representation of the number.</summary>
-        public override string ToString() => _value.ToString();
+        /// <summary>Returns a simple string representation of the number.</summary>
+        public override string ToString()
+        {
+            string raw = _value.ToString("E5");
+
+            // If it's in scientific notation, then remove the + sign and the trailing zeros
+            // at the end of the mantissa
+            if (raw.Contains('e') || raw.Contains('E'))
+            {
+                int eIdx = raw.IndexOfAny(['e', 'E']);
+
+                string mantissa = raw[..eIdx].TrimEnd('0').TrimEnd('.');
+                string exponent = raw[(eIdx + 1)..].TrimStart('+');
+                exponent = int.Parse(exponent).ToString();
+
+                return $"{mantissa}e{exponent}";
+            }
+
+            //If the mantissa is a decimal in normal notation, then remove trailing zeros
+            if (raw.Contains('.'))
+            {
+                string trimmed = raw.TrimEnd('0');
+                return trimmed.EndsWith('.') ? trimmed[..^1] : trimmed;
+            }
+
+            return raw;
+        }
+
+        public string ToFullString() => _value.ToString();
 
         public override bool Equals(object? obj) => obj is BigFloat other && _value.Equals(other._value);
 
@@ -222,7 +249,7 @@ namespace fractalis.Core.Numbers
 
         public override void Write(Utf8JsonWriter writer, BigFloat value, JsonSerializerOptions options)
         {
-            writer.WriteStringValue(value.ToString());
+            writer.WriteStringValue(value.ToFullString());
         }
     }
 }

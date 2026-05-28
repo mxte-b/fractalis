@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace fractalis.Core.Video
 {
-    public record DistributedRendererSettings
+    public record DistributedRendererConfig
     {
         public required Uri                     OrchestratorUri         { get; init; }
         public int                              FrameListenerPort       { get; init; } = 8060;

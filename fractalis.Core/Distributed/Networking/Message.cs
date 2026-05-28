@@ -10,9 +10,6 @@ namespace fractalis.Core.Distributed.Networking
     /// <summary>
     /// Base class for all message types exchanged between clients and the orchestrator.
     /// </summary>
-    /// <remarks>
-    /// Uses JSON polymorphic serialization with a type discriminator property named "type".
-    /// </remarks>
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
     [JsonDerivedType(typeof(DebugMessage), "debug")]
     [JsonDerivedType(typeof(ReconnectMessage), "reconnect")]

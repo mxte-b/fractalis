@@ -63,8 +63,10 @@ namespace fractalis
                     break;
 
                 case AppMode.Benchmark:
+                    if (settings.FractalBenchmarkConfig is null) throw new Exception("FractalBenchmarkConfig is null.");
+
                     FractalBenchmark benchmark = new(settings.FractalRendererConfig);
-                    benchmark.Run("Before buffer", 100);
+                    benchmark.Run(settings.FractalBenchmarkConfig.Label, settings.FractalBenchmarkConfig.Runs);
                     break;
             }
         }

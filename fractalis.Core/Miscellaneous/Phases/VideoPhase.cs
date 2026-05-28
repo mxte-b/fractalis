@@ -7,10 +7,10 @@ using System.Text.RegularExpressions;
 
 namespace fractalis.Core.Miscellaneous.Phases
 {
-    public record VideoPhaseResult(VideoMode VideoMode, DistributedRendererSettings? DistributedRendererSettings, VideoConfig VideoConfig);
+    public record VideoPhaseResult(VideoMode VideoMode, DistributedRendererConfig? DistributedRendererSettings, VideoConfig VideoConfig);
     internal class VideoPhase : IPromptPhase<VideoPhaseResult>
     {
-        private static DistributedRendererSettings ConfigureDistributedRenderer()
+        private static DistributedRendererConfig ConfigureDistributedRenderer()
         {
             var uri = Prompts.TextValidated(
                 $"What is the [{ThemeColor.Accent}]WebSocket URI[/] of the Orchestrator?",
@@ -71,7 +71,7 @@ namespace fractalis.Core.Miscellaneous.Phases
 
         public VideoPhaseResult Run()
         {
-            Prompts.Section("Video rendering", 4);
+            Prompts.Section("Video rendering");
 
             var videoMode = Prompts.Selection(
                 $"[{ThemeColor.Accent}]How[/] should the video be rendered?",

@@ -8,6 +8,7 @@ public readonly record struct Resolution(int Width, int Height)
     
     public static readonly IReadOnlyList<ResolutionPreset> CommonResolutions =
     [
+        new("DEBUG (400x400)", new Resolution(400, 400)),
         new("HD (720p)",  new Resolution(1280, 720)),
         new("FHD (1080p)", new Resolution(1920, 1080)),
         new("QHD (1440p)", new Resolution(2560, 1440)),

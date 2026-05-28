@@ -1,4 +1,4 @@
-﻿namespace fractalis.Core.Miscellaneous.Phases
+﻿namespace fractalis.Core.Miscellaneous
 {
     public interface IPromptPhase<out T>
     {

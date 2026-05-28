@@ -1,5 +1,4 @@
 ﻿using fractalis.Core.Numbers;
-using System.Runtime.Intrinsics;
 using System.Text.Json.Serialization;
 
 namespace fractalis.Core.Fractals
@@ -102,7 +101,7 @@ namespace fractalis.Core.Fractals
         /// Performs SIMD-based perturbation iteration for four points.
         /// </summary>
         /// <param name="ndcX">Normalized X coordinates vector.</param>
-        /// <param name="ndcY">Normalized Y coordinate.</param>
+        /// <param name="ndcY">Normalized Y coordinates vector.</param>
         /// <param name="pixelSpacing">Distance between pixels in fractal space.</param>
         /// <param name="maxIterations">Maximum iterations per point.</param>
         /// <param name="referenceOrbit">Reference orbit for perturbation calculations.</param>
@@ -110,6 +109,6 @@ namespace fractalis.Core.Fractals
         /// A tuple of <see cref="IterationResult"/> for each point.
         /// </returns>
         (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3)
-            IterationPerturbedSIMD(Vec256d ndcX, double ndcY, double pixelSpacing, int maxIterations, in ReferenceOrbit referenceOrbit);
+            IterationPerturbedSIMD(Vec256d ndcX, Vec256d ndcY, int maxIterations, in ReferenceOrbit referenceOrbit);
     }
 }

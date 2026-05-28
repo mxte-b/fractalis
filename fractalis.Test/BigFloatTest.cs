@@ -482,5 +482,15 @@ namespace fractalis.Test
 
             Console.WriteLine(result);
         }
+
+        [Theory]
+        [InlineData("-100000000000", "-1e11")]
+        [InlineData("0.00001", "1e-5")]
+        [InlineData("12.213698163871286387126378612873678", "1.22136e1")]
+        public void ToString_ScientificNotation(string a, string expected)
+        {
+            BigFloat x = new(a);
+            Assert.Equal(expected, x.ToString());
+        }
     }
 }

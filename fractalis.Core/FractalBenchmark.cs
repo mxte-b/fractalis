@@ -1,4 +1,5 @@
 ﻿using fractalis.Core.Fractals;
+using fractalis.Core.Renderers;
 using Spectre.Console;
 using System.Diagnostics;
 using System.Reflection;
@@ -39,8 +40,8 @@ namespace fractalis.Core
                 throw new InvalidOperationException("Fractal does not support perturbation.");
             }
 
-            List<long> refTimes     = new List<long>();
-            List<long> renderTimes  = new List<long>();
+            List<long> refTimes     = [];
+            List<long> renderTimes  = [];
 
             for (int i = 0; i < runs; i++)
             {
@@ -51,7 +52,7 @@ namespace fractalis.Core
                 refTimes.Add(refSw.ElapsedMilliseconds);
 
                 // Little hack: setting the private field _referenceOrbit
-                FractalRenderer renderer = new FractalRenderer(_config);
+                FractalRenderer renderer = new(_config);
                 _orbitField.SetValue(renderer, orbit);
 
                 // Benchmarking rendering phase

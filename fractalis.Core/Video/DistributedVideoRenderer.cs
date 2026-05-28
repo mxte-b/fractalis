@@ -2,6 +2,7 @@
 using fractalis.Core.Distributed.Clients;
 using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Distributed.Networking.Messages;
+using fractalis.Core.Renderers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,7 +40,7 @@ namespace fractalis.Core.Video
             Console.WriteLine($"Frame listener running at {_listener.Uri}");
 
             // Connecting to the orchestrator
-            InitiatorClient client = new InitiatorClient();
+            InitiatorClient client = new();
             await client.Connect(orchestratorUri, "Administrator");
 
             // Sending render request to the orchestrator

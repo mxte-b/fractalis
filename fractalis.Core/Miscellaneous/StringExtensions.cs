@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace fractalis.Core.Miscellaneous.Phases
+namespace fractalis.Core.Miscellaneous
 {
     internal static class StringExtensions
     {

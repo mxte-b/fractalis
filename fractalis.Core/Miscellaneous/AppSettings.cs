@@ -1,3 +1,4 @@
+using fractalis.Core.Renderers;
 using fractalis.Core.Video;
 
 namespace fractalis.Core.Miscellaneous
@@ -34,7 +35,7 @@ namespace fractalis.Core.Miscellaneous
         /// <summary>Fractal renderer configuration.</summary>
         public required FractalRendererConfig   FractalRendererConfig       { get; init; }
 
-        /// <summary>Whether to automatically open the rendered image.</summary>
+        /// <summary>Whether to automatically open the rendered image. This setting is only adhered to in <see cref="AppMode.Image"/>.</summary>
         public bool                             OpenRenderedImage           { get; init; } = true;
 
         /// <summary>Video rendering configuration.</summary>
@@ -44,6 +45,9 @@ namespace fractalis.Core.Miscellaneous
         public VideoMode?                       VideoMode                   { get; init; }
 
         /// <summary>Distributed renderer settings.</summary>
-        public DistributedRendererSettings?     DistributedRendererSettings { get; init; }
+        public DistributedRendererConfig?       DistributedRendererSettings { get; init; }
+
+        /// <summary>Fractal benchmark settings.</summary>
+        public FractalBenchmarkConfig?          FractalBenchmarkConfig      { get; init; }
     }
 }

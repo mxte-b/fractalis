@@ -2,6 +2,8 @@
 using fractalis.Core.Distributed.Clients;
 using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Distributed.Networking.Messages;
+using fractalis.Core.Miscellaneous;
+using System.Text;
 
 namespace fractalis.ClientApp
 {
@@ -9,25 +11,32 @@ namespace fractalis.ClientApp
     {
         static async Task Main(string[] args)
         {
+            Console.OutputEncoding = Encoding.UTF8;
             Console.WriteLine(Banner.V1);
+            ClientSettings settings = ClientConfigurator.Configure(args);
 
-            string displayName = "User's Laptop";
-            Uri uri = new Uri("ws://localhost:5059/ws");
-
-            WorkerClient client = new WorkerClient();
+            WorkerClient client = new(settings.ProcessorUsageLimit);
 
             // Initiate server connection
             Console.WriteLine("<#> Establishing connection to the Orchestrator...");
-            await client.Connect(uri, displayName);
+            try
+            {
+                await client.Connect(settings.OrchestratorUri, settings.DisplayName);
+            }
+            catch
+            {
+                Prompts.Warn("Couldn't establish a connection to the server. Please check the settings and try again.");
+                return;
+            }
+
             if (client.Connected)
             {
                 Console.WriteLine("   - Done!");
             }
-            else
+                else
             {
                 throw new Exception("Couldn't establish a connection to the server.");
             }
-
             _ = Task.Run(client.Start);
 
             // Test echo

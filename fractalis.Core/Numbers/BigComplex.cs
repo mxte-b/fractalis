@@ -126,7 +126,7 @@ namespace fractalis.Core.Numbers
         /// <returns>A string representing this <see cref="BigComplex"/>.</returns>
         public override string ToString()
         {
-            return Real.ToString() + "+" + Imaginary.ToString() + "i";
+            return Real.ToFullString() + "+" + Imaginary.ToFullString() + "i";
         }
     }
 }

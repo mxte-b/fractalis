@@ -3,15 +3,16 @@ using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Distributed.Networking.Messages;
 using fractalis.Core.Video;
 using fractalis.Core.Distributed.Clients;
+using fractalis.Core.Renderers;
 
 namespace fractalis.Core.Distributed.Runtimes
 {
-    public class WorkerRuntime(IClientContext context, WorkerClientOptions options) : IRuntime
+    public class WorkerRuntime(IClientContext context, double processorUsageLimit) : IRuntime
     {
         private readonly IClientContext                     _context    = context;
         private bool                                        _idle       = true;
-        private List<RenderJob>                             _jobs       = new List<RenderJob>();
-        private readonly Dictionary<Guid, VideoRenderer>    _renderers  = new();
+        private List<RenderJob>                             _jobs       = [];
+        private readonly Dictionary<Guid, VideoRenderer>    _renderers  = [];
 
         private async Task RequestAssignmentAsync() => await _context.SendMessageToServerAsync(new RenderAssignmentRequest());
 
@@ -19,7 +20,7 @@ namespace fractalis.Core.Distributed.Runtimes
         {
             return new VideoRenderer(new FractalRenderer(rendererConfig with
             {
-                ProcessorUsageLimit = options.ProcessorUsageLimit
+                ProcessorUsageLimit = processorUsageLimit
             }), videoConfig);
         }
 

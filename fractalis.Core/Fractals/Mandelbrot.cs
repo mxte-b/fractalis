@@ -23,7 +23,7 @@ namespace fractalis.Core.Fractals
         /// <summary>
         /// Maximum magnitude before a point is considered escaped in high-precision iterations.
         /// </summary>
-        private static readonly FloatExp    BAILOUT         = new FloatExp(1, 7);
+        private static readonly FloatExp    BAILOUT         = new(1, 7);
 
         /// <summary>
         /// Maximum magnitude before a point is considered escaped in double-precision iterations.
@@ -41,7 +41,7 @@ namespace fractalis.Core.Fractals
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public IterationResult Iteration(Complex c, int maxIterations)
         {
-            Complex z = new Complex(0, 0);
+            Complex z = new(0, 0);
             int i = 0;
 
             for (; i < maxIterations; i++)
@@ -71,7 +71,7 @@ namespace fractalis.Core.Fractals
         {
             int i = 0;
             int refIteration = 0;
-            ScaledComplex dz = new ScaledComplex(0, 0);
+            ScaledComplex dz = new(0, 0);
             double escapeMag = 0;
 
             for (; i < maxIterations; i++)
@@ -229,7 +229,7 @@ namespace fractalis.Core.Fractals
         /// <param name="referenceOrbit">Reference orbit for perturbation.</param>
         /// <returns>Tuple of <see cref="IterationResult"/> for each point.</returns>
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationPerturbedSIMD(Vec256d ndcX, double ndcY, double pixelSpacing, int maxIterations, in ReferenceOrbit referenceOrbit)
+        public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationPerturbedSIMD(Vec256d deltaR, Vec256d deltaI, int maxIterations, in ReferenceOrbit referenceOrbit)
         {
             Vec256d dzr = SimdAgnostic.Zero;
             Vec256d dzi = SimdAgnostic.Zero;
@@ -239,8 +239,6 @@ namespace fractalis.Core.Fractals
             Vec256d one = SimdAgnostic.Create(1.0);
             Vec256d two = SimdAgnostic.Create(2.0);
             Vec256d bailout = SimdAgnostic.Create(BAILOUT_DOUBLE);
-            Vec256d dr = SimdAgnostic.Multiply(pixelSpacing, ndcX);
-            Vec256d di = SimdAgnostic.Create(ndcY * pixelSpacing);
 
             int escape = referenceOrbit.EscapeIteration - 1;
 
@@ -262,8 +260,8 @@ namespace fractalis.Core.Fractals
                     Vec256d ai = SimdAgnostic.MultiplyAdd(two, zi_ref, dzi);
 
                     // delta = (2 * z_ref * dz) * dz + dz + delta
-                    Vec256d newdzr = SimdAgnostic.MultiplyAdd(ar, dzr, SimdAgnostic.MultiplyAddNegated(ai, dzi, dr));
-                    Vec256d newdzi = SimdAgnostic.MultiplyAdd(ar, dzi, SimdAgnostic.MultiplyAdd(ai, dzr, di));
+                    Vec256d newdzr = SimdAgnostic.MultiplyAdd(ar, dzr, SimdAgnostic.MultiplyAddNegated(ai, dzi, deltaR));
+                    Vec256d newdzi = SimdAgnostic.MultiplyAdd(ar, dzi, SimdAgnostic.MultiplyAdd(ai, dzr, deltaI));
 
                     // Only apply it to non-escaped points
                     dzr = SimdAgnostic.BlendVariable(dzr, newdzr, active);
@@ -338,8 +336,8 @@ namespace fractalis.Core.Fractals
         /// </remarks>
         public void CalculateReferenceOrbit(BigComplex center, int maxIterations, out ReferenceOrbit orbit)
         {
-            ReferenceOrbit o = new ReferenceOrbit(maxIterations);
-            BigComplex z = new BigComplex(0, 0);
+            ReferenceOrbit o = new(maxIterations);
+            BigComplex z = new(0, 0);
             int i = 0;
 
             AnsiConsole.Progress()
