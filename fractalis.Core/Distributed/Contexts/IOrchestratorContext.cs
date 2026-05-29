@@ -8,9 +8,9 @@ namespace fractalis.Core.Distributed.Contexts
     public interface IOrchestratorContext
     {
         /// <summary>
-        /// Adds a new render job to the orchestrator queue.
+        /// Adds a new render job to the orchestrator.
         /// </summary>
-        /// <param name="job">The render job to enqueue.</param>
+        /// <param name="job">The render job to add.</param>
         Task AddJobAsync(RenderJob job);
 
         /// <summary>

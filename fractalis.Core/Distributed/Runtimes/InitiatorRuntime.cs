@@ -10,11 +10,12 @@ namespace fractalis.Core.Distributed.Runtimes
 
         public Task<MessageHandlingResult> HandleMessage(Message message)
         {
-            if (message is RenderJobStatusMessage statusMessage)
+            switch (message)
             {
-                Console.WriteLine($"New status: {statusMessage.Status}");
+                case RenderJobStatusMessage statusMessage:
+                    Console.WriteLine($"New status: {statusMessage.Status}");
 
-                return Task.FromResult(MessageHandlingResult.Stop);
+                    return Task.FromResult(MessageHandlingResult.Stop);
             }
 
             return Task.FromResult(MessageHandlingResult.Continue);

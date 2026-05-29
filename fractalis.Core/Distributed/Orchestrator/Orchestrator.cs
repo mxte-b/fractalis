@@ -72,7 +72,7 @@ namespace fractalis.Core.Distributed.Orchestrator
         {
             for (int i = job.VideoConfig.StartFrame; i < job.VideoConfig.FrameCount; i += size)
             {
-                RenderAssignment assignment = new RenderAssignment()
+                RenderAssignment assignment = new()
                 {
                     JobId = job.Id,
                     StartFrameIndex = i,
@@ -97,10 +97,7 @@ namespace fractalis.Core.Distributed.Orchestrator
         }
 
         #region Context-revealed methods
-        /// <summary>
-        /// Adds a job, splits it into assignments, and notifies worker clients.
-        /// </summary>
-        /// <param name="job">The job to add.</param>
+        /// <inheritdoc/>
         public async Task AddJobAsync(RenderJob job)
         {
             Jobs.TryAdd(job.Id, job);
@@ -108,12 +105,7 @@ namespace fractalis.Core.Distributed.Orchestrator
             await BroadcastMessageAsync(new RenderJobAnnouncementMessage() { Job = job }, ClientRole.Worker);
         }
 
-        /// <summary>
-        /// Retrieves and claims the next available render assignment.
-        /// </summary>
-        /// <returns>
-        /// A <see cref="RenderAssignmentMessage"/> if available; otherwise a <see cref="NoAssignmentMessage"/>.
-        /// </returns>
+        /// <inheritdoc/>
         public Message GetRenderAssignment()
         {
             RenderAssignment? assignment = Assignments.Values.FirstOrDefault(x => x.TryClaim());
@@ -122,14 +114,7 @@ namespace fractalis.Core.Distributed.Orchestrator
             return new RenderAssignmentMessage() { Assignment = assignment };
         }
 
-        /// <summary>
-        /// Marks an assignment as completed and removes it from pending assignments.
-        /// </summary>
-        /// <param name="assignmentId">Identifier of the assignment to complete.</param>
-        /// <returns>
-        /// <see langword="true"/> if the associated job is completed; otherwise <see langword="false"/>.
-        /// </returns>
-        /// <remarks>NOT THREAD SAFE YET</remarks>
+        /// <inheritdoc/>
         public void CompleteAssignment(Guid assignmentId)
         {
             Assignments.TryRemove(assignmentId, out RenderAssignment? assignment);
@@ -147,24 +132,17 @@ namespace fractalis.Core.Distributed.Orchestrator
             return;
         }
 
-        /// <summary>
-        /// Attempts to cancel an existing assignment, returning it to a pending state.
-        /// </summary>
-        /// <param name="assignmentId">Identifier of the assignment to cancel.</param>
+        /// <inheritdoc/>
         public void CancelAssignment(Guid assignmentId)
         {
             Assignments.TryGetValue(assignmentId, out RenderAssignment? assignment);
             assignment?.TryCancel();
         }
 
-        /// <summary>
-        /// Logs a message to the dashboard.
-        /// </summary>
+        /// <inheritdoc/>
         public void Log(string message) => _dashboard.AddLog(message);
 
-        /// <summary>
-        /// Logs a message to the dashboard associated with a specific client.
-        /// </summary>
+        /// <inheritdoc/>
         public void Log(ClientConnection connection, string message) => _dashboard.AddLog(connection, message);
         #endregion
 

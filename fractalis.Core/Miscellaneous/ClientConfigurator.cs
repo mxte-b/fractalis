@@ -43,7 +43,7 @@ namespace fractalis.Core.Miscellaneous
 
             var cpu = Prompts.Selection(
                 $"What should the [{ThemeColor.Accent}]CPU usage limit[/] be?",
-                [1, 0.75, 0.5, 0.25],
+                [1, 0.75, 0.5, 0.25, 0.1],
                 converter: x => $"{x:p0}");
 
             Prompts.Done();

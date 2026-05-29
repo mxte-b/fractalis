@@ -44,8 +44,7 @@ namespace fractalis
                                 ?? throw new Exception("DistributedRendererConfig is null.");
 
                             DistributedVideoRenderer distributed = new(settings.FractalRendererConfig, settings.VideoConfig);
-                            distributed.Initialize(distributedSettings.FrameListenerPort);
-                            await distributed.Start(distributedSettings.OrchestratorUri);
+                            await distributed.Start(distributedSettings.OrchestratorUri, distributedSettings.FrameListenerPort);
 
                             distributed.Save();
                             break;

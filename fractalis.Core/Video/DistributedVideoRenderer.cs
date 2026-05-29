@@ -16,32 +16,25 @@ namespace fractalis.Core.Video
     {
         private FrameListener? _listener;
 
-        public void Initialize(int listenPort = 8060)
-        {
-            _listener = new FrameListener(listenPort, ImageSequencePath);
-        }
 
         /// <summary>
         /// Starts rendering the video using the locally distributed render network.
         /// </summary>
         /// <param name="uri">URI of the network orchestrator.</param>
-        /// <param name="config">Fractal renderer config to use.</param>
-        public async Task Start(Uri orchestratorUri)
+        /// <param name="listenPort">The listen port of the frame listener.</param>
+        public async Task Start(Uri orchestratorUri, int listenPort = 8060)
         {
-            if (_listener is null)
-            {
-                throw new Exception("The video renderer is not yet initialized.");
-            }
-
             CreateOutputDirectory();
-
-            // Starting frame listener
-            _ = _listener.Start();
-            Console.WriteLine($"Frame listener running at {_listener.Uri}");
 
             // Connecting to the orchestrator
             InitiatorClient client = new();
             await client.Connect(orchestratorUri, "Administrator");
+
+            // Starting frame listener
+            _listener = new FrameListener(listenPort, ImageSequencePath);
+            _ = _listener.Start();
+            Console.WriteLine($"Frame listener running at {_listener.Uri}");
+
 
             // Sending render request to the orchestrator
             await client.SendMessageToServerAsync(new VideoRenderRequest()
