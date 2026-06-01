@@ -14,6 +14,7 @@ namespace fractalis.Core.Distributed.Networking
     {
         private readonly Webserver _listener;
         private readonly string _imageSequencePath;
+        private readonly Action? _reportFrameReceived;
 
         /// <summary>
         /// Base URI where the listener is accessible.
@@ -25,7 +26,7 @@ namespace fractalis.Core.Distributed.Networking
         /// </summary>
         /// <param name="port">Port to listen on.</param>
         /// <param name="imageSequencePath">Directory where received frames will be saved.</param>
-        public FrameListener(int port, string imageSequencePath)
+        public FrameListener(int port, string imageSequencePath, Action? reportFrameReceived = null )
         {
             Uri = new Uri($"http://{GetLocalIPAddress()}:{port}/");
             _imageSequencePath = imageSequencePath;
@@ -37,6 +38,7 @@ namespace fractalis.Core.Distributed.Networking
             // Endpoints
             _listener.UseHealthCheck();
             _listener.Post<RenderedImageMessage>("/frame", PostFrame);
+            _reportFrameReceived = reportFrameReceived;
         }
 
         /// <summary>
@@ -80,9 +82,12 @@ namespace fractalis.Core.Distributed.Networking
             RenderedImageMessage body = req.GetData<RenderedImageMessage>();
 
             string path = $"{_imageSequencePath}/frame{(body.FrameIndex + 1).ToString().PadLeft(5, '0')}.png";
-            Console.WriteLine($"Saving to {path}");
 
-            File.WriteAllBytes(path, body.Bytes);
+            if (!File.Exists(path))
+            {
+                File.WriteAllBytes(path, body.Bytes);
+                _reportFrameReceived?.Invoke();
+            }
 
             return Task.FromResult<object?>(null);
         }

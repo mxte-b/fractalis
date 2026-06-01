@@ -8,10 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\fontatlas.png" />
     <None Remove="Resources\palettes.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\fontatlas.png" />
     <EmbeddedResource Include="Resources\palettes.json" />
   </ItemGroup>
 

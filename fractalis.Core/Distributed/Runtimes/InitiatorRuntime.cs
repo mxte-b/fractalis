@@ -13,8 +13,6 @@ namespace fractalis.Core.Distributed.Runtimes
             switch (message)
             {
                 case RenderJobStatusMessage statusMessage:
-                    Console.WriteLine($"New status: {statusMessage.Status}");
-
                     return Task.FromResult(MessageHandlingResult.Stop);
             }
 

@@ -90,7 +90,7 @@ namespace fractalis.Core
         public static readonly Sight CoolDeep = new()
         {
             Name = "Cool Deep",
-            Location = new BigComplex("0.307208440393", "-0.4839543604205"),
+            Location = new BigComplex("-0.738031298652625", " -0.148972367926702"),
             FractalType = FractalType.Mandelbrot,
             FractionalDigits = 13
         };
