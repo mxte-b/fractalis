@@ -1,13 +1,10 @@
-﻿using LayerCompositorTest.Compositor.Layers.Color;
-using LayerCompositorTest.Compositor.Layers.Stylistic;
-using LayerCompositorTest.Compositor.Layers.Tone;
-using System;
-using System.Collections.Generic;
+﻿using fractalis.Core.Compositor.Layers.Color;
+using fractalis.Core.Compositor.Layers.Stylistic;
+using fractalis.Core.Compositor.Layers.Tone;
 using System.Numerics;
-using System.Text;
 using System.Text.Json.Serialization;
 
-namespace LayerCompositorTest.Compositor.Layers
+namespace fractalis.Core.Compositor.Layers
 {
     /// <summary>
     /// Base class for compositing image effect layers.

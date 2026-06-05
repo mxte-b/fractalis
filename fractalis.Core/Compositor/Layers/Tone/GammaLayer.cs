@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 
-namespace LayerCompositorTest.Compositor.Layers.Tone
+namespace fractalis.Core.Compositor.Layers.Tone
 {
     /// <summary>
     /// Represents an effect layer that applies gamma correction.
@@ -11,8 +8,12 @@ namespace LayerCompositorTest.Compositor.Layers.Tone
     /// <param name="gamma">
     /// The gamma correction value. Values below 1 brighten midtones, while values above 1 darken them.
     /// </param>
-    internal class GammaLayer(float gamma) : CompositeLayer
+    public class GammaLayer(float gamma) : CompositeLayer
     {
+        #region JSON-exposed parameters
+        public float Gamma => _gamma;
+        #endregion
+
         private readonly float _gamma = gamma;
 
         public override void Apply(Memory<Vector4> src, Memory<Vector4> dst, int width, int height)

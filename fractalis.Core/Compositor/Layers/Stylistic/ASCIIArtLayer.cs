@@ -1,21 +1,21 @@
-﻿using LayerCompositorTest.Compositor.Layers;
-using LayerCompositorTest.Compositor.Layers.Color;
+﻿using fractalis.Core.Compositor.Layers.Color;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Collections.Generic;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 
-namespace LayerCompositorTest.Compositor.Layers.Stylistic
+namespace fractalis.Core.Compositor.Layers.Stylistic
 {
-    /// <summary>
-    /// Represents an effect layer that converts image data into ASCII art.
-    /// </summary>
-    internal class ASCIIArtLayer : CompositeLayer
+	/// <summary>
+	/// Represents an effect layer that converts image data into ASCII art.
+	/// </summary>
+	public class ASCIIArtLayer : CompositeLayer
     {
+        #region JSON-exposed parameters
+        public float Scale => _scale;
+        #endregion
+
         private readonly Memory<Vector4> _atlas;
         private readonly int _atlasWidth;
         private readonly int _cellsPerRow;

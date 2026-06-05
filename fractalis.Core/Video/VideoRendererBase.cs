@@ -1,13 +1,4 @@
-﻿using fractalis.Core.Numbers;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace fractalis.Core.Video
+﻿namespace fractalis.Core.Video
 {
     public abstract class VideoRendererBase(VideoConfig config)
     {

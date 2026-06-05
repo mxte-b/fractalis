@@ -1,10 +1,6 @@
-﻿using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 
-namespace LayerCompositorTest.Compositor.Layers
+namespace fractalis.Core.Compositor.Layers
 {
     /// <summary>
     /// Represents a composite layer with the ability to apply an effect on an array of colors.

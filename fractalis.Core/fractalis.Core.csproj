@@ -10,11 +10,15 @@
   <ItemGroup>
     <None Remove="Resources\fontatlas.png" />
     <None Remove="Resources\palettes.json" />
+    <None Remove="Resources\watermark_black.png" />
+    <None Remove="Resources\watermark_white.png" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\fontatlas.png" />
     <EmbeddedResource Include="Resources\palettes.json" />
+    <EmbeddedResource Include="Resources\watermark_black.png" />
+    <EmbeddedResource Include="Resources\watermark_white.png" />
   </ItemGroup>
 
   <ItemGroup>

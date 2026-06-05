@@ -1,11 +1,6 @@
-﻿using fractalis.Core.Distributed;
-using fractalis.Core.Numbers;
+﻿using fractalis.Core.Numbers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using System.Net;
-using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
 
 namespace fractalis.Core.Video
 {
@@ -63,7 +58,7 @@ namespace fractalis.Core.Video
             for (int i = Config.StartFrame; i < Config.FrameCount; i++)
             {
                 Renderer.Zoom = GetZoom(i);
-                Image<Rgb24> image = Renderer.Render(false);
+                Image<Rgba32> image = Renderer.Render(false);
 
                 image.Save(ImageSequencePath + $"/frame{(i+1).ToString().PadLeft(5, '0')}.png");
             }
@@ -83,7 +78,7 @@ namespace fractalis.Core.Video
             {
                 Renderer.Zoom = GetZoom(i);
 
-                using Image<Rgb24> image = Renderer.Render(false);
+                using Image<Rgba32> image = Renderer.Render(false);
                 using MemoryStream ms = new();
 
                 image.SaveAsPng(ms);

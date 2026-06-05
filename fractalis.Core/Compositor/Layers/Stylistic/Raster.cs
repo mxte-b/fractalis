@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Runtime.CompilerServices;
 
-namespace LayerCompositorTest.Compositor.Layers.Stylistic
+namespace fractalis.Core.Compositor.Layers.Stylistic
 {
     internal static class Raster
     {

@@ -1,10 +1,6 @@
-﻿using LayerCompositorTest.Compositor.Layers.Color;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 
-namespace LayerCompositorTest.Compositor.Layers.Stylistic
+namespace fractalis.Core.Compositor.Layers.Stylistic
 {
     /// <summary>
     /// Represents an effect layer that applies a vignette (darkening toward edges).
@@ -15,8 +11,13 @@ namespace LayerCompositorTest.Compositor.Layers.Stylistic
     /// <param name="extent">
     /// The radius of the unaffected center area (higher values keep more of the image bright).
     /// </param>
-    internal class VignetteLayer(float strength = 10f, float extent = 0.9f) : CompositeLayer
+    public class VignetteLayer(float strength = 10f, float extent = 0.9f) : CompositeLayer
     {
+        #region JSON-exposed parameters
+        public float Strength => _strength;
+        public float Extent => _extent;
+        #endregion
+
         private readonly float _strength = strength;
         private readonly float _extent = extent;
 

@@ -1,29 +1,8 @@
-﻿using System.Numerics;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace fractalis.Core
 {
-    public class Vector4Converter : JsonConverter<Vector4>
-    {
-        public override Vector4 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            float[] values = JsonSerializer.Deserialize<float[]>(ref reader, options)!;
-            return new Vector4(values[0] / 255f, values[1] / 255f, values[2] / 255f, values[3] / 255f);
-        }
-
-        public override void Write(Utf8JsonWriter writer, Vector4 value, JsonSerializerOptions options)
-        {
-            writer.WriteStartArray();
-            writer.WriteNumberValue(value.X * 255f);
-            writer.WriteNumberValue(value.Y * 255f);
-            writer.WriteNumberValue(value.Z * 255f);
-            writer.WriteNumberValue(value.W * 255f);
-            writer.WriteEndArray();
-        }
-    }
-
     public class ResourceManager
     {
         private static ResourceManager _instance = new ResourceManager();

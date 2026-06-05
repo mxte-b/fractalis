@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using fractalis.Core.Converters;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
+using System.Text.Json.Serialization;
 
-namespace LayerCompositorTest.Compositor.Layers.Stylistic
+namespace fractalis.Core.Compositor.Layers.Stylistic
 {
     /// <summary>
     /// Represents an effect layer that applies chromatic aberration.
@@ -13,8 +12,13 @@ namespace LayerCompositorTest.Compositor.Layers.Stylistic
     /// The per-channel RGB displacement amount. Each component controls how far
     /// red, green, and blue channels are shifted from the original pixel position.
     /// </param>
-    internal class ChromaticAberrationLayer(Vector3 rgbDisplacement) : CompositeLayer
+    public class ChromaticAberrationLayer(Vector3 rgbDisplacement) : CompositeLayer
     {
+        #region JSON-exposed parameters
+        [JsonConverter(typeof(Vector3JsonConverter))]
+        public Vector3 RgbDisplacement => _rgbDisplacement;
+        #endregion
+
         private readonly Vector3 _rgbDisplacement = rgbDisplacement;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

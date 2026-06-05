@@ -1,8 +1,7 @@
-﻿using fractalis.Core.Numbers;
+﻿using fractalis.Core.Converters;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Numerics;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace fractalis.Core
@@ -53,9 +52,12 @@ namespace fractalis.Core
         /// <summary>
         /// Color at this stop, serialized as a Vector4 for JSON compatibility.
         /// </summary>
-        [JsonConverter(typeof(Vector4Converter))]
+        [JsonConverter(typeof(ColorJsonConverter))]
         [JsonPropertyName("color")]
-        public Vector4  Color    { get; set; } = color.ToPixel<Rgba32>().ToVector4();
+        public Color  Color    { get; set; } = color;
+
+        [JsonIgnore]
+        public readonly Vector4 Vector => Color.ToPixel<Rgba32>().ToVector4();
     }
 
     /// <summary>
@@ -172,7 +174,7 @@ namespace fractalis.Core
             if (_stops.Count == 0) return;
             if (_stops.Count == 1)
             {
-                Vector4 stop = _stops[0].Color;
+                Vector4 stop = _stops[0].Vector;
                 for (int i = 0; i < LutResolution; i++)
                 {
                     _lut[i] = stop;
@@ -195,17 +197,17 @@ namespace fractalis.Core
         private Vector4 SampleStops(float t)
         {
             // Normalizing the iteration with repeating
-            if (_stops.Count == 1) return _stops[0].Color;
+            if (_stops.Count == 1) return _stops[0].Vector;
 
             // Selecting the stops that bracket the value
             ColorStop left = _stops.LastOrDefault(s => s.Position <= t);
             ColorStop right = _stops.FirstOrDefault(s => s.Position >= t);
 
-            if (left.Position == right.Position) return left.Color;
+            if (left.Position == right.Position) return left.Vector;
 
             // Interpolating between them
             float localT = (t - left.Position) / (right.Position - left.Position);
-            return Vector4.Lerp(left.Color, right.Color, localT);
+            return Vector4.Lerp(left.Vector, right.Vector, localT);
         }
 
         /// <summary>
@@ -223,29 +225,6 @@ namespace fractalis.Core
 
             int index = (int)(shifted * (LutResolution - 1));
             return _lut[index];
-        }
-    }
-
-    public class ColorJsonConverter : JsonConverter<Color>
-    {
-        public override Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            Vector4Converter conv = new Vector4Converter();
-            Vector4 vec = conv.Read(ref reader, typeToConvert, options);
-
-            return Color.FromRgba(
-                (byte)(vec.X * 255),
-                (byte)(vec.Y * 255),
-                (byte)(vec.Z * 255),
-                (byte)(vec.W * 255)
-            );
-        }
-
-        public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
-        {
-            Vector4 col = value.ToPixel<Rgba32>().ToVector4();
-            Vector4Converter conv = new Vector4Converter();
-            conv.Write(writer, col, options);
         }
     }
 }

@@ -1,9 +1,8 @@
 ﻿using fractalis.Core.Distributed.Contexts;
 using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Distributed.Networking.Messages;
-using fractalis.Core.Video;
-using fractalis.Core.Distributed.Clients;
 using fractalis.Core.Renderers;
+using fractalis.Core.Video;
 
 namespace fractalis.Core.Distributed.Runtimes
 {

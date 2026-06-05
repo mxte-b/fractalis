@@ -1,6 +1,4 @@
-﻿using fractalis.Core.Distributed.Clients;
-using fractalis.Core.Distributed.Networking.Messages;
-using fractalis.Core.Video;
+﻿using fractalis.Core.Distributed.Networking.Messages;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;

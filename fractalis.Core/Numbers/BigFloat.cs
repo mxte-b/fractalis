@@ -1,9 +1,8 @@
-﻿using System.ComponentModel;
-using System.Globalization;
+﻿using fractalis.Core.Converters;
 using Sdcb.Arithmetic.Gmp;
 using Sdcb.Arithmetic.Mpfr;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
-using System.Text.Json;
 
 namespace fractalis.Core.Numbers
 {
@@ -16,6 +15,7 @@ namespace fractalis.Core.Numbers
     /// or numerical simulations requiring hundreds or thousands of digits of accuracy.
     /// </remarks>
     [TypeConverter(typeof(BigFloatConverter))]
+    [JsonConverter(typeof(BigFloatJsonConverter))]
     public class BigFloat
     {
         private readonly MpfrFloat _value;
@@ -222,34 +222,5 @@ namespace fractalis.Core.Numbers
         public override bool Equals(object? obj) => obj is BigFloat other && _value.Equals(other._value);
 
         public override int GetHashCode() => _value.GetHashCode();
-    }
-
-    public class BigFloatConverter : TypeConverter
-    {
-        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
-        {
-            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-        }
-
-        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
-        {
-            if (value is not string s) return base.ConvertFrom(context, culture, value);
-            
-            return BigFloat.TryParse(s, out var result) ? result : throw new FormatException($"'{s}' is not a valid BigFloat.");
-        }
-    }
-
-    public class BigFloatJsonConverter : JsonConverter<BigFloat>
-    {
-        public override BigFloat Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            string? value = reader.GetString();
-            return value is null ? throw new JsonException("Expected a string for BigFloat.") : new BigFloat(value);
-        }
-
-        public override void Write(Utf8JsonWriter writer, BigFloat value, JsonSerializerOptions options)
-        {
-            writer.WriteStringValue(value.ToFullString());
-        }
     }
 }

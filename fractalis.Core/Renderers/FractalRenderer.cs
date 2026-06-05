@@ -1,4 +1,5 @@
-﻿using fractalis.Core.Distributed.Networking;
+﻿using fractalis.Core.Compositor;
+using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
 using fractalis.Core.Renderers;
@@ -44,6 +45,9 @@ namespace fractalis.Core
         /// <summary>Color palette used for rendering.</summary>
         public readonly ColorPalette        ColorPalette            = config.ColorPalette;
 
+        /// <summary>The layer compositor used for post-processing.</summary>
+        public readonly LayerCompositor?    LayerCompositor         = config.LayerCompositor;
+
         /// <summary>Zoom level for the fractal view.</summary>
         public BigFloat                     Zoom            
         {
@@ -87,7 +91,7 @@ namespace fractalis.Core
         /// </summary>
         /// <param name="showProgress">Whether to show a console progress bar.</param>
         /// <returns>The rendered image.</returns>
-        public Image<Rgb24> Render(bool showProgress = true)
+        public Image<Rgba32> Render(bool showProgress = true)
         {
             RenderMode mode = RenderMode;
 
@@ -96,7 +100,7 @@ namespace fractalis.Core
                 perturbable.CalculateReferenceOrbit(_center, Iterations, out _referenceOrbit);
             }
 
-            Rgb24[] colorBuffer = new Rgb24[Width * Height];
+            Rgba32[] colorBuffer = new Rgba32[Width * Height];
 
             Action<int> renderRow = (mode, Fractal) switch
             {
@@ -116,7 +120,7 @@ namespace fractalis.Core
                 var rows = Partitioner.Create(Enumerable.Range(0, Height), EnumerablePartitionerOptions.NoBuffering);
                 var options = new ParallelOptions { MaxDegreeOfParallelism = AvailableCores };
 
-                Rgb24[] aaBuffer = (Rgb24[])colorBuffer.Clone();
+                Rgba32[] aaBuffer = (Rgba32[])colorBuffer.Clone();
 
                 Action<int> rowAA = (RenderMode, Fractal, SimdAgnostic.IsSupported && _aaSamples > 2) switch
                 {
@@ -134,7 +138,10 @@ namespace fractalis.Core
                 colorBuffer = aaBuffer;
             }
 
-            return Image.LoadPixelData<Rgb24>(colorBuffer, Width, Height);
+            // Apply post-processing if necessary
+            LayerCompositor?.Apply(colorBuffer, Width, Height);
+
+            return Image.LoadPixelData<Rgba32>(colorBuffer, Width, Height);
         }
 
         private void RenderRows(Action<int> renderRow, bool showProgress, RenderMode mode)

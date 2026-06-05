@@ -1,4 +1,6 @@
-﻿using fractalis.Core.Fractals;
+﻿using fractalis.Core.Compositor;
+using fractalis.Core.Converters;
+using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
 using System.Text.Json.Serialization;
 
@@ -40,5 +42,8 @@ namespace fractalis.Core.Renderers
 
         /// <summary>Color palette used for rendering.</summary>
         public ColorPalette ColorPalette { get; init; } = ColorPalette.FromPreset(PalettePreset.BB);
+
+        /// <summary>The layer compositor to use when rendering images.</summary>
+        public LayerCompositor? LayerCompositor { get; init; } = null;
     }
 }

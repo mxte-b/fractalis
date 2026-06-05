@@ -1,11 +1,8 @@
 ﻿using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
 
-namespace LayerCompositorTest.Compositor.Layers.Color
+namespace fractalis.Core.Compositor.Layers.Color
 {
     /// <summary>
     /// Provides high-performance color space conversion utilities.

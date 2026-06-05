@@ -1,8 +1,6 @@
 ﻿using fractalis.Core.Numbers;
 using Spectre.Console;
 using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
 
 namespace fractalis.Core.Fractals
 {

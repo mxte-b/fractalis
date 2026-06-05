@@ -1,15 +1,8 @@
-﻿using fractalis.Core.Distributed;
-using fractalis.Core.Distributed.Clients;
+﻿using fractalis.Core.Distributed.Clients;
 using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Distributed.Networking.Messages;
 using fractalis.Core.Renderers;
 using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fractalis.Core.Video
 {

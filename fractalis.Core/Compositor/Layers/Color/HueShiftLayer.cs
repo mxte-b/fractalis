@@ -1,18 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Numerics;
 
-namespace LayerCompositorTest.Compositor.Layers.Color
+namespace fractalis.Core.Compositor.Layers.Color
 {
     /// <summary>
     /// Represents an effect layer for hue-shifting.
     /// </summary>
     /// <param name="shiftDegrees">The hue shift in range [0,360]</param>
-    internal class HueShiftLayer(float shiftDegrees) : CompositeLayer
+    public class HueShiftLayer(float shiftDegrees) : CompositeLayer
     {
+        #region JSON-exposed parameters
+        public float ShiftDegrees => shiftDegrees;
+        #endregion
+
         private readonly float _shift = (shiftDegrees / 360f) % 1f;
 
         public override void Apply(Memory<Vector4> src, Memory<Vector4> dst, int width, int height)

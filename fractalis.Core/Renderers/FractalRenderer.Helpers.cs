@@ -1,11 +1,6 @@
 ﻿using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
 using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fractalis.Core
 {
@@ -19,23 +14,23 @@ namespace fractalis.Core
         }
 
         private double NdcX(double x) => x * (2.0 / Height) - _aspectRatio;
-        private Rgb24 Sample(IterationResult r)
+        private Rgba32 Sample(IterationResult r)
         {
-            if (!r.Escaped) return ColorPalette.InteriorColor.ToPixel<Rgb24>();
+            if (!r.Escaped) return ColorPalette.InteriorColor.ToPixel<Rgba32>();
 
             double smoothIter = Fractal.GetContinousValue(r);
 
             System.Numerics.Vector4 c = ColorPalette.Sample(smoothIter);
-            return new Rgb24((byte)(c.X * 255), (byte)(c.Y * 255), (byte)(c.Z * 255));
+            return new Rgba32((byte)(c.X * 255), (byte)(c.Y * 255), (byte)(c.Z * 255));
         }
         private Complex PixelCoordinates(double ndcX, double ndcY) => new(ndcX * _pixelSpacingDouble + _centerDouble.Real, ndcY * _pixelSpacingDouble + _centerDouble.Imaginary);
 
-        private static int Diff(Rgb24 a, Rgb24 b) => Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
+        private static int Diff(Rgba32 a, Rgba32 b) => Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 
-        private bool NeedsAA(Rgb24[] colorBuffer, int x, int y)
+        private bool NeedsAA(Rgba32[] colorBuffer, int x, int y)
         {
             int centerIndex = y * Width + x;
-            Rgb24 center = colorBuffer[centerIndex];
+            Rgba32 center = colorBuffer[centerIndex];
 
             return (x > 0 && Diff(center, colorBuffer[centerIndex - 1]) > AA_THRESHOLD) ||
                    (x < Width - 1 && Diff(center, colorBuffer[centerIndex + 1]) > AA_THRESHOLD) ||

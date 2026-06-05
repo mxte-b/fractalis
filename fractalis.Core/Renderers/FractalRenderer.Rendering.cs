@@ -1,19 +1,13 @@
 ﻿using fractalis.Core.Fractals;
 using fractalis.Core.Numbers;
 using SixLabors.ImageSharp.PixelFormats;
-using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace fractalis.Core
 {
     public partial class FractalRenderer
     {
         #region Row rendering
-        private void RenderRowScalar(Rgb24[] colorBuffer, int y)
+        private void RenderRowScalar(Rgba32[] colorBuffer, int y)
         {
             double ndcY = NdcY(y);
             int rowOffset = y * Width;
@@ -26,7 +20,7 @@ namespace fractalis.Core
             }
         }
 
-        private void RenderRowSimd(Rgb24[] colorBuffer, int y, ISimdFractal simd)
+        private void RenderRowSimd(Rgba32[] colorBuffer, int y, ISimdFractal simd)
         {
             double ndcY = NdcY(y);
 
@@ -55,7 +49,7 @@ namespace fractalis.Core
             }
         }
 
-        private void RenderRowPerturbed(Rgb24[] colorBuffer, int y, IPerturbableFractal p)
+        private void RenderRowPerturbed(Rgba32[] colorBuffer, int y, IPerturbableFractal p)
         {
             double ndcY = NdcY(y);
             int rowOffset = y * Width;
@@ -68,7 +62,7 @@ namespace fractalis.Core
             }
         }
 
-        private void RenderRowFloatExp(Rgb24[] colorBuffer, int y, IPerturbableFractal p)
+        private void RenderRowFloatExp(Rgba32[] colorBuffer, int y, IPerturbableFractal p)
         {
             double ndcY = NdcY(y);
             int rowOffset = y * Width;
@@ -82,7 +76,7 @@ namespace fractalis.Core
             }
         }
 
-        private void RenderRowSimdPerturbed(Rgb24[] colorBuffer, int y, ISimdPerturbableFractal simd)
+        private void RenderRowSimdPerturbed(Rgba32[] colorBuffer, int y, ISimdPerturbableFractal simd)
         {
             var ndcY = SimdAgnostic.Create(NdcY(y) * _pixelSpacingDouble);
             double ndcStepX = 2.0 / Height;
@@ -115,7 +109,7 @@ namespace fractalis.Core
         private static readonly double[] AA_OFFSETS_Y = [0,  0.97492791, -0.43388374,  0.78183148,  0.43388374, -0.97492791, -0.78183148, 0];
         private const double AA_SCALE = 0.5;
 
-        private void AAPassScalar(Rgb24[] colorBuffer, Rgb24[] aaBuffer, int y)
+        private void AAPassScalar(Rgba32[] colorBuffer, Rgba32[] aaBuffer, int y)
         {
             double ndcY = NdcY(y);
             double stepX = 2.0 * _pixelSpacingDouble / Height;
@@ -129,7 +123,7 @@ namespace fractalis.Core
                 if (!NeedsAA(colorBuffer, x, y)) continue;
 
                 Complex c = PixelCoordinates(NdcX(x), ndcY);
-                Rgb24 center = colorBuffer[rowOffset + x];
+                Rgba32 center = colorBuffer[rowOffset + x];
 
                 int r = center.R * 3, 
                     g = center.G * 3, 
@@ -139,7 +133,7 @@ namespace fractalis.Core
 
                 for (int i = 0; i < _aaSamples - 1; i++)
                 {
-                    Rgb24 color = Sample(
+                    Rgba32 color = Sample(
                         Fractal.Iteration(c + new Complex(AA_OFFSETS_X[i] * halfStepX, AA_OFFSETS_Y[i] * halfStepY),Iterations)
                     );
 
@@ -150,11 +144,11 @@ namespace fractalis.Core
                     totalWeight++;
                 }
 
-                aaBuffer[rowOffset + x] = new Rgb24((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
+                aaBuffer[rowOffset + x] = new Rgba32((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
             }
         }
 
-        private void AAPassSimd(Rgb24[] colorBuffer, Rgb24[] aaBuffer, int y, ISimdFractal s)
+        private void AAPassSimd(Rgba32[] colorBuffer, Rgba32[] aaBuffer, int y, ISimdFractal s)
         {
             double ndcY = NdcY(y);
             double stepX = 2.0 * _pixelSpacingDouble / Height;
@@ -172,7 +166,7 @@ namespace fractalis.Core
             {
                 if (!NeedsAA(colorBuffer, x, y)) continue;
 
-                Rgb24 center = colorBuffer[rowOffset + x];
+                Rgba32 center = colorBuffer[rowOffset + x];
                 Vec256d pixelCr = SimdAgnostic.Add(SimdAgnostic.Create(x * stepX), centerReal);
 
                 int r = center.R * 3,
@@ -197,7 +191,7 @@ namespace fractalis.Core
 
                     var (r0, r1, r2, r3) = s.IterationSIMD(cr, ci, Iterations);
 
-                    Rgb24 c0 = Sample(r0),
+                    Rgba32 c0 = Sample(r0),
                           c1 = Sample(r1),
                           c2 = Sample(r2),
                           c3 = Sample(r3);
@@ -209,11 +203,11 @@ namespace fractalis.Core
                     totalWeight += 4;
                 }
 
-                aaBuffer[rowOffset + x] = new Rgb24((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
+                aaBuffer[rowOffset + x] = new Rgba32((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
             }
         }
 
-        private void AAPassPerturbed(Rgb24[] colorBuffer, Rgb24[] aaBuffer, int y, IPerturbableFractal p)
+        private void AAPassPerturbed(Rgba32[] colorBuffer, Rgba32[] aaBuffer, int y, IPerturbableFractal p)
         {
             double ndcY = NdcY(y) * _pixelSpacingDouble;
             double stepX = 2.0 * _pixelSpacingDouble / Height;
@@ -229,7 +223,7 @@ namespace fractalis.Core
 
                 double ndcX = x * stepX + ndcXStart;
 
-                Rgb24 center = colorBuffer[rowOffset + x];
+                Rgba32 center = colorBuffer[rowOffset + x];
 
                 int r = center.R * 3,
                     g = center.G * 3,
@@ -242,7 +236,7 @@ namespace fractalis.Core
                     double dr = ndcX + AA_OFFSETS_X[i] * halfStepX;
                     double di = ndcY + AA_OFFSETS_Y[i] * halfStepY;
 
-                    Rgb24 color = Sample(
+                    Rgba32 color = Sample(
                         p.IterationPerturbed(dr, di, Iterations, in _referenceOrbit)
                     );
 
@@ -253,11 +247,11 @@ namespace fractalis.Core
                     totalWeight++;
                 }
 
-                aaBuffer[rowOffset + x] = new Rgb24((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
+                aaBuffer[rowOffset + x] = new Rgba32((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
             }
         }
 
-        private void AAPassFloatExp(Rgb24[] colorBuffer, Rgb24[] aaBuffer, int y, IPerturbableFractal p)
+        private void AAPassFloatExp(Rgba32[] colorBuffer, Rgba32[] aaBuffer, int y, IPerturbableFractal p)
         {
             FloatExp ndcY = NdcY(y) * _pixelSpacing;
             FloatExp halfStepX = _pixelSpacing * (2.0 * AA_SCALE / Height);
@@ -271,7 +265,7 @@ namespace fractalis.Core
 
                 FloatExp ndcX = NdcX(x) * _pixelSpacing;
 
-                Rgb24 center = colorBuffer[rowOffset + x];
+                Rgba32 center = colorBuffer[rowOffset + x];
 
                 int r = center.R * 3,
                     g = center.G * 3,
@@ -285,7 +279,7 @@ namespace fractalis.Core
                         ndcX + (FloatExp)AA_OFFSETS_X[i] * halfStepX,
                         ndcY + (FloatExp)AA_OFFSETS_Y[i] * halfStepY);
 
-                    Rgb24 color = Sample(
+                    Rgba32 color = Sample(
                        p.IterationFloatExp(delta, Iterations, in _referenceOrbit)
                     );
 
@@ -296,11 +290,11 @@ namespace fractalis.Core
                     totalWeight++;
                 }
 
-                aaBuffer[rowOffset + x] = new Rgb24((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
+                aaBuffer[rowOffset + x] = new Rgba32((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
             }
         }
 
-        private void AAPassSimdPerturbed(Rgb24[] colorBuffer, Rgb24[] aaBuffer, int y, ISimdPerturbableFractal s)
+        private void AAPassSimdPerturbed(Rgba32[] colorBuffer, Rgba32[] aaBuffer, int y, ISimdPerturbableFractal s)
         {
             Vec256d ndcY = SimdAgnostic.Create(NdcY(y) * _pixelSpacingDouble);
             Vec256d ndcXStart = SimdAgnostic.Create(-_aspectRatio * _pixelSpacingDouble);
@@ -317,7 +311,7 @@ namespace fractalis.Core
 
                 Vec256d ndcX = SimdAgnostic.MultiplyAdd(SimdAgnostic.Create(x), stepX, ndcXStart);
 
-                Rgb24 center = colorBuffer[rowOffset + x];
+                Rgba32 center = colorBuffer[rowOffset + x];
 
                 int r = center.R * 3,
                     g = center.G * 3,
@@ -341,7 +335,7 @@ namespace fractalis.Core
 
                     var (r0, r1, r2, r3) = s.IterationPerturbedSIMD(dr, di, Iterations, in _referenceOrbit);
 
-                    Rgb24 c0 = Sample(r0),
+                    Rgba32 c0 = Sample(r0),
                           c1 = Sample(r1),
                           c2 = Sample(r2),
                           c3 = Sample(r3);
@@ -353,7 +347,7 @@ namespace fractalis.Core
                     totalWeight += 4;
                 }
 
-                aaBuffer[rowOffset + x] = new Rgb24((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
+                aaBuffer[rowOffset + x] = new Rgba32((byte)(r / totalWeight), (byte)(g / totalWeight), (byte)(b / totalWeight));
             }
         }
         #endregion

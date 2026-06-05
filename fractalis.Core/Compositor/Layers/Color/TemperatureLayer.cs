@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 
-namespace LayerCompositorTest.Compositor.Layers.Color
+namespace fractalis.Core.Compositor.Layers.Color
 {
     /// <summary>
     /// Represents an effect layer for color temperature adjustment.
@@ -12,8 +9,12 @@ namespace LayerCompositorTest.Compositor.Layers.Color
     /// The target color temperature in Kelvin (from 1000K to 10000K). Lower values produce warmer tones,
     /// while higher values produce cooler tones.
     /// </param>
-    internal class TemperatureLayer(float kelvin) : CompositeLayer
+    public class TemperatureLayer(float kelvin) : CompositeLayer
     {
+        #region JSON-exposed parameters
+        public float Kelvin => _kelvin;
+        #endregion
+
         private readonly float _kelvin = kelvin;
 
         private static readonly Vector4[] _kelvinLUT =

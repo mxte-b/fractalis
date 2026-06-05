@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace fractalis.Core.Video
+﻿namespace fractalis.Core.Video
 {
     /// <summary>
     /// Defines easing behavior for the beginning and end of the animation.

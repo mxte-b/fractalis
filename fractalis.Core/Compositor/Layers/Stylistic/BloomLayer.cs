@@ -1,21 +1,26 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
+﻿using System.Buffers;
 using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Text;
 
-namespace LayerCompositorTest.Compositor.Layers.Stylistic
+namespace fractalis.Core.Compositor.Layers.Stylistic
 {
     /// <summary>
     /// Represents an effect layer that applies a bloom (glow) effect.
     /// </summary>
-    internal class BloomLayer : CompositeLayer
+    public class BloomLayer : CompositeLayer
     {
+        #region JSON-exposed parameters
+        public float Intensity => _intensity;
+        public float BloomStart => _bloomStart;
+        public float BloomEnd => _bloomEnd;
+        public int Radius => _radius;
+        public float Sigma => _sigma;
+        #endregion
+
         private readonly float _intensity;
         private readonly float _bloomStart;
         private readonly float _bloomEnd;
         private readonly int _radius;
+        private readonly float _sigma;
         private readonly float[] _weights;
         private readonly float _weightSum;
 
@@ -45,6 +50,7 @@ namespace LayerCompositorTest.Compositor.Layers.Stylistic
             _radius = radius;
             _bloomStart = bloomStart;
             _bloomEnd = bloomEnd;
+            _sigma = sigma;
 
             // Precalculate weight values
             _weights = new float[radius * 2 + 1];

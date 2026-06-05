@@ -1,16 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 
-namespace LayerCompositorTest.Compositor.Layers.Color
+namespace fractalis.Core.Compositor.Layers.Color
 {
     /// <summary>
     /// Represent a composite layer for vibrancy effect.
     /// </summary>
     /// <param name="vibrance">The strength of the effect in the range [0,1].</param>
-    internal class VibranceLayer(float vibrance) : CompositeLayer
+    public class VibranceLayer(float vibrance) : CompositeLayer
     {
+        #region JSON-exposed parameters
+        public float Vibrance => vibrance;
+        #endregion
+
         private readonly float _vibrance = Math.Clamp(vibrance, 0, 1);
 
         public override void Apply(Memory<Vector4> src, Memory<Vector4> dst, int width, int height)

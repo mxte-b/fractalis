@@ -1,10 +1,6 @@
-﻿using fractalis.Core.Numbers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using fractalis.Core.Converters;
+using fractalis.Core.Numbers;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace fractalis.Core.Video
 {

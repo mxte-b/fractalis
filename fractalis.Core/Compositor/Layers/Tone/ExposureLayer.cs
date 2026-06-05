@@ -1,10 +1,6 @@
-﻿using LayerCompositorTest.Compositor.Layers;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 
-namespace LayerCompositorTest.Compositor.Layers.Tone
+namespace fractalis.Core.Compositor.Layers.Tone
 {
     /// <summary>
     /// Represents an effect layer that applies exposure adjustment.
@@ -13,8 +9,12 @@ namespace LayerCompositorTest.Compositor.Layers.Tone
     /// The exposure value applied to the image. Positive values increase brightness,
     /// while negative values darken the image.
     /// </param>
-    internal class ExposureLayer(float exposure) : CompositeLayer
+    public class ExposureLayer(float exposure) : CompositeLayer
     {
+        #region JSON-exposed parameters
+        public float Exposure => _exposure;
+        #endregion
+
         private readonly float _exposure = exposure;
 
         public override void Apply(Memory<Vector4> src, Memory<Vector4> dst, int width, int height)

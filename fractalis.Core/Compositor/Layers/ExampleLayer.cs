@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 
-namespace LayerCompositorTest.Compositor.Layers
+namespace fractalis.Core.Compositor.Layers
 {
     /// <summary>
     /// This is an example composite layer intended for basic guidance on how to
     /// create a custom, performant layer to use in a <see cref="LayerCompositor"/>.
     /// </summary>
     /// <param name="mix">A custom variable for the layer.</param>
-    internal class ExampleLayer(float mix) : CompositeLayer
+    public class ExampleLayer(float mix) : CompositeLayer
     {
         // Custom parameter for the layer
         private readonly float _mix = mix;

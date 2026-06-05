@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 
-namespace LayerCompositorTest.Compositor.Layers.Color
+namespace fractalis.Core.Compositor.Layers.Color
 {
     /// <summary>
     /// Represents an effect layer that adjusts color saturation.
@@ -12,8 +9,12 @@ namespace LayerCompositorTest.Compositor.Layers.Color
     /// The saturation multiplier. Values above 1 increase saturation,
     /// while values between 0 and 1 decrease it.
     /// </param>
-    internal class SaturationLayer(float saturation) : CompositeLayer
+    public class SaturationLayer(float saturation) : CompositeLayer
     {
+        #region JSON-exposed parameters
+        public float Saturation => _saturation;
+        #endregion
+
         private readonly float _saturation = saturation;
 
         public override void Apply(Memory<Vector4> src, Memory<Vector4> dst, int width, int height)

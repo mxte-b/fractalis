@@ -1,9 +1,6 @@
 ﻿using fractalis.Core.Numbers;
 using fractalis.Core.Video;
 using Spectre.Console;
-using System.Net;
-using System.Security.AccessControl;
-using System.Text.RegularExpressions;
 
 namespace fractalis.Core.Miscellaneous.Phases
 {
