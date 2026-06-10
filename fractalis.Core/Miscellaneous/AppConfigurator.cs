@@ -1,5 +1,6 @@
 using fractalis.Core.Fractals;
 using fractalis.Core.Miscellaneous.Phases;
+using fractalis.Core.Compositor;
 using fractalis.Core.Renderers;
 using Spectre.Console;
 using System.Text.Json;
@@ -8,11 +9,6 @@ namespace fractalis.Core.Miscellaneous
 {
     public static class AppConfigurator
     {
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
 
         private static AppMode PromptAppMode() 
             => Prompts.Selection($"What would you like to [bold {ThemeColor.Accent}]do[/]?", 
@@ -25,7 +21,7 @@ namespace fractalis.Core.Miscellaneous
                 _ => AppMode.Image
             });
 
-        private static AppSettings? ParseConfig(string path) => JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path), JsonOptions);
+        private static AppSettings? ParseConfig(string path) => JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path), FractalisJsonOptions.Default);
 
         private static AppSettings? TryLoadConfig(string[] args)
         {
@@ -36,7 +32,6 @@ namespace fractalis.Core.Miscellaneous
                     string path = args[i + 1];
 
                     Prompts.Info($"Trying to load config from path {path}");
-
                     return ParseConfig(path);
                 }
             }
@@ -78,7 +73,7 @@ namespace fractalis.Core.Miscellaneous
             if (Prompts.Confirm("Save this configuration to a JSON file for later reuse?"))
             {
                 var path = Prompts.Text("Save path:", defaultValue: "config.json");
-                File.WriteAllText(path, JsonSerializer.Serialize(settings, JsonOptions));
+                File.WriteAllText(path, JsonSerializer.Serialize(settings, FractalisJsonOptions.Default));
                 Prompts.Success($"Config saved to [cyan]{path}[/]");
             }
 
@@ -92,6 +87,7 @@ namespace fractalis.Core.Miscellaneous
             var location    = new LocationPhase(fractal.Type, appMode == AppMode.Video).Run();
             var output      = new OutputPhase(appMode, videoMode).Run();
             var appearance  = new AppearancePhase().Run();
+            var post        = new PostProcessingPhase().Run();
 
             return new FractalRendererConfig()
             {
@@ -104,6 +100,7 @@ namespace fractalis.Core.Miscellaneous
                 ColorPalette = ColorPalette.FromPreset(appearance.Palette),
                 AntiAliasing = appearance.AntiAliasing,
                 ProcessorUsageLimit = output.ProcessorUsageLimit,
+                LayerCompositor = post.Layers != null ? new LayerCompositor(post.Layers) : null,
             };
         }
 

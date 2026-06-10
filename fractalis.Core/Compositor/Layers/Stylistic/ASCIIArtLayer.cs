@@ -10,7 +10,7 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
 	/// <summary>
 	/// Represents an effect layer that converts image data into ASCII art.
 	/// </summary>
-	public class ASCIIArtLayer : CompositeLayer
+	public class AsciiArtLayer : CompositeLayer
     {
         #region JSON-exposed parameters
         public float Scale => _scale;
@@ -30,7 +30,7 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
         /// </summary>
         /// <param name="scale">The relative scaling of the ASCII characters.</param>
         /// <exception cref="Exception">When the font atlas cannot be loaded.</exception>
-        public ASCIIArtLayer(float scale = 1)
+        public AsciiArtLayer(float scale = 1)
         {
             _scale = scale;
 

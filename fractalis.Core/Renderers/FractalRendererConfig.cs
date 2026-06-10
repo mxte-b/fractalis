@@ -24,7 +24,6 @@ namespace fractalis.Core.Renderers
         public required int Height { get; init; }
 
         /// <summary>Zoom level for the fractal view.</summary>
-        [JsonConverter(typeof(BigFloatJsonConverter))]
         public required BigFloat Zoom { get; init; }
 
         /// <summary>Center coordinate in the complex plane.</summary>

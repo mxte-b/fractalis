@@ -1,5 +1,6 @@
 ﻿using fractalis.Core;
 using fractalis.Core.Compositor;
+using fractalis.Core.Compositor.Layers.Color;
 using fractalis.Core.Compositor.Layers.Stylistic;
 using fractalis.Core.Miscellaneous;
 using fractalis.Core.Video;
@@ -16,23 +17,9 @@ namespace fractalis
         {
             Console.OutputEncoding = Encoding.UTF8;
             Console.WriteLine(Banner.V1);
-            Console.WriteLine(Watermarks.FractalisBlack);
-
-            LayerCompositor compositor = new LayerCompositor()
-                //.AddLayer(new ASCIIArtLayer(0.5f))
-                .AddLayer(new ChromaticAberrationLayer(new(0.006f, 0.003f, -0.003f)))
-                .AddLayer(new VignetteLayer(1, 1.5f))
-                .AddLayer(new WatermarkLayer(
-                    Watermarks.FractalisWhite,
-                    new WatermarkOptions()
-                    {
-                        Scale = 0.5f,
-                        Opacity = 0.4f
-                    }
-                ));
 
             AppSettings settings = AppConfigurator.Configure(args);
-            FractalRenderer renderer = new(settings.FractalRendererConfig with { LayerCompositor = compositor});
+            FractalRenderer renderer = new(settings.FractalRendererConfig);
 
             switch (settings.Mode)
             {

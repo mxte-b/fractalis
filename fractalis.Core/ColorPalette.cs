@@ -12,28 +12,16 @@ namespace fractalis.Core
     public enum PalettePreset
     {
         BB,
-        Midnight,
-        RedAccent,
         Glacial,
+        Midnight,
+        NebulaTides,
+        Pulse,
         PurpleFlame,
-    }
-
-    /// <summary>
-    /// Represents a named color palette with a list of color stops.
-    /// </summary>
-    public record PaletteData
-    {
-        /// <summary>
-        /// The name of the palette.
-        /// </summary>
-        [JsonPropertyName("name")]
-        public required string          Name        { get; init; }
-
-        /// <summary>
-        /// The list of color stops defining the palette gradient.
-        /// </summary>
-        [JsonPropertyName("stops")]
-        public required List<ColorStop> ColorStops  { get; init; }
+        RedAccent,
+        SunkenTemple,
+        Synthwave,
+        VoidGold,
+        Verdant,
     }
 
     /// <summary>
@@ -63,38 +51,43 @@ namespace fractalis.Core
     /// <summary>
     /// Manages a continuous color gradient with a lookup table for efficient sampling.
     /// </summary>
+    [JsonConverter(typeof(ColorPaletteJsonConverter))]
     public class ColorPalette
     {
+        public const int DefaultFrequency = 200;
+        public const float DefaultOffset = 0.4f;
+        public static Color DefaultInteriorColor = Color.Black;
+
         /// <summary>
         /// The number of iterations over which the palette repeats.
         /// </summary>
-        public int                          Frequency       { get; set; } = 200;
+        public int                          Frequency       { get; set; } = DefaultFrequency;
 
         /// <summary>
         /// Offset applied to the palette sampling for shifting the gradient.
         /// </summary>
-        public float                        Offset          { get; set; } = 0.4f;
+        public float                        Offset          { get; set; } = DefaultOffset;
 
         /// <summary>
         /// Color used for points inside the fractal.
         /// </summary>
         [JsonConverter(typeof(ColorJsonConverter))]
-        public Color                        InteriorColor   { get; set; } = Color.Black;
+        public Color                        InteriorColor   { get; set; } = DefaultInteriorColor;
+
+        /// <summary>
+        /// The name of the preset associated with this color palette.
+        /// Null value indicates that it is a custom color palette.
+        /// </summary>
+        public string?                      PresetName      { get; init; } = null; 
 
         /// <summary>
         /// Resolution of the internal lookup table (LUT) used for fast gradient sampling.
         /// </summary>
         public static int                   LutResolution   { get; set; } = 4096;
 
-        [JsonInclude]
-        [JsonPropertyName("stops")]
-        private List<ColorStop> Stops
-        {
-            get => _stops;
-            set { _stops = value; BakeLUT(); }
-        }
+        public List<ColorStop> Stops => _stops;
 
-        private List<ColorStop>             _stops;
+        private readonly List<ColorStop>    _stops;
         private readonly Vector4[]          _lut;
 
         private static readonly ResourceManager    _resourceManager = ResourceManager.Instance;
@@ -104,7 +97,7 @@ namespace fractalis.Core
         /// </summary>
         public ColorPalette()
         {
-            _stops = new List<ColorStop>();
+            _stops = [];
             _lut = new Vector4[LutResolution];
         }
 
@@ -134,7 +127,12 @@ namespace fractalis.Core
                 throw new KeyNotFoundException($"The key '{preset}' is not a valid color palette.");
             }
 
-            return new ColorPalette(stops);
+            var palette = new ColorPalette(stops)
+            {
+                PresetName = preset.ToString()
+            };
+
+            return palette;
         }
 
         /// <summary>

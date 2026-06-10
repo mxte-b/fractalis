@@ -21,7 +21,7 @@ namespace fractalis.Core.Compositor.Layers.Tone
         {
             Parallel.For(0, src.Length, idx =>
             {
-                dst.Span[idx] = src.Span[idx] + _strength;
+                dst.Span[idx] = src.Span[idx] * _strength;
             });
         }
     }

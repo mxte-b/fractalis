@@ -87,6 +87,22 @@ namespace fractalis.Core
             FractionalDigits = 1494,
         };
 
+        public static readonly Sight JuliaIsland = new()
+        {
+            Name = "Julia Island",
+            Location = new BigComplex("-1.76877882", "-0.001738916"),
+            FractalType = FractalType.Mandelbrot,
+            FractionalDigits = 8
+        };
+
+        public static readonly Sight Flowers = new()
+        {
+            Name = "Flowers",
+            Location = new BigComplex("0.30720844039285", "-0.4839543604204"),
+            FractalType = FractalType.Mandelbrot,
+            FractionalDigits = 15,
+        };
+
         public static readonly Sight CoolDeep = new()
         {
             Name = "Cool Deep",
@@ -97,13 +113,15 @@ namespace fractalis.Core
 
         public static readonly IReadOnlyList<Sight> All =
         [
-            HardestTrip,
-            RetroDays,
-            TripToInfinity,
+            CoolDeep,
             Flake,
+            Flowers,
+            HardestTrip,
+            JuliaIsland,
             MagnumOpusEx,
+            RetroDays,
             Test,
-            CoolDeep
+            TripToInfinity,
         ];
     }
 }

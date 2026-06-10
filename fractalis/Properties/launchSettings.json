@@ -1,8 +1,7 @@
 {
   "profiles": {
     "fractalis": {
-      "commandName": "Project",
-      "commandLineArgs": "--config \"flake.json\""
+      "commandName": "Project"
     }
   }
 }

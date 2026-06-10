@@ -14,7 +14,9 @@
 
             var palette = Prompts.Selection(
                 $"What [{ThemeColor.Accent}]color palette[/] should the renderer use?",
-                Enum.GetValues<PalettePreset>());
+                Enum.GetValues<PalettePreset>(),
+                null, true
+                );
 
             Prompts.Done();
             return new(palette, antiAliasing);

@@ -7,7 +7,6 @@ namespace fractalis.Core
     {
         private static ResourceManager _instance = new ResourceManager();
         private static readonly object _lock = new object();
-        private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
         public Dictionary<string, List<ColorStop>> ColorPalettes = [];
 
@@ -29,16 +28,10 @@ namespace fractalis.Core
             StreamReader reader = new StreamReader(stream);
             string text = reader.ReadToEnd();
 
-            List<PaletteData>? data = JsonSerializer.Deserialize<List<PaletteData>>(text, _serializerOptions);
-            if (data == null)
-            {
-                throw new FormatException("The palette data was malformed.");
-            }
+            var data = JsonSerializer.Deserialize<Dictionary<string, List<ColorStop>>>(text, FractalisJsonOptions.Default) 
+                ?? throw new FormatException("The palette data was malformed.");
 
-            foreach (PaletteData palette in data)
-            {
-                ColorPalettes.Add(palette.Name, palette.ColorStops);
-            }
+            ColorPalettes = data;
         }
 
         public static ResourceManager Instance

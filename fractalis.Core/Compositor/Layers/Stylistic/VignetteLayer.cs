@@ -6,10 +6,12 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
     /// Represents an effect layer that applies a vignette (darkening toward edges).
     /// </summary>
     /// <param name="strength">
-    /// The intensity of the vignette effect.
+    /// Controls how bright the center stays. Higher values preserve more brightness;
+    /// lower values darken the image more aggressively. Practical range: 5–25.
     /// </param>
     /// <param name="extent">
-    /// The radius of the unaffected center area (higher values keep more of the image bright).
+    /// Controls the softness of the falloff. Below 1 gives a gradual fade;
+    /// above 1 gives a sharper edge. Practical range: 0.3–1.5.
     /// </param>
     public class VignetteLayer(float strength = 10f, float extent = 0.9f) : CompositeLayer
     {

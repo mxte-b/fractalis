@@ -18,7 +18,9 @@ namespace fractalis.Core.Miscellaneous.Phases
                 searchable: true);
 
             // For video rendering, asking the zoom value is unnecessary
-            var zoom = isVideo ? BigFloat.One : Prompts.Text<BigFloat>($"What should the [{ThemeColor.Accent}]zoom[/] level be?");
+            var zoom = isVideo 
+                ? BigFloat.One 
+                : Prompts.Text<BigFloat>($"What should the [{ThemeColor.Accent}]zoom[/] level be?");
 
             if (zoom > sight.MaxRange)
                 Prompts.Warn("Zoom exceeds the precision limit — the image may render as a solid color.");

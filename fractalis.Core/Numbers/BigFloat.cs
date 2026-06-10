@@ -71,17 +71,12 @@ namespace fractalis.Core.Numbers
 
         public static bool TryParse(string s, out BigFloat? value)
         {
-            value = null;
+            // MpfrFloat.TryParse corrupts memory on invalid input, so we use double's TryParse.
+            bool valid = double.TryParse(s, out _);
 
-            try
-            {
-                value = new BigFloat(s);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            value = valid ? new BigFloat(s) : null;
+
+            return valid;
         }
 
         /// <summary>

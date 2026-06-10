@@ -16,7 +16,6 @@ namespace fractalis.Core.Compositor.Layers
     //Tone
     [JsonDerivedType(typeof(BrightnessLayer), "brightness")]
     [JsonDerivedType(typeof(ContrastLayer), "contrast")]
-    [JsonDerivedType(typeof(ExposureLayer), "exposure")]
     [JsonDerivedType(typeof(GammaLayer), "gamma")]
     //Color
     [JsonDerivedType(typeof(HueShiftLayer), "hueShift")]
@@ -24,7 +23,7 @@ namespace fractalis.Core.Compositor.Layers
     [JsonDerivedType(typeof(TemperatureLayer), "temperature")]
     [JsonDerivedType(typeof(VibranceLayer), "vibrance")]
     //Stylistic
-    [JsonDerivedType(typeof(ASCIIArtLayer), "asciiArt")]
+    [JsonDerivedType(typeof(AsciiArtLayer), "asciiArt")]
     [JsonDerivedType(typeof(BloomLayer), "bloom")]
     [JsonDerivedType(typeof(ChromaticAberrationLayer), "chromaticAberration")]
     [JsonDerivedType(typeof(VignetteLayer), "vignette")]
@@ -32,5 +31,20 @@ namespace fractalis.Core.Compositor.Layers
     public abstract class CompositeLayer : ICompositeLayer
     {
         public abstract void Apply(Memory<Vector4> src, Memory<Vector4> dst, int width, int height);
+
+        public static readonly IEnumerable<Type> AllLayers = [
+            typeof(BrightnessLayer),
+            typeof(ContrastLayer),
+            typeof(GammaLayer),
+            typeof(HueShiftLayer),
+            typeof(SaturationLayer),
+            typeof(TemperatureLayer),
+            typeof(VibranceLayer),
+            typeof(AsciiArtLayer),
+            typeof(BloomLayer),
+            typeof(ChromaticAberrationLayer),
+            typeof(VignetteLayer),
+            typeof(WatermarkLayer),
+        ];
     }
 }

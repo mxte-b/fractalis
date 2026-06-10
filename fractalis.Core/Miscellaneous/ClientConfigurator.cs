@@ -5,13 +5,7 @@ namespace fractalis.Core.Miscellaneous
 {
     public static class ClientConfigurator
     {
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-
-        private static ClientSettings? LoadConfig(string path) => JsonSerializer.Deserialize<ClientSettings>(File.ReadAllText(path));
+        private static ClientSettings? LoadConfig(string path) => JsonSerializer.Deserialize<ClientSettings>(File.ReadAllText(path), FractalisJsonOptions.Default);
 
         public static ClientSettings Configure(string[] args)
         {

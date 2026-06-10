@@ -16,7 +16,7 @@ namespace fractalis.Core.Miscellaneous
         /// Displays a selection prompt and returns the user's chosen value.
         /// </summary>
         /// <typeparam name="T">The type of the selectable items.</typeparam>
-        /// <param name="title">The title displayed above the selection prompt.</param>
+        /// <param name="title">The title displayed above the selection prompt (optional).</param>
         /// <param name="choices">The collection of available options.</param>
         /// <param name="converter">
         /// Optional function used to convert each item into a display string.
@@ -25,14 +25,14 @@ namespace fractalis.Core.Miscellaneous
         /// If true, enables search functionality within the selection list.
         /// </param>
         /// <returns>The value selected by the user.</returns>
-        public static T Selection<T>(string title, IEnumerable<T> choices, Func<T, string>? converter = null, bool searchable = false)
+        public static T Selection<T>(string? title, IEnumerable<T> choices, Func<T, string>? converter = null, bool searchable = false)
             where T : notnull
         {
             var prompt = new SelectionPrompt<T>()
-                .Title(title)
                 .HighlightStyle(Theme.Selection)
                 .AddChoices(choices);
 
+            if (title is not null) prompt.Title = title;
             if (converter is not null) prompt.UseConverter(converter);
             if (searchable) prompt.EnableSearch();
 
@@ -50,12 +50,17 @@ namespace fractalis.Core.Miscellaneous
         /// <returns>The parsed user input.</returns>
         public static T Text<T>(string title, T? defaultValue = default) where T : notnull
         {
-            var prompt = new TextPrompt<T>(title).ClearOnFinish();
+            var top = Console.CursorTop;
+            var prompt = new TextPrompt<T>(title);
 
             if (defaultValue is not null)
                 prompt.DefaultValue(defaultValue).DefaultValueStyle(Theme.Muted);
 
-            return AnsiConsole.Prompt(prompt);
+            T result = AnsiConsole.Prompt(prompt);
+
+            ClearLines(top, Console.CursorTop);
+
+            return result;
         }
 
         /// <summary>
@@ -73,17 +78,24 @@ namespace fractalis.Core.Miscellaneous
         public static T TextValidated<T>(
             string title,
             Func<T, ValidationResult> validator,
-            T? defaultValue = default
+            T? defaultValue = default,
+            string? hint = null
         ) where T : notnull
         {
-            var prompt = new TextPrompt<T>(title)
-                .ClearOnFinish()
-                .Validate(validator);
+            var top = Console.CursorTop;
+
+            if (hint is not null) AnsiConsole.MarkupLine(hint + "\n");
+
+            var prompt = new TextPrompt<T>(title).Validate(validator);
 
             if (defaultValue is not null)
                 prompt.DefaultValue(defaultValue).DefaultValueStyle(Theme.Muted);
 
-            return AnsiConsole.Prompt(prompt);
+            T result = AnsiConsole.Prompt(prompt);
+
+            ClearLines(top, Console.CursorTop);
+
+            return result;
         }
 
         /// <summary>
@@ -96,12 +108,21 @@ namespace fractalis.Core.Miscellaneous
         /// <returns><see langword="true"/> if confirmed; otherwise <see langword="false"/>.</returns>
         public static bool Confirm(string message, bool defaultValue = false)
         {
-            var prompt = new ConfirmationPrompt(message)
+            var top = Console.CursorTop;
+
+            var prompt = new TextPrompt<bool>(message)
+                .AddChoice(true)
+                .AddChoice(false)
+                .DefaultValue(defaultValue)
+                .WithConverter(value => value ? "y" : "n")
                 .DefaultValueStyle(Theme.Muted)
                 .ChoicesStyle(Theme.Accent);
 
-            prompt.DefaultValue = defaultValue;
-            return AnsiConsole.Prompt(prompt);
+            bool result = AnsiConsole.Prompt(prompt);
+
+            ClearLines(top, Console.CursorTop);
+
+            return result;
         }
 
         /// <summary>
@@ -146,5 +167,21 @@ namespace fractalis.Core.Miscellaneous
         /// </summary>
         /// <param name="message">The message to display.</param>
         public static void Info(string message) => AnsiConsole.MarkupLine($"[{ThemeColor.Info}]ℹ  {message}[/]");
+
+        /// <summary>
+        /// Clears the console lines in a specified range.
+        /// </summary>
+        /// <param name="from">The first line to clear.</param>
+        /// <param name="to">The last line to clear.</param>
+        public static void ClearLines(int from, int to)
+        {
+            for (int i = from; i <= to; i++)
+            {
+                Console.SetCursorPosition(0, i);
+                Console.Write(new string(' ', Console.WindowWidth));
+            }
+
+            Console.SetCursorPosition(0, from);
+        }
     }
 }

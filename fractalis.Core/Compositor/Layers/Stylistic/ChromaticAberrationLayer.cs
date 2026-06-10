@@ -58,6 +58,7 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
                 dst.Span[idx].X = src.Span[ri].X;
                 dst.Span[idx].Y = src.Span[gi].Y;
                 dst.Span[idx].Z = src.Span[bi].Z;
+                dst.Span[idx].W = 1;
             });
         }
     }

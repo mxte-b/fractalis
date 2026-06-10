@@ -116,16 +116,19 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
             int wmScaledWidth = (int)(_wmWidth * _options.Scale);
             int wmScaledHeight = (int)(_wmHeight * _options.Scale);
 
+            int mx = _options.Margin.X;
+            int my = _options.Margin.Y;
+
             (int wmOffsetX, int wmOffsetY) = _options.Position switch
             {
-                WatermarkPosition.TopLeft => (0, 0),
-                WatermarkPosition.TopRight => (width - wmScaledWidth + _options.Margin.X, 0),
-                WatermarkPosition.BottomLeft => (0, height - wmScaledHeight + _options.Margin.Y),
+                WatermarkPosition.TopLeft => (mx, my),
+                WatermarkPosition.TopRight => (width - wmScaledWidth - mx, my),
+                WatermarkPosition.BottomLeft => (mx, height - wmScaledHeight - my),
                 WatermarkPosition.BottomRight => (
-                    width - wmScaledWidth + _options.Margin.X, 
-                    height - wmScaledHeight + _options.Margin.Y
+                    width - wmScaledWidth - mx, 
+                    height - wmScaledHeight - my
                 ),
-                _ => (0, 0)
+                _ => (mx, my)
             };
 
             Parallel.For(0, src.Length, idx =>

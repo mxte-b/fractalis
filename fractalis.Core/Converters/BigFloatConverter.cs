@@ -15,7 +15,7 @@ namespace fractalis.Core.Converters
         {
             if (value is not string s) return base.ConvertFrom(context, culture, value);
 
-            return BigFloat.TryParse(s, out var result) ? result : throw new FormatException($"'{s}' is not a valid BigFloat.");
+            return BigFloat.TryParse(s, out var result) ? result : null;
         }
     }
 }
