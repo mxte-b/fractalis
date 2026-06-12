@@ -91,11 +91,11 @@ namespace fractalis.Core.Miscellaneous
 
             return new FractalRendererConfig()
             {
-                Fractal = IFractal.Create(fractal.Type),
+                Fractal = IFractal.Create(fractal.Type, fractal.Parameters),
                 Iterations = fractal.Iterations,
                 Width = output.Resolution.Width,
                 Height = output.Resolution.Height,
-                Center = location.Sight.Location,
+                Center = location.Center,
                 Zoom = location.Zoom,
                 ColorPalette = ColorPalette.FromPreset(appearance.Palette),
                 AntiAliasing = appearance.AntiAliasing,

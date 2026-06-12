@@ -28,14 +28,7 @@ namespace fractalis.Core.Fractals
         /// </summary>
         private static readonly double      BAILOUT_DOUBLE  = Math.Pow(2, 7);
 
-        /// <summary>
-        /// Performs standard Mandelbrot iteration for a given complex number.
-        /// </summary>
-        /// <param name="c">The complex coordinate to iterate.</param>
-        /// <param name="maxIterations">The maximum number of iterations to perform.</param>
-        /// <returns>
-        /// An <see cref="IterationResult"/> indicating the number of iterations and magnitude at escape.
-        /// </returns>
+        #region Iterations
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public IterationResult Iteration(Complex c, int maxIterations)
         {
@@ -49,7 +42,7 @@ namespace fractalis.Core.Fractals
                 z.Real = z.Real * z.Real - z.Imaginary * z.Imaginary + c.Real;
                 z.Imaginary = 2 * zrTemp * z.Imaginary + c.Imaginary;
 
-                if (z.MagnitudeSquared > 100) break;
+                if (z.MagnitudeSquared > BAILOUT_DOUBLE) break;
             }
 
             if (i == maxIterations) return new IterationResult(i, double.NaN);
@@ -57,15 +50,8 @@ namespace fractalis.Core.Fractals
             return new IterationResult(i, z.MagnitudeSquared);
         }
 
-        /// <summary>
-        /// Performs high-dynamic-range Mandelbrot iteration using <see cref="ScaledComplex"/> for perturbation.
-        /// </summary>
-        /// <param name="delta">The offset from the reference orbit.</param>
-        /// <param name="maxIterations">Maximum number of iterations.</param>
-        /// <param name="referenceOrbit">The reference orbit for perturbation calculations.</param>
-        /// <returns>An <see cref="IterationResult"/> with iteration count and magnitude.</returns>
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public IterationResult IterationFloatExp(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit)
+        public IterationResult IterationFloatExpPerturbed(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit)
         {
             int i = 0;
             int refIteration = 0;
@@ -100,16 +86,7 @@ namespace fractalis.Core.Fractals
 
             return new IterationResult(i, escapeMag);
         }
-
         
-        /// <summary>
-        /// Performs perturbation-based iteration for a single point.
-        /// </summary>
-        /// <param name="dr">Delta real component.</param>
-        /// <param name="di">Delta imaginary component.</param>
-        /// <param name="maxIterations">Maximum iterations.</param>
-        /// <param name="referenceOrbit">Reference orbit to base perturbation on.</param>
-        /// <returns>An <see cref="IterationResult"/> indicating escape or iteration completion.</returns>
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public unsafe IterationResult IterationPerturbed(double dr, double di, int maxIterations, in ReferenceOrbit referenceOrbit)
         {
@@ -153,15 +130,9 @@ namespace fractalis.Core.Fractals
             if (i == maxIterations) return new IterationResult(i, double.NaN);
             return new IterationResult(i, zmag);
         }
+        #endregion
 
         #region SIMD-accelerated iterations
-        /// <summary>
-        /// Performs SIMD-accelerated Mandelbrot iterations for four points simultaneously.
-        /// </summary>
-        /// <param name="cr">Vector of real components.</param>
-        /// <param name="ci">Vector of imaginary components.</param>
-        /// <param name="maxIterations">Maximum iterations per point.</param>
-        /// <returns>Tuple of <see cref="IterationResult"/> for each point.</returns>
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationSIMD(Vec256d cr, Vec256d ci, int maxIterations)
         {
@@ -217,15 +188,6 @@ namespace fractalis.Core.Fractals
             return (Make(i0, z0, maxIterations), Make(i1, z1, maxIterations), Make(i2, z2, maxIterations), Make(i3, z3, maxIterations));
         }
 
-        /// <summary>
-        /// Performs SIMD-accelerated, perturbation-based iteration for four points.
-        /// </summary>
-        /// <param name="ndcX">Normalized X coordinates vector.</param>
-        /// <param name="ndcY">Normalized Y coordinate.</param>
-        /// <param name="pixelSpacing">Distance between pixels in fractal space.</param>
-        /// <param name="maxIterations">Maximum iterations per point.</param>
-        /// <param name="referenceOrbit">Reference orbit for perturbation.</param>
-        /// <returns>Tuple of <see cref="IterationResult"/> for each point.</returns>
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationPerturbedSIMD(Vec256d deltaR, Vec256d deltaI, int maxIterations, in ReferenceOrbit referenceOrbit)
         {
@@ -323,15 +285,6 @@ namespace fractalis.Core.Fractals
         }
         #endregion
 
-        /// <summary>
-        /// Calculates a reference orbit for a given center in the Mandelbrot set.
-        /// </summary>
-        /// <param name="center">The central complex coordinate.</param>
-        /// <param name="maxIterations">Maximum iterations for the orbit.</param>
-        /// <param name="orbit">Outputs the calculated <see cref="ReferenceOrbit"/>.</param>
-        /// <remarks>
-        /// Uses a progress bar for interactive feedback and stores scaled and double-precision points.
-        /// </remarks>
         public void CalculateReferenceOrbit(BigComplex center, int maxIterations, out ReferenceOrbit orbit)
         {
             ReferenceOrbit o = new(maxIterations);
@@ -375,11 +328,6 @@ namespace fractalis.Core.Fractals
             orbit = o;
         }
 
-        /// <summary>
-        /// Computes a continuous iteration value for smooth coloring of fractal images.
-        /// </summary>
-        /// <param name="result">The iteration result from a Mandelbrot calculation.</param>
-        /// <returns>A double representing the continuous iteration value for coloring.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetContinousValue(IterationResult result)
         {

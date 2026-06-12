@@ -12,6 +12,7 @@ namespace fractalis.Core.Fractals
     /// </remarks>
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
     [JsonDerivedType(typeof(Mandelbrot), "mandelbrot")]
+    [JsonDerivedType(typeof(Julia), "julia")]
     public interface IFractal
     {
         /// <summary>
@@ -33,11 +34,21 @@ namespace fractalis.Core.Fractals
         /// </returns>
         double GetContinousValue(IterationResult result);
 
-
-        public static IFractal Create(FractalType type) => type switch
+        /// <summary>
+        /// Insantiates an <see cref="IFractal"/> from a given <see cref="FractalType"/>
+        /// and <see cref="FractalParameters"/>, if possible.
+        /// </summary>
+        /// <param name="type">The fractal type to instantiate.</param>
+        /// <param name="parameters">The associated parameters for the fractal.</param>
+        /// <returns>An instance of the fractal.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// If the fractal type isn't recognized, or if the parameter type isn't compatible with that fractal.
+        /// </exception>
+        public static IFractal Create(FractalType type, FractalParameters parameters) => (type, parameters) switch
         {
-            FractalType.Mandelbrot => new Mandelbrot(),
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown fractal type")
+            (FractalType.Mandelbrot, NoParameters)  => new Mandelbrot(),
+            (FractalType.Julia, JuliaParameters p)  => new Julia(p),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Mismatched parameters or unknown fractal type encountered.")
         };
     }
 
@@ -71,7 +82,7 @@ namespace fractalis.Core.Fractals
         /// <param name="maxIterations">Maximum iterations.</param>
         /// <param name="referenceOrbit">Reference orbit for perturbation calculations.</param>
         /// <returns>An <see cref="IterationResult"/> representing escape or final iteration.</returns>
-        IterationResult IterationFloatExp(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit);
+        IterationResult IterationFloatExpPerturbed(ScaledComplex delta, int maxIterations, in ReferenceOrbit referenceOrbit);
     }
 
     /// <summary>
@@ -102,7 +113,6 @@ namespace fractalis.Core.Fractals
         /// </summary>
         /// <param name="ndcX">Normalized X coordinates vector.</param>
         /// <param name="ndcY">Normalized Y coordinates vector.</param>
-        /// <param name="pixelSpacing">Distance between pixels in fractal space.</param>
         /// <param name="maxIterations">Maximum iterations per point.</param>
         /// <param name="referenceOrbit">Reference orbit for perturbation calculations.</param>
         /// <returns>

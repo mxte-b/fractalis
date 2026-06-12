@@ -71,7 +71,7 @@ namespace fractalis.Core
             {
                 double ndcX = NdcX(x);
                 ScaledComplex delta = new(ndcX * _pixelSpacing, ndcY * _pixelSpacing);
-                IterationResult result = p.IterationFloatExp(delta, Iterations, in _referenceOrbit);
+                IterationResult result = p.IterationFloatExpPerturbed(delta, Iterations, in _referenceOrbit);
                 colorBuffer[rowOffset + x] = Sample(result);
             }
         }
@@ -280,7 +280,7 @@ namespace fractalis.Core
                         ndcY + (FloatExp)AA_OFFSETS_Y[i] * halfStepY);
 
                     Rgba32 color = Sample(
-                       p.IterationFloatExp(delta, Iterations, in _referenceOrbit)
+                       p.IterationFloatExpPerturbed(delta, Iterations, in _referenceOrbit)
                     );
 
                     r += color.R;

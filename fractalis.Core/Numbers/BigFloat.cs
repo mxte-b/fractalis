@@ -197,9 +197,8 @@ namespace fractalis.Core.Numbers
 
                 string mantissa = raw[..eIdx].TrimEnd('0').TrimEnd('.');
                 string exponent = raw[(eIdx + 1)..].TrimStart('+');
-                exponent = int.Parse(exponent).ToString();
 
-                return $"{mantissa}e{exponent}";
+                return $"{mantissa}{(int.Parse(exponent) != 0 ? $"e{exponent}" : "")}";
             }
 
             //If the mantissa is a decimal in normal notation, then remove trailing zeros
