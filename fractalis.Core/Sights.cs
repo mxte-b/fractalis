@@ -126,7 +126,10 @@ namespace fractalis.Core
             Name = "Hidden Spirals",
             Location = new BigComplex("-0.3903731635151264", "-0.3312822154125861"),
             FractalType = FractalType.Julia,
-            FractalParameters = new JuliaParameters(new(-0.46, -0.57)),
+            FractalParameters = new JuliaParameters()
+            {
+                Constant = new BigComplex(-0.46, -0.57)
+            },
             FractionalDigits = 15,
         };
 

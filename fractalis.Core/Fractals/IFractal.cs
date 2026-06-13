@@ -13,6 +13,7 @@ namespace fractalis.Core.Fractals
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
     [JsonDerivedType(typeof(Mandelbrot), "mandelbrot")]
     [JsonDerivedType(typeof(Julia), "julia")]
+    [JsonDerivedType(typeof(BurningShip), "burningShip")]
     public interface IFractal
     {
         /// <summary>
@@ -48,6 +49,9 @@ namespace fractalis.Core.Fractals
         {
             (FractalType.Mandelbrot, NoParameters)  => new Mandelbrot(),
             (FractalType.Julia, JuliaParameters p)  => new Julia(p),
+            (FractalType.BurningShip, NoParameters) => new BurningShip(),
+            (FractalType.GeneralizedMandelbrot, GeneralizedMandelbrotParameters p) => new GeneralizedMandelbrot(p),
+            (FractalType.GeneralizedJulia, GeneralizedJuliaParameters p) => new GeneralizedJulia(p),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Mismatched parameters or unknown fractal type encountered.")
         };
     }

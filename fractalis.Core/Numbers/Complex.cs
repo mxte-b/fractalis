@@ -37,13 +37,7 @@
         /// This property is useful when comparing magnitudes for ordering or thresholds,
         /// as it avoids the extra computation of a square root.
         /// </remarks>
-        public double MagnitudeSquared
-        {
-            get
-            {
-                return Real * Real + Imaginary * Imaginary;
-            }
-        }
+        public double MagnitudeSquared => Real * Real + Imaginary * Imaginary;
 
         /// <summary>
         /// Gets a value representing the overall size of the complex number.
@@ -52,13 +46,7 @@
         /// Use this property when the actual magnitude is needed for distance calculations
         /// or scaling.
         /// </remarks>
-        public double Magnitude
-        {
-            get
-            {
-                return Math.Sqrt(Real * Real + Imaginary * Imaginary);
-            }
-        }
+        public double Magnitude => Math.Sqrt(Real * Real + Imaginary * Imaginary);
 
         /// <summary>
         /// Computes a measure of similarity between two complex numbers.
@@ -68,10 +56,7 @@
         /// <returns>
         /// A value representing the combined contribution of both components of the numbers.
         /// </returns>
-        public static double Dot(Complex a, Complex b)
-        {
-            return a.Real * b.Real + a.Imaginary * b.Imaginary;
-        }
+        public static double Dot(Complex a, Complex b) => a.Real * b.Real + a.Imaginary * b.Imaginary;
 
         #region Arithmetic operators
 

@@ -2,6 +2,7 @@
 using Sdcb.Arithmetic.Gmp;
 using Sdcb.Arithmetic.Mpfr;
 using System.ComponentModel;
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace fractalis.Core.Numbers
@@ -72,9 +73,9 @@ namespace fractalis.Core.Numbers
         public static bool TryParse(string s, out BigFloat? value)
         {
             // MpfrFloat.TryParse corrupts memory on invalid input, so we use double's TryParse.
-            bool valid = double.TryParse(s, out _);
-
-            value = valid ? new BigFloat(s) : null;
+            bool valid = double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out _);
+            
+            value = valid ? new BigFloat(s.Trim().Replace(',', '.')) : null;
 
             return valid;
         }
@@ -194,8 +195,8 @@ namespace fractalis.Core.Numbers
             if (raw.Contains('e') || raw.Contains('E'))
             {
                 int eIdx = raw.IndexOfAny(['e', 'E']);
-
-                string mantissa = raw[..eIdx].TrimEnd('0').TrimEnd('.');
+    
+                string mantissa = raw[..eIdx].TrimEnd('0').TrimEnd('.', ',');
                 string exponent = raw[(eIdx + 1)..].TrimStart('+');
 
                 return $"{mantissa}{(int.Parse(exponent) != 0 ? $"e{exponent}" : "")}";
@@ -211,7 +212,7 @@ namespace fractalis.Core.Numbers
             return raw;
         }
 
-        public string ToFullString() => _value.ToString();
+        public string ToFullString() => _value.ToString().Replace(',', '.');
 
         public override bool Equals(object? obj) => obj is BigFloat other && _value.Equals(other._value);
 

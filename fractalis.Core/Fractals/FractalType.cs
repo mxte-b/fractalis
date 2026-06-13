@@ -8,5 +8,14 @@ namespace fractalis.Core.Fractals
 
         /// <summary>The Julia set fractal.</summary>
         Julia,
+        
+        /// <summary>The Burning Ship fractal. </summary>
+        BurningShip,
+        
+        /// <summary>The generalized Mandelbrot set fractal.</summary>
+        GeneralizedMandelbrot,
+        
+        /// <summary>The generalized Julia set fractal.</summary>
+        GeneralizedJulia,
     }
 }

@@ -17,9 +17,12 @@ namespace fractalis.Core.Fractals.Configurators
             var imaginary = Prompts.Text<BigFloat>(
                 $"[{ThemeColor.Accent}]Imaginary part[/] of the Julia constant?",
                 new(0)
-            );
+            );  
 
-            return new JuliaParameters(new(real, imaginary));
+            return new JuliaParameters()
+            {
+                Constant = new BigComplex(real, imaginary)
+            };
         }
     }
 }

@@ -1,7 +1,4 @@
 ﻿using fractalis.Core;
-using fractalis.Core.Compositor;
-using fractalis.Core.Compositor.Layers.Color;
-using fractalis.Core.Compositor.Layers.Stylistic;
 using fractalis.Core.Miscellaneous;
 using fractalis.Core.Video;
 using SixLabors.ImageSharp;
