@@ -15,10 +15,10 @@
 <h2>Feature Highlights</h2>
 
 <p align="center">
-  <img width="400" src="https://github.com/user-attachments/assets/9d038e43-beb3-400b-8ab4-af6c8858e2b2" />
-  <img width="400" src="https://github.com/user-attachments/assets/9301251a-5eed-44ad-9158-821ce7c73d44" />
+  <img width="400" src="https://github.com/user-attachments/assets/a1ce82e3-c30d-42f6-82e5-791b5d36ff08" />
+  <img width="400" src="https://github.com/user-attachments/assets/77a3ab7f-7ee3-4723-8e80-7fff1bf2c819" />
 </p>
 <p align="center">
-  <img width="400" src="https://github.com/user-attachments/assets/1ce1fd14-06a7-426d-b192-13c698a14c1a" />
-  <img width="400" src="https://github.com/user-attachments/assets/76d21061-8be7-4795-a35c-baead204cd18" />
+  <img width="400" src="https://github.com/user-attachments/assets/62160f8c-b43b-4419-8684-74308abf6755" />
+  <img width="400" src="https://github.com/user-attachments/assets/d37e6881-4143-458a-b1eb-7acb3a996926" />
 </p>
