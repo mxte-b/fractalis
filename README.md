@@ -11,3 +11,14 @@
 <p align="center">
   <img width="800" height="450" alt="ezgif-86d0d9137eb50183" src="https://github.com/user-attachments/assets/daedca9c-4caf-4905-aa8b-d786259bc806" />
 </p>
+
+<h2>Feature Highlights</h2>
+
+<p align="center">
+  <img width="400" src="https://github.com/user-attachments/assets/9d038e43-beb3-400b-8ab4-af6c8858e2b2" />
+  <img width="400" src="https://github.com/user-attachments/assets/9301251a-5eed-44ad-9158-821ce7c73d44" />
+</p>
+<p align="center">
+  <img width="400" src="https://github.com/user-attachments/assets/1ce1fd14-06a7-426d-b192-13c698a14c1a" />
+  <img width="400" src="https://github.com/user-attachments/assets/76d21061-8be7-4795-a35c-baead204cd18" />
+</p>
