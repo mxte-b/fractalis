@@ -161,7 +161,19 @@ namespace fractalis.Core.Numbers
                 return Vec256d.FromV256(Avx.Add(a._v256, b._v256));
             }
 
-            return Vec256d.FromLoHi(a._lo + b._lo, a._hi + b._hi);
+            return Vec256d.FromV256(Vector256.Add(a._v256, b._v256));
+        }
+
+        /// <summary>
+        /// Element-wise subtraction.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vec256d Subtract(Vec256d a, Vec256d b)
+        {
+            if (Avx.IsSupported)
+                return Vec256d.FromV256(Avx.Subtract(a._v256, b._v256));
+
+            return Vec256d.FromV256(Vector256.Subtract(a._v256, b._v256));
         }
 
         /// <summary>
@@ -170,12 +182,7 @@ namespace fractalis.Core.Numbers
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vec256d Multiply(Vec256d a, Vec256d b)
         {
-            if (Avx.IsSupported)
-            {
-                return Vec256d.FromV256(a._v256 * b._v256);
-            }
-
-            return Vec256d.FromLoHi(a._lo * b._lo, a._hi * b._hi);
+            return Vec256d.FromV256(a._v256 * b._v256);
         }
 
         /// <summary>
@@ -184,13 +191,7 @@ namespace fractalis.Core.Numbers
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vec256d Multiply(double scalar, Vec256d v)
         {
-            if (Avx.IsSupported)
-            {
-                return Vec256d.FromV256(Vector256.Create(scalar) * v._v256);
-            }
-
-            var s = Vector128.Create(scalar);
-            return Vec256d.FromLoHi(s * v._lo, s * v._hi);
+            return Vec256d.FromV256(Vector256.Create(scalar) * v._v256);
         }
         #endregion
 
@@ -202,13 +203,9 @@ namespace fractalis.Core.Numbers
         public static Vec256d And(Vec256d a, Vec256d b)
         {
             if (Avx.IsSupported)
-            {
                 return Vec256d.FromV256(Avx.And(a._v256, b._v256));
-            }
 
-            return Vec256d.FromLoHi(
-                (a._lo.AsUInt64() & b._lo.AsUInt64()).AsDouble(),
-                (a._hi.AsUInt64() & b._hi.AsUInt64()).AsDouble());
+            return Vec256d.FromV256(Vector256.BitwiseAnd(a._v256, b._v256));
         }
 
         /// <summary>
@@ -218,13 +215,21 @@ namespace fractalis.Core.Numbers
         public static Vec256d AndNot(Vec256d a, Vec256d b)
         {
             if (Avx.IsSupported)
-            {
                 return Vec256d.FromV256(Avx.AndNot(a._v256, b._v256));
-            }
 
-            return Vec256d.FromLoHi(
-                (~a._lo.AsUInt64() & b._lo.AsUInt64()).AsDouble(),
-                (~a._hi.AsUInt64() & b._hi.AsUInt64()).AsDouble());
+            return Vec256d.FromV256(Vector256.AndNot(b._v256, a._v256));
+        }
+
+        /// <summary>
+        /// Bitwise OR of every lane.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vec256d Or(Vec256d a, Vec256d b)
+        {
+            if (Avx.IsSupported)
+                return Vec256d.FromV256(Avx.Or(a._v256, b._v256));
+
+            return Vec256d.FromV256(Vector256.BitwiseOr(a._v256, b._v256));
         }
 
         /// <summary>

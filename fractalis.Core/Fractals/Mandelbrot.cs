@@ -28,10 +28,50 @@ namespace fractalis.Core.Fractals
         /// </summary>
         private static readonly double      BAILOUT_DOUBLE  = Math.Pow(2, 7);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsInterior(Complex z)
+        {
+            // Bulb check
+            double zr1 = z.Real + 1;
+            double zi2 = z.Imaginary * z.Imaginary;
+            if (zr1 * zr1 + zi2 <= 0.0625) return true;
+
+            // Cardioid check
+            double zr14 = z.Real - 0.25;
+            double q = zr14 * zr14 + zi2;
+            if (q * (q + zr14) <= 0.25 * zi2) return true;
+
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vec256d IsInteriorSimd(Vec256d zr, Vec256d zi)
+        {
+            // Bulb check
+            Vec256d one = SimdAgnostic.Create(1);
+            Vec256d quarter = SimdAgnostic.Create(0.25);
+            Vec256d sixteenth = SimdAgnostic.Create(0.0625);
+
+            Vec256d zr1 = SimdAgnostic.Add(zr, one);
+            Vec256d zi2 = SimdAgnostic.Multiply(zi, zi);
+            Vec256d bulb = SimdAgnostic.CompareLessThan(SimdAgnostic.MultiplyAdd(zr1, zr1, zi2), sixteenth);
+
+            // Cardioid check
+            Vec256d zr14 = SimdAgnostic.Subtract(zr, quarter);
+            Vec256d q = SimdAgnostic.MultiplyAdd(zr14, zr14, zi2);
+            Vec256d cardioid = SimdAgnostic.CompareLessThan(
+                SimdAgnostic.Multiply(q, SimdAgnostic.Add(q, zr14)), 
+                SimdAgnostic.Multiply(quarter, zi2));
+
+            return SimdAgnostic.Or(bulb, cardioid);
+        }
+
         #region Iterations
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public IterationResult Iteration(Complex c, int maxIterations)
         {
+            if (IsInterior(c)) return new IterationResult(maxIterations, double.NaN);
+
             Complex z = new(0, 0);
             int i = 0;
 
@@ -136,29 +176,32 @@ namespace fractalis.Core.Fractals
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public unsafe (IterationResult r0, IterationResult r1, IterationResult r2, IterationResult r3) IterationSIMD(Vec256d cr, Vec256d ci, int maxIterations)
         {
+            Vec256d one = SimdAgnostic.Create(1.0);
             Vec256d zr = SimdAgnostic.Zero;
             Vec256d zi = SimdAgnostic.Zero;
+            Vec256d zr2 = SimdAgnostic.Zero;
+            Vec256d zi2 = SimdAgnostic.Zero;
             Vec256d iterations = SimdAgnostic.Zero;
             Vec256d escapeMags = SimdAgnostic.Zero;
-            Vec256d active = SimdAgnostic.AllBitsSet;
-            Vec256d one = SimdAgnostic.Create(1.0);
-            Vec256d two = SimdAgnostic.Create(2.0);
+            Vec256d outside = SimdAgnostic.AndNot(IsInteriorSimd(cr, ci), SimdAgnostic.AllBitsSet);
             Vec256d bailout = SimdAgnostic.Create(BAILOUT_DOUBLE);
+            Vec256d active = outside;
 
             for (int i = 0; i < maxIterations; i++)
             {
-                Vec256d newzi = SimdAgnostic.MultiplyAdd(SimdAgnostic.Multiply(two, zr), zi, ci);
-                Vec256d newzr = SimdAgnostic.MultiplyAdd(zr, zr, SimdAgnostic.MultiplyAddNegated(zi, zi, cr));
+                Vec256d zrzi = SimdAgnostic.Multiply(zr, zi);
 
-                // Only apply it to non-escaped points
-                zr = SimdAgnostic.BlendVariable(zr, newzr, active);
-                zi = SimdAgnostic.BlendVariable(zi, newzi, active);
+                zr = SimdAgnostic.Add(SimdAgnostic.Subtract(zr2, zi2), cr);
+                zi = SimdAgnostic.Add(SimdAgnostic.Add(zrzi, zrzi), ci);
+
+                zr2 = SimdAgnostic.Multiply(zr, zr);
+                zi2 = SimdAgnostic.Multiply(zi, zi);
 
                 // Bailout if every point escaped
-                Vec256d zmag = SimdAgnostic.MultiplyAdd(zr, zr, SimdAgnostic.Multiply(zi, zi));
+                Vec256d zmag = SimdAgnostic.Add(zr2, zi2);
                 Vec256d prevActive = active;
 
-                active = SimdAgnostic.CompareLessThan(zmag, bailout);
+                active = SimdAgnostic.And(SimdAgnostic.CompareLessThan(zmag, bailout), outside);
                 escapeMags = SimdAgnostic.BlendVariable(escapeMags, zmag, SimdAgnostic.AndNot(active, prevActive));
 
                 if (SimdAgnostic.TestZ(active, active)) break;
@@ -169,9 +212,11 @@ namespace fractalis.Core.Fractals
 
             double* magnitudeBuffer = stackalloc double[4];
             double* iterationBuffer = stackalloc double[4];
+            double* interiorBuffer = stackalloc double[4];
 
             SimdAgnostic.Store(magnitudeBuffer, escapeMags);
             SimdAgnostic.Store(iterationBuffer, iterations);
+            SimdAgnostic.Store(interiorBuffer, outside);
 
             int i0 = (int)iterationBuffer[0];
             int i1 = (int)iterationBuffer[1];
@@ -183,9 +228,14 @@ namespace fractalis.Core.Fractals
             double z2 = magnitudeBuffer[2];
             double z3 = magnitudeBuffer[3];
 
-            static IterationResult Make(int i, double z, int m) => new(i, i < m ? z : double.NaN);
+            static IterationResult Make(int i, double z, int m, bool interior) 
+                => interior ? new(m, double.NaN) : new(i, i < m ? z : double.NaN);
 
-            return (Make(i0, z0, maxIterations), Make(i1, z1, maxIterations), Make(i2, z2, maxIterations), Make(i3, z3, maxIterations));
+            return (
+                Make(i0, z0, maxIterations, interiorBuffer[0] == 0),
+                Make(i1, z1, maxIterations, interiorBuffer[1] == 0),
+                Make(i2, z2, maxIterations, interiorBuffer[2] == 0), 
+                Make(i3, z3, maxIterations, interiorBuffer[3] == 0));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]

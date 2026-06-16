@@ -3,6 +3,7 @@ using fractalis.Core.Miscellaneous;
 using fractalis.Core.Video;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Spectre.Console;
 using System.Diagnostics;
 using System.Text;
 
@@ -64,6 +65,13 @@ namespace fractalis
                     FractalBenchmark benchmark = new(settings.FractalRendererConfig);
                     benchmark.Run(settings.FractalBenchmarkConfig.Label, settings.FractalBenchmarkConfig.Runs);
                     break;
+            }
+
+            // Prevent app from closing instantly after it finishes
+            if (!Console.IsInputRedirected)
+            {
+                AnsiConsole.MarkupLine($"[{ThemeColor.Muted}]Press any key to exit...[/]");
+                Console.ReadKey(true);
             }
         }
     }
