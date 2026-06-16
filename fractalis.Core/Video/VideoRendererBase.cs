@@ -1,4 +1,6 @@
-﻿namespace fractalis.Core.Video
+﻿using fractalis.Core.Miscellaneous;
+
+namespace fractalis.Core.Video
 {
     public abstract class VideoRendererBase(VideoConfig config)
     {
@@ -20,11 +22,13 @@
         /// <summary>
         /// Merges the rendered image sequence into an MP4 video file with ffmpeg, then removes the image sequence directory.
         /// </summary>
-        /// <param name="fileName">The filename of the video.</param>
-        public void Save(string fileName = "render")
+        /// <param name="fileName">The output path of the video.</param>
+        public void Save(string fileName = "render.mp4")
         {
+            Prompts.Info("Merging image sequence");
             VideoEncoder.MergeImageSequence($"render-{_renderId}", Config.FPS, fileName);
             RemoveOutputDirectory();
+            Prompts.Done();
         }
 
         protected void CreateOutputDirectory() => Directory.CreateDirectory($"render-{_renderId}");

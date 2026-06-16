@@ -1,6 +1,7 @@
 ﻿using fractalis.Core.Numbers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Spectre.Console;
 
 namespace fractalis.Core.Video
 {
@@ -55,13 +56,27 @@ namespace fractalis.Core.Video
             CreateOutputDirectory();
 
             // Start rendering each frame one by one
-            for (int i = Config.StartFrame; i < Config.FrameCount; i++)
+            AnsiConsole.Progress()
+            .Columns([
+                new TaskDescriptionColumn(),
+                new ProgressBarColumn(),
+                new PercentageColumn(),
+                new ElapsedTimeColumn(),
+                new RemainingTimeColumn(),
+                new SpinnerColumn(),
+            ])
+            .Start(ctx =>
             {
-                Renderer.Zoom = GetZoom(i);
-                Image<Rgba32> image = Renderer.Render(false);
+                var task = ctx.AddTask($"<#> Rendering frames", maxValue: Config.FrameCount - Config.StartFrame);
+                for (int i = Config.StartFrame; i < Config.FrameCount; i++)
+                {
+                    Renderer.Zoom = GetZoom(i);
+                    Image<Rgba32> image = Renderer.Render(false);
 
-                image.Save(ImageSequencePath + $"/frame{(i+1).ToString().PadLeft(5, '0')}.png");
-            }
+                    image.Save(ImageSequencePath + $"/frame{(i + 1).ToString().PadLeft(5, '0')}.png");
+                    task.Increment(1);
+                }
+            });
         }
 
         /// <summary>

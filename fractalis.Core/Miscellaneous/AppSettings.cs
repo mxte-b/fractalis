@@ -35,6 +35,9 @@ namespace fractalis.Core.Miscellaneous
         /// <summary>Fractal renderer configuration.</summary>
         public required FractalRendererConfig   FractalRendererConfig       { get; init; }
 
+        /// <summary>The path where the app will save the result</summary>
+        public required string                  OutputPath                  { get; init; }
+
         /// <summary>Whether to automatically open the rendered image. This setting is only adhered to in <see cref="AppMode.Image"/>.</summary>
         public bool                             OpenRenderedImage           { get; init; } = true;
 

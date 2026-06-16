@@ -22,7 +22,7 @@ namespace fractalis
             {
                 case AppMode.Image:
                     Image<Rgba32> image = renderer.Render();
-                    image.Save("render.png");
+                    image.Save(settings.OutputPath);
 
                     if (settings.OpenRenderedImage)
                     {
@@ -43,14 +43,14 @@ namespace fractalis
                             DistributedVideoRenderer distributed = new(settings.FractalRendererConfig, settings.VideoConfig);
                             await distributed.Start(distributedSettings.OrchestratorUri, distributedSettings.FrameListenerPort);
 
-                            distributed.Save();
+                            distributed.Save(settings.OutputPath);
                             break;
 
                         // Local video rendering using local compute
                         case VideoMode.Local:
                             VideoRenderer local = new(renderer, settings.VideoConfig);
                             local.Start();
-                            local.Save();
+                            local.Save(settings.OutputPath);
                             break;
 
                         default: throw new Exception($"Unknown video mode encountered: {settings.VideoConfig}");

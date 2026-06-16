@@ -16,21 +16,21 @@ namespace fractalis.Core.Compositor.Configurators.Stylistic
 
         public CompositeLayer Configure()
         {
-            var path = Prompts.TextValidated(
+            var path = Prompts.FilePath(
                 $"[{ThemeColor.Accent}]Path[/] of the watermark image?",
-                path => File.Exists(path) || path == "default:white" || path == "default:black"
-                    ? ValidationResult.Success()
-                    : ValidationResult.Error("[red]Please enter a valid path.[/]"),
-                "default:white",
-                "[grey]Hint: The default watermarks can be accessed by using 'default:white' or 'default:black' values below.[/]"
-            ).Convert(path => 
-                path.StartsWith("default:") 
+                allowResources: true,
+                defaultValue: "default:white",
+                hint: "[grey]Hint: Use 'default:white' or 'default:black' for built-in watermarks.[/]",
+                allowedFormats: AppConfigurator.ImageFormats,
+                alsoAccept: ["default:white", "default:black"]
+            ).Convert(path =>
+                path.StartsWith("default:")
                     ? path switch
-                        {
-                            "default:white" => Watermarks.FractalisWhite,
-                            "default:black" => Watermarks.FractalisBlack,
-                            _ => Watermarks.FractalisWhite,
-                        } 
+                    {
+                        "default:white" => Watermarks.FractalisWhite,
+                        "default:black" => Watermarks.FractalisBlack,
+                        _ => Watermarks.FractalisWhite,
+                    }
                     : path
             );
 

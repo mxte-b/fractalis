@@ -54,7 +54,7 @@ namespace fractalis.Core.Video
             ProcessStartInfo startInfo = new()
             {
                 FileName = "ffmpeg.exe",
-                Arguments = $"-y -framerate {fps} -i \"{inputPattern}\" -c:v libx264 -pix_fmt yuv420p \"{outputPath}.mp4\"",
+                Arguments = $"-y -framerate {fps} -i \"{inputPattern}\" -c:v libx264 -pix_fmt yuv420p \"{outputPath}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,

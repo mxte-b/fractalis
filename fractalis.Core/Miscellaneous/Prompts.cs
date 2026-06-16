@@ -1,4 +1,5 @@
 ﻿using Spectre.Console;
+using System.Reflection;
 
 namespace fractalis.Core.Miscellaneous
 {
@@ -12,6 +13,17 @@ namespace fractalis.Core.Miscellaneous
     /// </remarks>
     public static class Prompts
     {
+        private enum FileBrowserActions
+        {
+            Up,
+            SelectFolder
+        }
+
+        private static readonly Dictionary<string, FileBrowserActions> _browserActions = new() {
+            { $"[{ThemeColor.Accent}].. (up)[/]", FileBrowserActions.Up },
+            { $"[{ThemeColor.Accent}][[SELECT FOLDER]][/]", FileBrowserActions.SelectFolder }
+        };
+
         /// <summary>
         /// Displays a selection prompt and returns the user's chosen value.
         /// </summary>
@@ -123,6 +135,255 @@ namespace fractalis.Core.Miscellaneous
             ClearLines(top, Console.CursorTop);
 
             return result;
+        }
+
+        /// <summary>
+        /// Displays an interactive prompt and returns a selected file path or resource identifier.
+        /// </summary>
+        /// <param name="title">The prompt message to show to the user.</param>
+        /// <param name="allowResources">
+        /// Whether to allow embedded assembly resources as valid input,
+        /// using the "resource:" prefix.
+        /// </param>
+        /// <param name="defaultValue">A default path pre-filled in the manual entry prompt.</param>
+        /// <param name="hint">An optional hint displayed below the title to guide the user.</param>
+        /// <param name="alsoAccept">
+        /// An optional set of values to accept in addition to valid file paths.
+        /// </param>
+        /// <param name="allowedFormats">
+        /// An optional set of file extensions (e.g. ".png", ".jpg") to restrict selection to.
+        /// Files with other extensions are hidden in the browser and rejected in manual entry.
+        /// </param>
+        public static string FilePath(
+            string title,
+            bool allowResources = false,
+            string? defaultValue = null,
+            string? hint = null,
+            IEnumerable<string>? alsoAccept = null,
+            IEnumerable<string>? allowedFormats = null)
+        {
+            // Helper local function to validate a given path p
+            ValidationResult validator(string p)
+            {
+                if (alsoAccept?.Contains(p) == true) return ValidationResult.Success();
+
+                if (allowedFormats is not null &&
+                    !allowedFormats.Any(e => Path.GetExtension(p).Equals(e, StringComparison.OrdinalIgnoreCase)))
+                    return ValidationResult.Error($"File must be one of: {string.Join(", ", allowedFormats)}");
+
+                bool valid = false;
+
+                if (allowResources && p.Contains("resource:"))
+                {
+                    valid = Assembly.GetExecutingAssembly().GetManifestResourceNames().Contains(p.Replace("resource:", ""));
+                }
+                else
+                {
+                    valid = File.Exists(p);
+                }
+
+                return valid ? ValidationResult.Success() : ValidationResult.Error("Invalid file or resource path.");
+            }
+
+            // Helper local function to select an active drive
+            string SelectDrive()
+            {
+                var drives = DriveInfo.GetDrives()
+                            .Where(d => d.IsReady)
+                            .Select(d => d.Name);
+
+                return AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(drives)
+                        .Title($"Select [{ThemeColor.Accent}]drive[/]:")
+                        .HighlightStyle(Theme.Selection));
+            }
+
+            if (hint is not null) AnsiConsole.MarkupLine(hint + "\n");
+            AnsiConsole.MarkupLine(title);
+
+            var mode = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                .HighlightStyle(Theme.Selection)
+                .AddChoices(["Enter path manually", "Browse files"]));
+
+            string path;
+            switch (mode)
+            {
+                case "Enter path manually":
+                    ClearLines(Console.CursorTop - 1, Console.CursorTop);
+                    path = TextValidated(title, validator, defaultValue);
+                    break;
+
+                case "Browse files":
+                    var current = SelectDrive();
+                    var directoryIdentifier = $"[{ThemeColor.Muted}][[DIR]][/]";
+
+                    // Navigation loop
+                    while (true)
+                    {
+                        // If the current directory is empty, prompt for a drive
+                        current ??= SelectDrive();
+
+                        var dirs = Directory.GetDirectories(current);
+                        var files = Directory.GetFiles(current);
+
+                        var dirMap = dirs.ToDictionary(
+                            d => $"{directoryIdentifier} {Path.GetFileName(d)}",
+                            d => d);
+
+                        // Select a file, or directory, or navigation action
+                        var choice = Selection(
+                            $"Browsing: {current}, ",
+                            dirMap.Keys
+                                .Concat(
+                                    files
+                                        .Select(f => Path.GetFileName(f))
+                                        .Where(f => allowedFormats?.Any(e => Path.GetExtension(f).Equals(e, StringComparison.OrdinalIgnoreCase)) ?? true))
+                                .Prepend(_browserActions.First(a => a.Value == FileBrowserActions.Up).Key),
+                            null,
+                            true);
+
+                        // Handle choice
+                        if (_browserActions.TryGetValue(choice, out var action))
+                        {
+                            current = Directory.GetParent(current)?.FullName ?? null;
+                        }
+                        else if (dirMap.TryGetValue(choice, out var selectedDir))
+                        {
+                            current = selectedDir;
+                        }
+                        else
+                        {
+                            var p = Path.Combine(current, choice);
+
+                            if (File.Exists(p))
+                            {
+                                path = p;
+                                break;
+                            }
+
+                            current = p;
+                        }
+                    }
+
+                    // Clear excess lines
+                    ClearLines(Console.CursorTop - (hint is not null ? 3 : 1), Console.CursorTop);
+
+                    break;
+
+                default: throw new ArgumentException($"Unknown selection value: '{mode}'");
+            }
+            return path;
+        }
+
+        /// <summary>
+        /// Displays an interactive prompt and returns a selected save path.
+        /// </summary>
+        /// <param name="title">The prompt message to show to the user.</param>
+        /// <param name="defaultValue">A default path pre-filled in the manual entry prompt.</param>
+        /// <param name="allowedFormats">
+        /// An optional set of file extensions (e.g. ".png", ".mp4") to restrict selection to.
+        /// Files with other extensions are hidden in the browser and rejected in manual entry.
+        /// </param>
+        public static string SavePath(string title, string? defaultValue = null, IEnumerable<string>? allowedFormats = null)
+        {
+            // Helper local function to validate a given path p
+            ValidationResult validator(string p)
+            {
+                var resolved = Path.IsPathFullyQualified(p) ? p : Path.Combine(Directory.GetCurrentDirectory(), p);
+                return Path.IsPathFullyQualified(resolved) && 
+                    (allowedFormats?.Any(e => Path.GetExtension(resolved).Equals(e, StringComparison.OrdinalIgnoreCase)) ?? true)
+                    ? ValidationResult.Success()
+                    : ValidationResult.Error("Invalid file path.");
+            }
+
+            // Helper local function to select an active drive
+            string SelectDrive()
+            {
+                var drives = DriveInfo.GetDrives()
+                            .Where(d => d.IsReady)
+                            .Select(d => d.Name);
+
+                return AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(drives)
+                        .Title($"Select [{ThemeColor.Accent}]drive[/]:")
+                        .HighlightStyle(Theme.Selection));
+            }
+
+            AnsiConsole.MarkupLine(title);
+
+            var modePrompt = new SelectionPrompt<string>()
+                .HighlightStyle(Theme.Selection)
+                .AddChoices(["Enter path manually", "Browse files"]);
+
+            string path;
+
+            switch (AnsiConsole.Prompt(modePrompt))
+            {
+                case "Enter path manually":
+                    ClearLines(Console.CursorTop - 1, Console.CursorTop);
+                    path = TextValidated(title, validator, defaultValue);
+                    break;
+
+                case "Browse files":
+                    var current = SelectDrive();
+
+                    var directoryIdentifier = $"[{ThemeColor.Muted}][[DIR]][/]";
+
+                    while (true)
+                    {
+                        current ??= SelectDrive();
+
+                        var dirs = Directory.GetDirectories(current);
+                        var files = Directory.GetFiles(current);
+
+                        var choice = Selection(
+                            $"Browsing: {current}, ",
+                            _browserActions.Keys.Concat(
+                                dirs
+                                    .Select(d => $"{directoryIdentifier} {Path.GetFileName(d)}")
+                                    .Concat(
+                                        files
+                                            .Select(f => Path.GetFileName(f))
+                                            .Where(f => allowedFormats?.Any(e => Path.GetExtension(f).Equals(e, StringComparison.OrdinalIgnoreCase)) ?? true)
+                                    )
+                            ),
+                            null,
+                            true);
+
+                        // If an action has been selected
+                        if (_browserActions.TryGetValue(choice, out var action))
+                        {
+                            if (action == FileBrowserActions.Up)
+                            {
+                                current = Directory.GetParent(current)?.FullName ?? null;
+                            }
+                            else
+                            {
+                                ClearLines(Console.CursorTop - 1, Console.CursorTop);
+
+                                var filename = TextValidated(
+                                    $"What should the [{ThemeColor.Accent}]file name[/] be?", 
+                                    p => validator(Path.Combine(current, p)), 
+                                    defaultValue);
+
+                                path = Path.Combine(current, filename);
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            current = Path.Combine(current, choice.Replace(directoryIdentifier, ""));
+                        }
+                    }
+                    break;
+
+                default: throw new ArgumentException($"Unknown selection value: '{modePrompt}'");
+            }
+
+            return path;
         }
 
         /// <summary>

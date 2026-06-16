@@ -4,12 +4,14 @@ using fractalis.Core.Compositor;
 using fractalis.Core.Renderers;
 using Spectre.Console;
 using System.Text.Json;
+using SixLabors.ImageSharp;
 
 namespace fractalis.Core.Miscellaneous
 {
     public static class AppConfigurator
     {
-
+        internal static readonly IEnumerable<string> ImageFormats = Configuration.Default.ImageFormats.SelectMany(f => f.FileExtensions).Select(e => "." + e);
+        internal static readonly IEnumerable<string> VideoFormats = [".mp4", ".avi", ".mkv", ".mov", ".webm"];
         private static AppMode PromptAppMode() 
             => Prompts.Selection($"What would you like to [bold {ThemeColor.Accent}]do[/]?", 
                 ["Image rendering", "Video rendering", "Benchmarking"])
@@ -21,10 +23,23 @@ namespace fractalis.Core.Miscellaneous
                 _ => AppMode.Image
             });
 
+        private static string PromptOutputPath(AppMode mode) => Prompts.SavePath(
+                $"[{ThemeColor.Accent}]Where[/] should the output be saved to?",
+                defaultValue: "render" + (mode == AppMode.Video? ".mp4" : ".png"),
+                allowedFormats: mode switch
+                {
+                    AppMode.Image => ImageFormats,
+                    AppMode.Video => VideoFormats,
+                    _ => null
+                }
+            );
+
+
         private static AppSettings? ParseConfig(string path) => JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path), FractalisJsonOptions.Default);
 
         private static AppSettings? TryLoadConfig(string[] args)
         {
+            // Try arguments first
             for (int i = 0; i < args.Length; i++)
             {
                 if (args[i] == "--config" && i + 1 < args.Length)
@@ -34,6 +49,24 @@ namespace fractalis.Core.Miscellaneous
                     Prompts.Info($"Trying to load config from path {path}");
                     return ParseConfig(path);
                 }
+            }
+
+            // Then ask for path to config file
+            var isManualConfig = Prompts.Selection(
+                $"[{ThemeColor.Accent}]How[/] do you want to configure the app?",
+                ["Configure manually", "Load configuration from file"]
+            ).Convert(choice => choice == "Configure manually");
+
+            if (!isManualConfig)
+            {
+                var configPath = Prompts.FilePath(
+                    $"What is the [{ThemeColor.Accent}]path[/] of the config file?",
+                    allowedFormats: [".json"]
+                    );
+
+                var config = ParseConfig(configPath);
+
+                if (config is not null) return config;
             }
 
             return null;
@@ -56,26 +89,31 @@ namespace fractalis.Core.Miscellaneous
             var rendererConfig = ConfigureRenderer(mode, video?.VideoMode);
             var benchmarkConfig = mode == AppMode.Benchmark ? ConfigureBenchmark() : null;
 
-            AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[bold DarkOliveGreen2]Configuration complete[/]");
-            AnsiConsole.WriteLine();
+            Prompts.Section("Export");
+            var outputPath = PromptOutputPath(mode);
 
             AppSettings settings = new()
             {
                 Mode = mode,
                 FractalRendererConfig = rendererConfig,
+                OutputPath = outputPath,
                 VideoMode = video?.VideoMode,
                 VideoConfig = video?.VideoConfig,
                 DistributedRendererSettings = video?.DistributedRendererSettings,
                 FractalBenchmarkConfig = benchmarkConfig,
             };
 
-            if (Prompts.Confirm("Save this configuration to a JSON file for later reuse?"))
+            if (Prompts.Confirm($"[{ThemeColor.Accent}]Save this configuration[/] to a JSON file for later reuse?"))
             {
-                var path = Prompts.Text("Save path:", defaultValue: "config.json");
+                var path = Prompts.SavePath($"[{ThemeColor.Accent}]Where[/] should the file be saved to?", defaultValue: "config.json");
                 File.WriteAllText(path, JsonSerializer.Serialize(settings, FractalisJsonOptions.Default));
-                Prompts.Success($"Config saved to [cyan]{path}[/]");
             }
+
+            Prompts.Done();
+
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("[bold DarkOliveGreen2]Configuration complete[/]");
+            AnsiConsole.WriteLine();
 
             return settings;
         }
