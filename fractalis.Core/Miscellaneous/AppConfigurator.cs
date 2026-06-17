@@ -23,16 +23,28 @@ namespace fractalis.Core.Miscellaneous
                 _ => AppMode.Image
             });
 
-        private static string PromptOutputPath(AppMode mode) => Prompts.SavePath(
+        private static string PromptOutputPath(AppMode mode)
+        {
+            var defaultValue = mode switch
+            {
+                AppMode.Image => "render.png",
+                AppMode.Video => "render.mp4",
+                AppMode.Benchmark => "benchmark.json",
+                _ => throw new Exception($"Unknown AppMode: {mode}")
+            };
+
+            return Prompts.SavePath(
                 $"[{ThemeColor.Accent}]Where[/] should the output be saved to?",
-                defaultValue: "render" + (mode == AppMode.Video? ".mp4" : ".png"),
+                defaultValue: defaultValue,
                 allowedFormats: mode switch
                 {
                     AppMode.Image => ImageFormats,
                     AppMode.Video => VideoFormats,
+                    AppMode.Benchmark => [".json"],
                     _ => null
                 }
             );
+        }
 
 
         private static AppSettings? ParseConfig(string path) => JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path), FractalisJsonOptions.Default);
@@ -90,7 +102,7 @@ namespace fractalis.Core.Miscellaneous
             var benchmarkConfig = mode == AppMode.Benchmark ? ConfigureBenchmark() : null;
 
             Prompts.Section("Export");
-            var outputPath = PromptOutputPath(mode);
+            var outputPath = mode != AppMode.Benchmark ? PromptOutputPath(mode) : null;
 
             AppSettings settings = new()
             {
@@ -105,7 +117,11 @@ namespace fractalis.Core.Miscellaneous
 
             if (Prompts.Confirm($"[{ThemeColor.Accent}]Save this configuration[/] to a JSON file for later reuse?"))
             {
-                var path = Prompts.SavePath($"[{ThemeColor.Accent}]Where[/] should the file be saved to?", defaultValue: "config.json");
+                var path = Prompts.SavePath(
+                    $"[{ThemeColor.Accent}]Where[/] should the file be saved to?", 
+                    defaultValue: "config.json",
+                    allowedFormats: [".json"]
+                    );
                 File.WriteAllText(path, JsonSerializer.Serialize(settings, FractalisJsonOptions.Default));
             }
 

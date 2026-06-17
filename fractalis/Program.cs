@@ -23,7 +23,7 @@ namespace fractalis
             {
                 case AppMode.Image:
                     Image<Rgba32> image = renderer.Render();
-                    image.Save(settings.OutputPath);
+                    image.Save(settings.OutputPath!);
 
                     if (settings.OpenRenderedImage)
                     {
@@ -44,14 +44,14 @@ namespace fractalis
                             DistributedVideoRenderer distributed = new(settings.FractalRendererConfig, settings.VideoConfig);
                             await distributed.Start(distributedSettings.OrchestratorUri, distributedSettings.FrameListenerPort);
 
-                            distributed.Save(settings.OutputPath);
+                            distributed.Save(settings.OutputPath!);
                             break;
 
                         // Local video rendering using local compute
                         case VideoMode.Local:
                             VideoRenderer local = new(renderer, settings.VideoConfig);
                             local.Start();
-                            local.Save(settings.OutputPath);
+                            local.Save(settings.OutputPath!);
                             break;
 
                         default: throw new Exception($"Unknown video mode encountered: {settings.VideoConfig}");
@@ -64,6 +64,7 @@ namespace fractalis
 
                     FractalBenchmark benchmark = new(settings.FractalRendererConfig);
                     benchmark.Run(settings.FractalBenchmarkConfig.Label, settings.FractalBenchmarkConfig.Runs);
+                    benchmark.PromptSave();
                     break;
             }
 
