@@ -1,5 +1,6 @@
 ﻿using Spectre.Console;
 using System.Reflection;
+using System.Text;
 
 namespace fractalis.Core.Miscellaneous
 {
@@ -13,6 +14,67 @@ namespace fractalis.Core.Miscellaneous
     /// </remarks>
     public static class Prompts
     {
+        /// <summary>
+        /// A custom console writer that keeps track of the number of lines written to the console.
+        /// This class was created because Spectre.NET doesn't have consistent clearing behaviour.
+        /// </summary>
+        private sealed class LineCountingWriter(TextWriter inner) : TextWriter
+        {
+            public int Lines { get; private set; }
+            public override Encoding Encoding => inner.Encoding;
+
+            public override void Write(char value)
+            {
+                if (value == '\n') Lines++;
+                inner.Write(value);
+            }
+
+            public override void Write(string? value)
+            {
+                if (value is not null)
+                    foreach (char c in value)
+                        if (c == '\n') Lines++;
+                inner.Write(value);
+            }
+
+            public override void WriteLine(string? value) { Lines++; inner.WriteLine(value); }
+            public override void WriteLine() { Lines++; inner.WriteLine(); }
+            public override void Flush() => inner.Flush();
+            protected override void Dispose(bool disposing) { } // don't close the underlying writer
+        }
+
+        private sealed class LineCountingOutput(LineCountingWriter writer) : IAnsiConsoleOutput
+        {
+            public TextWriter Writer => writer;
+            public bool IsTerminal => true;
+
+            public int Width => Console.WindowWidth;
+
+            public int Height => Console.WindowHeight;
+
+            public void SetEncoding(Encoding encoding) => Console.OutputEncoding = encoding;
+        }
+
+        /// <summary>
+        /// A method that displays a prompt to the console and clears it after a valid input,
+        /// adhering to console scrolling.
+        /// </summary>
+        /// <typeparam name="T">The return type of the prompt</typeparam>
+        /// <param name="action">The console action.</param>
+        /// <returns>The return value of the prompt.</returns>
+        private static T PromptAndClear<T>(Func<IAnsiConsole, T> action)
+        {
+            var writer = new LineCountingWriter(Console.Out);
+            var console = AnsiConsole.Create(new AnsiConsoleSettings { Out = new LineCountingOutput(writer) });
+
+            T result = action(console);
+
+            if (writer.Lines > 0) Console.Write($"\u001b[{writer.Lines}A");
+            Console.Write("\u001b[J"); // erase cursor to end of screen
+
+            return result;
+        }
+
         private enum FileBrowserActions
         {
             Up,
@@ -62,16 +124,12 @@ namespace fractalis.Core.Miscellaneous
         /// <returns>The parsed user input.</returns>
         public static T Text<T>(string title, T? defaultValue = default) where T : notnull
         {
-            var top = Console.CursorTop;
             var prompt = new TextPrompt<T>(title);
 
             if (defaultValue is not null)
                 prompt.DefaultValue(defaultValue).DefaultValueStyle(Theme.Muted);
 
-            T result = AnsiConsole.Prompt(prompt);
-
-            ClearFrom(top);
-            return result;
+            return PromptAndClear(c => c.Prompt(prompt));
         }
 
         /// <summary>
@@ -93,20 +151,17 @@ namespace fractalis.Core.Miscellaneous
             string? hint = null
         ) where T : notnull
         {
-            var top = Console.CursorTop;
+            return PromptAndClear(c =>
+            {
+                if (hint is not null) AnsiConsole.MarkupLine(hint + "\n");
 
-            if (hint is not null) AnsiConsole.MarkupLine(hint + "\n");
+                var prompt = new TextPrompt<T>(title).Validate(validator);
 
-            var prompt = new TextPrompt<T>(title).Validate(validator);
+                if (defaultValue is not null)
+                    prompt.DefaultValue(defaultValue).DefaultValueStyle(Theme.Muted);
 
-            if (defaultValue is not null)
-                prompt.DefaultValue(defaultValue).DefaultValueStyle(Theme.Muted);
-
-            T result = AnsiConsole.Prompt(prompt);
-
-            ClearFrom(top);
-
-            return result;
+                return c.Prompt(prompt);
+            });
         }
 
         /// <summary>
@@ -129,11 +184,7 @@ namespace fractalis.Core.Miscellaneous
                 .DefaultValueStyle(Theme.Muted)
                 .ChoicesStyle(Theme.Accent);
 
-            bool result = AnsiConsole.Prompt(prompt);
-
-            ClearFrom(top);
-
-            return result;
+            return PromptAndClear(c => c.Prompt(prompt));
         }
 
         /// <summary>
@@ -325,7 +376,7 @@ namespace fractalis.Core.Miscellaneous
             switch (AnsiConsole.Prompt(modePrompt))
             {
                 case "Enter path manually":
-                    ClearFrom(top);
+                    ClearFrom(Console.CursorTop - 1);
                     path = TextValidated(title, validator, defaultValue);
                     break;
 
@@ -364,7 +415,7 @@ namespace fractalis.Core.Miscellaneous
                             }
                             else
                             {
-                                ClearFrom(top);
+                                ClearFrom(Console.CursorTop - 1);
 
                                 var filename = TextValidated(
                                     $"What should the [{ThemeColor.Accent}]file name[/] be?", 
