@@ -102,13 +102,13 @@ namespace fractalis.Core
 
             Rgba32[] colorBuffer = new Rgba32[Width * Height];
 
-            Action<int> renderRow = (mode, Fractal) switch
+            Action<int> renderRow = (mode, Fractal, SimdAgnostic.IsSupported) switch
             {
-                (RenderMode.HighPrecision,             ISimdPerturbableFractal s) => y => RenderRowSimdPerturbed   (colorBuffer, y, s),
-                (RenderMode.HighPrecision,             IPerturbableFractal p)     => y => RenderRowPerturbed       (colorBuffer, y, p),
-                (RenderMode.HighPrecisionWithFloatExp, IPerturbableFractal p)     => y => RenderRowFloatExp        (colorBuffer, y, p),
-                (_,                                    ISimdFractal s)            => y => RenderRowSimd            (colorBuffer, y, s),
-                _                                                                 => y => RenderRowScalar          (colorBuffer, y)
+                (RenderMode.HighPrecision,             ISimdPerturbableFractal s, true)  => y => RenderRowSimdPerturbed(colorBuffer, y, s),
+                (RenderMode.HighPrecision,             IPerturbableFractal p,     _)     => y => RenderRowPerturbed    (colorBuffer, y, p),
+                (RenderMode.HighPrecisionWithFloatExp, IPerturbableFractal p,     _)     => y => RenderRowFloatExp     (colorBuffer, y, p),
+                (_,                                    ISimdFractal s,            true)  => y => RenderRowSimd         (colorBuffer, y, s),
+                _                                                                        => y => RenderRowScalar       (colorBuffer, y)
             };
 
             // First pass
@@ -155,7 +155,7 @@ namespace fractalis.Core
                 return;
             }
 
-            Console.WriteLine($"<#> Current render mode: {mode}");
+            Console.WriteLine($"<#> Current render mode: {mode}{(SimdAgnostic.IsSupported ? " - SIMD accelerated" : "No acceleration")}");
             AnsiConsole.Progress()
             .Columns([
                 new TaskDescriptionColumn(),
