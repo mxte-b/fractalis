@@ -70,8 +70,7 @@ namespace fractalis.Core.Miscellaneous
 
             T result = AnsiConsole.Prompt(prompt);
 
-            ClearLines(top, Console.CursorTop);
-
+            ClearFrom(top);
             return result;
         }
 
@@ -105,7 +104,7 @@ namespace fractalis.Core.Miscellaneous
 
             T result = AnsiConsole.Prompt(prompt);
 
-            ClearLines(top, Console.CursorTop);
+            ClearFrom(top);
 
             return result;
         }
@@ -132,7 +131,7 @@ namespace fractalis.Core.Miscellaneous
 
             bool result = AnsiConsole.Prompt(prompt);
 
-            ClearLines(top, Console.CursorTop);
+            ClearFrom(top);
 
             return result;
         }
@@ -200,6 +199,8 @@ namespace fractalis.Core.Miscellaneous
             }
 
             if (hint is not null) AnsiConsole.MarkupLine(hint + "\n");
+
+            var top = Console.CursorTop;
             AnsiConsole.MarkupLine(title);
 
             var mode = AnsiConsole.Prompt(
@@ -211,7 +212,7 @@ namespace fractalis.Core.Miscellaneous
             switch (mode)
             {
                 case "Enter path manually":
-                    ClearLines(Console.CursorTop - 1, Console.CursorTop);
+                    ClearFrom(top);
                     path = TextValidated(title, validator, defaultValue);
                     break;
 
@@ -268,7 +269,7 @@ namespace fractalis.Core.Miscellaneous
                     }
 
                     // Clear excess lines
-                    ClearLines(Console.CursorTop - (hint is not null ? 3 : 1), Console.CursorTop);
+                    ClearFrom(top);
 
                     break;
 
@@ -312,6 +313,7 @@ namespace fractalis.Core.Miscellaneous
                         .HighlightStyle(Theme.Selection));
             }
 
+            var top = Console.CursorTop;
             AnsiConsole.MarkupLine(title);
 
             var modePrompt = new SelectionPrompt<string>()
@@ -323,7 +325,7 @@ namespace fractalis.Core.Miscellaneous
             switch (AnsiConsole.Prompt(modePrompt))
             {
                 case "Enter path manually":
-                    ClearLines(Console.CursorTop - 1, Console.CursorTop);
+                    ClearFrom(top);
                     path = TextValidated(title, validator, defaultValue);
                     break;
 
@@ -362,7 +364,7 @@ namespace fractalis.Core.Miscellaneous
                             }
                             else
                             {
-                                ClearLines(Console.CursorTop - 1, Console.CursorTop);
+                                ClearFrom(top);
 
                                 var filename = TextValidated(
                                     $"What should the [{ThemeColor.Accent}]file name[/] be?", 
@@ -375,7 +377,7 @@ namespace fractalis.Core.Miscellaneous
                         }
                         else
                         {
-                            current = Path.Combine(current, choice.Replace(directoryIdentifier, ""));
+                            current = Path.Combine(current, choice.Replace(directoryIdentifier, "").Trim());
                         }
                     }
                     break;
@@ -429,20 +431,11 @@ namespace fractalis.Core.Miscellaneous
         /// <param name="message">The message to display.</param>
         public static void Info(string message) => AnsiConsole.MarkupLine($"[{ThemeColor.Info}]ℹ  {message}[/]");
 
-        /// <summary>
-        /// Clears the console lines in a specified range.
-        /// </summary>
-        /// <param name="from">The first line to clear.</param>
-        /// <param name="to">The last line to clear.</param>
-        public static void ClearLines(int from, int to)
+        private const string ESC = "\u001b";
+        private static void ClearFrom(int top)
         {
-            for (int i = from; i <= to; i++)
-            {
-                Console.SetCursorPosition(0, i);
-                Console.Write(new string(' ', Console.WindowWidth));
-            }
-
-            Console.SetCursorPosition(0, from);
+            Console.SetCursorPosition(0, top);
+            Console.Write("\u001b[J");
         }
     }
 }

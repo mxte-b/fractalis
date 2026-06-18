@@ -127,7 +127,8 @@ namespace fractalis.Core
                     $"{refOrbitTotal.Maximum + result.Render.Maximum:f2}");
             }
 
-            AnsiConsole.Write(table);
+            //AnsiConsole.Write(table);
+            //Console.WriteLine();
         }
 
         private static TimedResult ToTimedResult(List<long> times) => new()

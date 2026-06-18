@@ -127,9 +127,8 @@ namespace fractalis.Core.Miscellaneous
 
             Prompts.Done();
 
-            AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine("[bold DarkOliveGreen2]Configuration complete[/]");
-            AnsiConsole.WriteLine();
+            Console.WriteLine();
 
             return settings;
         }
