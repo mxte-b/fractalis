@@ -11,6 +11,9 @@ namespace fractalis.ServerApp
 
             Orchestrator orchestrator = new Orchestrator();
             var builder = WebApplication.CreateBuilder(args);
+            builder.Logging.SetMinimumLevel(LogLevel.Warning);
+            builder.WebHost.UseUrls("http://localhost:5059");
+
             var app = builder.Build();
 
             WebSocketOptions options = new WebSocketOptions()
