@@ -42,9 +42,9 @@ namespace fractalis.Core.Distributed.Orchestrator
         /// <summary>
         /// Initializes the orchestrator and starts the dashboard UI.
         /// </summary>
-        public Orchestrator()
+        public Orchestrator(string serverUrl)
         {
-            _dashboard.Initialize(Clients);
+            _dashboard.Initialize(Clients, serverUrl);
             _dashboard.Start();
         }
 

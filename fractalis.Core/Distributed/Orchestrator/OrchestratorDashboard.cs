@@ -17,11 +17,12 @@ namespace fractalis.Core.Distributed.Orchestrator
     internal class OrchestratorDashboard
     {
         private static readonly OrchestratorDashboard           _instance   = new();
-        private readonly ConcurrentQueue<string>                _logs       = new();
-        private ConcurrentDictionary<Guid, ClientConnection>?   _clients;
-        private readonly Layout                                 _layout;
-        private readonly Panel                                  _header     = new Panel(Banner.V1 + "\n[bold]Orchestrator Dashboard[/]").Border(BoxBorder.Rounded);
         private static readonly int                             _maxLogs    = 8;
+        private readonly ConcurrentQueue<string>                _logs       = new();
+        private readonly Layout                                 _layout;
+        private string                                          _serverUrl = string.Empty;
+        private ConcurrentDictionary<Guid, ClientConnection>?   _clients;
+        private Panel                                           _header     => new Panel(Banner.V1 + $"\n[bold]Orchestrator Dashboard[/] - {_serverUrl}").Border(BoxBorder.Rounded);
 
         /// <summary>
         /// Gets the singleton instance of the <see cref="OrchestratorDashboard"/>.
@@ -48,9 +49,10 @@ namespace fractalis.Core.Distributed.Orchestrator
         /// Initializes the dashboard with the concurrent dictionary of connected clients.
         /// </summary>
         /// <param name="clients">A thread-safe dictionary containing client connections keyed by GUID.</param>
-        public void Initialize(ConcurrentDictionary<Guid, ClientConnection> clients)
+        public void Initialize(ConcurrentDictionary<Guid, ClientConnection> clients, string serverUrl)
         {
             _clients = clients;
+            _serverUrl = serverUrl;
         }
 
         /// <summary>
