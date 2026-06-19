@@ -79,6 +79,18 @@ sudo dnf install gmp-devel mpfr-devel
   To tweak a render without starting from scratch, just edit the exported JSON directly.
 </p>
 
+<h2>Supported fractals</h2>
+
+| Fractal | Vectorized | Perturbation |
+|---|---|---|
+| Mandelbrot set | ✓ | ✓ |
+| Julia set | ✕ | ✓ |
+| Burning ship fractal | ✕ | ✕ |
+| Generalized Mandelbrot set | ✕ | ✕ |
+| Generalized Julia set | ✕ | ✕ |
+
+Broader vectorization and perturbation support can be expected in future releases.
+
 <h2>Project Structure</h2>
 
 | Project | Role |
