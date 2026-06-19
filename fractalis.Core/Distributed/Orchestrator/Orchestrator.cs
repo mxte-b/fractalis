@@ -70,7 +70,10 @@ namespace fractalis.Core.Distributed.Orchestrator
         /// <param name="size">Maximum number of frames per assignment.</param>
         private void SplitJobIntoAssignments(RenderJob job, int size)
         {
-            for (int i = job.VideoConfig.StartFrame; i < job.VideoConfig.FrameCount; i += size)
+            int start = job.VideoConfig.StartFrame;
+            int end = job.VideoConfig.FrameCount;
+
+            for (int i = start; i < end; i += size)
             {
                 RenderAssignment assignment = new()
                 {
@@ -122,6 +125,8 @@ namespace fractalis.Core.Distributed.Orchestrator
 
             if (!Assignments.Any(a => a.Value.JobId == assignment?.JobId))
             {
+                Jobs.TryRemove(assignment.JobId, out _);
+
                 _ = BroadcastMessageAsync(new RenderJobStatusMessage() 
                 { 
                     JobId = assignment.JobId, 

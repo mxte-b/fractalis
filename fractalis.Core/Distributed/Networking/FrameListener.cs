@@ -1,5 +1,6 @@
 ﻿using fractalis.Core.Distributed.Networking.Messages;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using WatsonWebserver;
 using WatsonWebserver.Core;
@@ -48,17 +49,17 @@ namespace fractalis.Core.Distributed.Networking
         /// <exception cref="Exception">Thrown if no IPv4 address is found.</exception>
         private static string GetLocalIPAddress()
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-
-            foreach (var ip in host.AddressList)
-            {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    return ip.ToString();
-                }
-            }
-
-            throw new Exception("No network adapters with an IPv4 address in the system!");
+            return NetworkInterface.GetAllNetworkInterfaces()
+                .Where(ni =>
+                    ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet &&
+                    ni.OperationalStatus == OperationalStatus.Up &&
+                    ni.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork))
+                .Select(ni => ni.GetIPProperties())
+                .SelectMany(p => p.UnicastAddresses)
+                .FirstOrDefault(a =>
+                    a.Address.AddressFamily == AddressFamily.InterNetwork &&
+                    !IPAddress.IsLoopback(a.Address))
+                ?.Address.ToString() ?? "localhost";
         }
 
         #region Endpoints

@@ -24,12 +24,10 @@ namespace fractalis.ServerApp
                     !IPAddress.IsLoopback(a.Address))
                 ?.Address.ToString() ?? "localhost";
 
-            var url = $"http://{localIp}:5059";
-
-            Orchestrator orchestrator = new Orchestrator(url);
+            Orchestrator orchestrator = new Orchestrator($"ws://{localIp}:5059/ws");
             var builder = WebApplication.CreateBuilder(args);
             builder.Logging.SetMinimumLevel(LogLevel.Warning);
-            builder.WebHost.UseUrls(url);
+            builder.WebHost.UseUrls($"http://{localIp}:5059");
 
             var app = builder.Build();
 

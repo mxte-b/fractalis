@@ -33,11 +33,18 @@ namespace fractalis.Core.Video
                 InitiatorClient client = new();
                 await client.Connect(orchestratorUri, "Administrator");
 
+                var allFramesReceived = new TaskCompletionSource();
+                var remainingFrames = Config.FrameCount;
+
                 // Starting frame listener
                 _listener = new FrameListener(listenPort, ImageSequencePath, () => {
                     lock (task)
                     {
                         task.Increment(1);
+                        if (--remainingFrames == 0)
+                        {
+                            allFramesReceived.TrySetResult();
+                        }
                     }
                 });
                 _ = _listener.Start();
@@ -52,8 +59,11 @@ namespace fractalis.Core.Video
                     FractalRendererConfig = rendererConfig,
                 });
 
-                // Wait until the job has been completed
-                await client.Start();
+                // Wait until the job has been completed and all frames have arrived
+                await Task.WhenAll(
+                    client.Start(),
+                    allFramesReceived.Task
+                    );
 
                 // Cleanup
                 _listener.Stop();

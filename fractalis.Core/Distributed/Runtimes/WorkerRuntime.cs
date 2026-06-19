@@ -3,6 +3,7 @@ using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Distributed.Networking.Messages;
 using fractalis.Core.Renderers;
 using fractalis.Core.Video;
+using System.ComponentModel;
 
 namespace fractalis.Core.Distributed.Runtimes
 {
@@ -71,7 +72,8 @@ namespace fractalis.Core.Distributed.Runtimes
 
                     _idle = false;
 
-                    Console.WriteLine($"Assignment: Id: {assignment.Id} JobId: {assignment.JobId}, from frame {assignment.StartFrameIndex} render {assignment.FrameCount} frames and upload to {assignedJob.UploadUri}");
+                    //Console.WriteLine($"Assignment: Id: {assignment.Id} JobId: {assignment.JobId}, from frame {assignment.StartFrameIndex} render {assignment.FrameCount} frames and upload to {assignedJob.UploadUri}");
+                    Console.WriteLine($"New assignment: {assignment.Id} - {assignment.StartFrameIndex}");
 
                     // Render images
                     _renderers.TryGetValue(assignment.JobId, out VideoRenderer? renderer);
@@ -82,15 +84,22 @@ namespace fractalis.Core.Distributed.Runtimes
                         break;
                     }
 
+                    var uploads = new List<Task>();
+
                     renderer.RenderSegment(assignment.StartFrameIndex, assignment.FrameCount, (frameIndex, bytes) =>
                     {
-                        _ = HttpHelper.PostAsync(assignedJob.UploadUri.ToString(), new RenderedImageMessage()
-                            {
-                                FrameIndex = frameIndex,
-                                Bytes = bytes
-                            }
+                        uploads.Add(
+                            HttpHelper.PostAsync(
+                                assignedJob.UploadUri.ToString(),
+                                new RenderedImageMessage
+                                {
+                                    FrameIndex = frameIndex,
+                                    Bytes = bytes
+                                })
                         );
                     });
+
+                    await Task.WhenAll(uploads);
 
                     // Report back to the orchestrator
                     _ = _context.SendMessageToServerAsync(new RenderAssignmentStatusMessage()
@@ -117,6 +126,13 @@ namespace fractalis.Core.Distributed.Runtimes
 
                 case NoAssignmentMessage:
                     Console.WriteLine("No more assignments are available right now.");
+
+                    if (_jobs.Count > 0)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(5));
+                        await RequestAssignmentAsync();
+                    }
+
                     break;
             }
 
