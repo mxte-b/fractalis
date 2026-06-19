@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "fractalis.Client": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DYLD_LIBRARY_PATH": "/opt/homebrew/lib"
+      }
+    }
+  }
+}

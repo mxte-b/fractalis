@@ -1,5 +1,6 @@
 using fractalis.Core.Distributed.Orchestrator;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
 namespace fractalis.ServerApp
@@ -11,9 +12,18 @@ namespace fractalis.ServerApp
             
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            var localIp = Dns.GetHostEntry(Dns.GetHostName())
-                .AddressList
-                .First(a => a.AddressFamily == AddressFamily.InterNetwork);
+            var localIp = NetworkInterface.GetAllNetworkInterfaces()
+                .Where(ni =>
+                    ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet &&
+                    ni.OperationalStatus == OperationalStatus.Up &&
+                    ni.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork))
+                .Select(ni => ni.GetIPProperties())
+                .SelectMany(p => p.UnicastAddresses)
+                .FirstOrDefault(a =>
+                    a.Address.AddressFamily == AddressFamily.InterNetwork &&
+                    !IPAddress.IsLoopback(a.Address))
+                ?.Address.ToString() ?? "localhost";
+
             var url = $"http://{localIp}:5059";
 
             Orchestrator orchestrator = new Orchestrator(url);
