@@ -233,6 +233,18 @@ namespace fractalis.Core.Numbers
         }
 
         /// <summary>
+        /// Bitwise XOR of every lane.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vec256d Xor(Vec256d a, Vec256d b)
+        {
+            if (Avx.IsSupported)
+                return Vec256d.FromV256(Avx.Xor(a._v256, b._v256));
+
+            return Vec256d.FromV256(Vector256.Xor(a._v256, b._v256));
+        }
+
+        /// <summary>
         /// Per-lane ordered less-than comparison.
         /// Returns all-1 bits in lanes where <c>a &lt; b</c>, all-0 bits otherwise.
         /// NaN inputs produce all-0.

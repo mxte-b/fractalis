@@ -96,6 +96,38 @@ namespace fractalis.Core.Numbers
         }
 
         /// <summary>
+        /// Subtracts two <see cref="BigComplex"/> numbers.
+        /// </summary>
+        /// <param name="a">The first operand.</param>
+        /// <param name="b">The second operand.</param>
+        /// <returns>
+        /// A new <see cref="BigComplex"/> representing the difference of <paramref name="a"/> and <paramref name="b"/>.
+        /// </returns>
+        public static BigComplex operator -(BigComplex a, BigComplex b)
+        {
+            return new BigComplex(a.Real - b.Real, a.Imaginary - b.Imaginary);
+        }
+
+        /// <summary>
+        /// Divides two <see cref="BigComplex"/> numbers.
+        /// </summary>
+        /// <param name="a">The first operand.</param>
+        /// <param name="b">The second operand.</param>
+        /// <returns>
+        /// A new <see cref="BigComplex"/> representing the quotient of <paramref name="a"/> and <paramref name="b"/>.
+        /// </returns>
+        public static BigComplex operator /(BigComplex a, BigComplex b)
+        {
+            var denom = b.MagnitudeSquared;
+            if (denom == BigFloat.Zero) throw new DivideByZeroException();
+
+            return new BigComplex(
+                (a.Real * b.Real + a.Imaginary * b.Imaginary) / denom,
+                (a.Imaginary * b.Real - a.Real * b.Imaginary) / denom
+            );
+        }
+
+        /// <summary>
         /// Converts this <see cref="BigComplex"/> to a standard-precision <see cref="Complex"/>.
         /// </summary>
         /// <returns>

@@ -285,7 +285,7 @@ namespace fractalis.Core.Fractals
                     Vec256d prevActive = active;
 
                     // Bailout if every point escaped
-                    active = SimdAgnostic.CompareLessThan(zmag, bailout);
+                    active = SimdAgnostic.And(prevActive, SimdAgnostic.CompareLessThan(zmag, bailout));
 
                     // Store magnitudes for points that just escaped
                     escapeMags = SimdAgnostic.BlendVariable(escapeMags, zmag, SimdAgnostic.AndNot(active, prevActive));
@@ -299,8 +299,13 @@ namespace fractalis.Core.Fractals
                     if ((i & 3) == 0)
                     {
                         Vec256d dzmag = SimdAgnostic.MultiplyAdd(dzr, dzr, SimdAgnostic.Multiply(dzi, dzi));
-                        Vec256d cmp = SimdAgnostic.CompareLessThan(zmag, dzmag);
-                        needsRebase = !SimdAgnostic.TestZ(cmp, cmp);
+
+                        // Only rebase if all lanes are glitched
+                        Vec256d cmp = SimdAgnostic.And(
+                            SimdAgnostic.Xor(SimdAgnostic.AllBitsSet, SimdAgnostic.CompareLessThan(zmag, dzmag)),
+                            active);
+
+                        needsRebase = SimdAgnostic.TestZ(cmp, cmp);
                     }
 
                     if (needsRebase || refIteration == escape)

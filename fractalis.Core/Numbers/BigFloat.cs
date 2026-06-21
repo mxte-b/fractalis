@@ -37,8 +37,9 @@ namespace fractalis.Core.Numbers
             set => _precision = (int)Math.Ceiling(value * LOG2_10);
         }
 
-        public static readonly BigFloat One = new(1);
-        public static readonly BigFloat Ten = new(10);
+        public static readonly BigFloat Zero = new(0);
+        public static readonly BigFloat One  = new(1);
+        public static readonly BigFloat Ten  = new(10);
 
         /// <summary>
         /// Initializes a new <see cref="BigFloat"/> from a string representation.
@@ -181,7 +182,7 @@ namespace fractalis.Core.Numbers
             ExpDouble converted = x._value.ToExpDouble();
             return new FloatExp(converted.Value, converted.Exp);
         }
-
+        
         public double ToDouble() => _value.ToDouble(MpfrRounding.ToEven);
         #endregion
 
