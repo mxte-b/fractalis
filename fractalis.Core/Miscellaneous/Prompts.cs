@@ -1,4 +1,5 @@
-﻿using Spectre.Console;
+﻿using fractalis.Core.Numbers;
+using Spectre.Console;
 using System.Reflection;
 using System.Text;
 
@@ -153,7 +154,7 @@ namespace fractalis.Core.Miscellaneous
         {
             return PromptAndClear(c =>
             {
-                if (hint is not null) AnsiConsole.MarkupLine(hint + "\n");
+                if (hint is not null) c.MarkupLine(hint + "\n");
 
                 var prompt = new TextPrompt<T>(title).Validate(validator);
 
@@ -249,9 +250,9 @@ namespace fractalis.Core.Miscellaneous
                         .HighlightStyle(Theme.Selection));
             }
 
-            if (hint is not null) AnsiConsole.MarkupLine(hint + "\n");
-
             var top = Console.CursorTop;
+
+            if (hint is not null) AnsiConsole.MarkupLine(hint + "\n");
             AnsiConsole.MarkupLine(title);
 
             var mode = AnsiConsole.Prompt(
@@ -264,7 +265,7 @@ namespace fractalis.Core.Miscellaneous
             {
                 case "Enter path manually":
                     ClearFrom(top);
-                    path = TextValidated(title, validator, defaultValue);
+                    path = TextValidated(title, validator, defaultValue, hint);
                     break;
 
                 case "Browse files":
@@ -437,6 +438,27 @@ namespace fractalis.Core.Miscellaneous
             }
 
             return path;
+        }
+
+        /// <summary>
+        /// Displays an interactive prompt and returns a location.
+        /// </summary>
+        /// <param name="titleReal">The title of the prompt for the real part of the location.</param>
+        /// <param name="titleImaginary">The title of the prompt for the imaginary part of the location.</param>
+        /// <returns>The location as a <see cref="BigComplex"/>.</returns>
+        public static BigComplex Location(string titleReal, string titleImaginary)
+        {
+            var real = Text<BigFloat>(
+                titleReal,
+                new(0)
+            );
+
+            var imaginary = Text<BigFloat>(
+                titleImaginary,
+                new(0)
+            );
+
+            return new(real, imaginary);
         }
 
         /// <summary>

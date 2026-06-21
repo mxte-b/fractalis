@@ -5,33 +5,42 @@ namespace fractalis.Core
 {
     public class ResourceManager
     {
-        private static ResourceManager _instance = new ResourceManager();
-        private static readonly object _lock = new object();
+        private static ResourceManager _instance = new();
+        private static readonly object _lock = new();
 
         public Dictionary<string, List<ColorStop>> ColorPalettes = [];
+        public Dictionary<string, Sight> Sights = [];
 
         private ResourceManager()
         {
-            LoadColorPalettes();
+            ColorPalettes = LoadColorPalettes();
+            Sights = LoadSights();
         }
 
-        private void LoadColorPalettes()
+        private static string ReadEmbeddedResource(string resourceName)
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
-            Stream? stream = assembly.GetManifestResourceStream("fractalis.Core.Resources.palettes.json");
+            Stream? stream = assembly.GetManifestResourceStream(resourceName)
+                ?? throw new FileNotFoundException($"Couldn't find embedded resource '{resourceName}'.");
 
-            if (stream == null)
-            {
-                throw new FileNotFoundException("Couldn't find color palette embedded resource.");
-            }
+            StreamReader reader = new(stream);
+            return reader.ReadToEnd();
+        }
 
-            StreamReader reader = new StreamReader(stream);
-            string text = reader.ReadToEnd();
+        private static Dictionary<string, List<ColorStop>> LoadColorPalettes()
+        {
+            string text = ReadEmbeddedResource("fractalis.Core.Resources.palettes.json");
 
-            var data = JsonSerializer.Deserialize<Dictionary<string, List<ColorStop>>>(text, FractalisJsonOptions.Default) 
+            return JsonSerializer.Deserialize<Dictionary<string, List<ColorStop>>>(text, FractalisJsonOptions.Default) 
                 ?? throw new FormatException("The palette data was malformed.");
+        }
 
-            ColorPalettes = data;
+        private static Dictionary<string, Sight> LoadSights()
+        {
+            string text = ReadEmbeddedResource("fractalis.Core.Resources.sights.json");
+
+            return JsonSerializer.Deserialize<Dictionary<string, Sight>>(text, FractalisJsonOptions.Default)
+                ?? throw new FormatException("The sights data was malformed.");
         }
 
         public static ResourceManager Instance

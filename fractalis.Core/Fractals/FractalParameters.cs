@@ -6,6 +6,11 @@ namespace fractalis.Core.Fractals
     /// <summary>
     /// Base class for all fractal parameters.
     /// </summary>
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+    [JsonDerivedType(typeof(NoParameters), "noParameters")]
+    [JsonDerivedType(typeof(JuliaParameters), "julia")]
+    [JsonDerivedType(typeof(GeneralizedMandelbrotParameters), "generalizedMandelbrot")]
+    [JsonDerivedType(typeof(GeneralizedJuliaParameters), "generalizedJulia")]
     public abstract record FractalParameters;
 
     /// <summary>

@@ -346,38 +346,22 @@ namespace fractalis.Core.Fractals
             BigComplex z = new(0, 0);
             int i = 0;
 
-            AnsiConsole.Progress()
-                .Columns([
-                    new TaskDescriptionColumn(),
-                    new ProgressBarColumn(),
-                    new PercentageColumn(),
-                    new ElapsedTimeColumn(),
-                    new RemainingTimeColumn(),
-                    new SpinnerColumn(),
-                ])
-                .Start(ctx =>
-                {
-                    var task = ctx.AddTask("<#> Calculating reference orbit".PadRight(31), maxValue: maxIterations);
+            for (; i < maxIterations; i++)
+            {
+                Complex zc = z.ToComplex();
+                o.PointsR[i] = zc.Real;
+                o.PointsI[i] = zc.Imaginary;
+                o.ScaledPoints[i] = z.ToScaledComplex();
 
-                    for (; i < maxIterations; i++)
-                    {
-                        Complex zc = z.ToComplex();
-                        o.PointsR[i] = zc.Real;
-                        o.PointsI[i] = zc.Imaginary;
-                        o.ScaledPoints[i] = z.ToScaledComplex();
+                BigFloat zrTemp = z.Real;
+                BigFloat zr2 = z.Real * z.Real;
+                BigFloat zi2 = z.Imaginary * z.Imaginary;
 
-                        BigFloat zrTemp = z.Real;
-                        BigFloat zr2 = z.Real * z.Real;
-                        BigFloat zi2 = z.Imaginary * z.Imaginary;
+                z.Real = zr2 - zi2 + center.Real;
+                z.Imaginary = 2 * zrTemp * z.Imaginary + center.Imaginary;
 
-                        z.Real = zr2 - zi2 + center.Real;
-                        z.Imaginary = 2 * zrTemp * z.Imaginary + center.Imaginary;
-
-                        if (zr2 + zi2 > BAILOUT_DOUBLE) break;
-
-                        task.Increment(1);
-                    }
-                });
+                if (zr2 + zi2 > BAILOUT_DOUBLE) break;
+            }
 
             o.EscapeIteration = i;
             orbit = o;

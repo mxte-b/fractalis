@@ -5,18 +5,23 @@ namespace fractalis.Core.Fractals
 {
     public static class MandelbrotSightGenerator
     {
-        private static readonly BigFloat TOLERANCE = new("1e-100");
-        private static readonly int NEWTON_ITERS = 500;
+
+
+
+
+        private static readonly BigFloat TOLERANCE = new("1e-200");
+        private static readonly int NEWTON_ITERS = 5000;
 
         /// <summary>
         /// Generates a coordinate of a minibrot from an initial position guess and a given period value.
         /// </summary>
         /// <param name="near">The initial guess for the Minibrot's position.</param>
         /// <param name="targetPeriod">The target period value of the Minibrot.</param>
-        /// <returns>The approximate position of the Minibrot.</returns>
-        public static BigComplex FindMinibrot(BigComplex near, int targetPeriod)
+        /// <returns>The approximate position and approximate zoom depth of the Minibrot.</returns>
+        public static (BigComplex, BigFloat) FindMinibrot(BigComplex near, int targetPeriod)
         {
             BigComplex c = near;
+            BigFloat zoom = BigFloat.One;
 
             AnsiConsole.Progress()
                 .Columns([
@@ -35,6 +40,8 @@ namespace fractalis.Core.Fractals
                     {
                         (var z, var dz) = RunningDerivative(c, targetPeriod);
 
+                        zoom = dz.MagnitudeSquared / BigFloat.Ten;
+
                         if (z.MagnitudeSquared < TOLERANCE)
                         {
                             task.Value = NEWTON_ITERS;
@@ -46,7 +53,7 @@ namespace fractalis.Core.Fractals
                     }
                 });
 
-            return c;
+            return (c, zoom);
         }
 
         private static (BigComplex, BigComplex) RunningDerivative(BigComplex c, int targetPeriod)
