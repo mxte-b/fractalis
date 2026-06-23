@@ -27,5 +27,10 @@ namespace fractalis.Core.Distributed.Networking
         /// Indicates that the render job is cancelled.
         /// </summary>
         Cancelled,
+
+        /// <summary>
+        /// Indicates that the render job has failed.
+        /// </summary>
+        Failed,
     }
 }

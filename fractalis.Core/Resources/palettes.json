@@ -92,5 +92,13 @@
     { "position": 0.6, "color": [132, 134, 150, 255] },
     { "position": 0.8, "color": [110, 202, 255, 255] },
     { "position": 1.0, "color": [0, 0, 0, 255] }
+  ],
+  "Sapphire": [
+    { "position": 0, "color": [210, 203, 197, 255] },
+    { "position": 0.2, "color": [210, 203, 197, 255] },
+    { "position": 0.35, "color": [0, 76, 255, 255] },
+    { "position": 0.5, "color": [0, 195, 255, 255] },
+    { "position": 0.65, "color": [0, 76, 255, 255] },
+    { "position": 0.8, "color": [210, 203, 197, 255] }
   ]
 }

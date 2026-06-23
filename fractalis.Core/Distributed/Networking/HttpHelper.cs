@@ -5,7 +5,10 @@ namespace fractalis.Core.Distributed.Networking
 {
     public static class HttpHelper
     {
-        private static readonly HttpClient _client = new HttpClient();
+        private static readonly HttpClient _client = new HttpClient()
+        {
+            Timeout = TimeSpan.FromSeconds(30)
+        };
 
         /// <summary>
         /// Sends a POST request with a serialized <see cref="Message"/> payload.

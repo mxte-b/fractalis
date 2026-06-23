@@ -3,6 +3,7 @@ using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Distributed.Networking.Messages;
 using fractalis.Core.Renderers;
 using fractalis.Core.Video;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 
 namespace fractalis.Core.Distributed.Runtimes
@@ -99,18 +100,34 @@ namespace fractalis.Core.Distributed.Runtimes
                         );
                     });
 
-                    await Task.WhenAll(uploads);
-
-                    // Report back to the orchestrator
-                    _ = _context.SendMessageToServerAsync(new RenderAssignmentStatusMessage()
+                    try
                     {
-                        AssignmentId = assignment.Id,
-                        Status = RenderStatus.Finished
-                    });
+                        await Task.WhenAll(uploads);
 
-                    // Request new assignment
-                    _idle = true;
-                    await RequestAssignmentAsync();
+                        // Report back to the orchestrator
+                        _ = _context.SendMessageToServerAsync(new RenderAssignmentStatusMessage()
+                        {
+                            AssignmentId = assignment.Id,
+                            Status = RenderStatus.Finished
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Upload failed for assignment {assignment.Id}: {ex.Message}");
+
+                        _ = _context.SendMessageToServerAsync(new RenderAssignmentStatusMessage
+                        {
+                            AssignmentId = assignment.Id,
+                            Status = RenderStatus.Failed
+                        });
+                    }
+                    finally
+                    {
+                        // Request new assignment
+                        _idle = true;
+                        await RequestAssignmentAsync();
+                    }
+
                     break;
 
                 case RenderJobStatusMessage jobStatusMessage:

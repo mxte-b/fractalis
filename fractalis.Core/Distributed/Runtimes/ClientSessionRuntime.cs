@@ -42,6 +42,7 @@ namespace fractalis.Core.Distributed.Runtimes
                             _context.CompleteAssignment(assignmentStatusMessage.AssignmentId);
                             break;
 
+                        case RenderStatus.Failed:
                         case RenderStatus.Cancelled:
                             _context.CancelAssignment(assignmentStatusMessage.AssignmentId);
                             break;

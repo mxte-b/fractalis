@@ -22,6 +22,7 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
     /// </summary>
     /// <param name="x">Horizontal offset in pixels.</param>
     /// <param name="y">Vertical offset in pixels.</param>
+    [method: JsonConstructor]
     public readonly struct Margin(int x, int y)
     {
         [JsonInclude]
@@ -81,6 +82,7 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
         )
         {
             _imagePath = imagePath;
+            Console.WriteLine(options?.Margin.X);
             _options = options ?? new WatermarkOptions();
 
             // Loading watermark and converting to linear color space
