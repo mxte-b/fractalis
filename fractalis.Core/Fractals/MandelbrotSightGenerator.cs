@@ -5,12 +5,8 @@ namespace fractalis.Core.Fractals
 {
     public static class MandelbrotSightGenerator
     {
-
-
-
-
         private static readonly BigFloat TOLERANCE = new("1e-200");
-        private static readonly int NEWTON_ITERS = 5000;
+        private static readonly int NEWTON_ITERS = 10000;
 
         /// <summary>
         /// Generates a coordinate of a minibrot from an initial position guess and a given period value.
@@ -38,17 +34,27 @@ namespace fractalis.Core.Fractals
 
                     for (int i = 0; i < NEWTON_ITERS; i++)
                     {
-                        (var z, var dz) = RunningDerivative(c, targetPeriod);
+                        (var z, var dz, var isPure) = RunningDerivative(c, targetPeriod);
 
                         zoom = dz.MagnitudeSquared / BigFloat.Ten;
 
-                        if (z.MagnitudeSquared < TOLERANCE)
+                        if (z.MagnitudeSquared < TOLERANCE && isPure)
                         {
                             task.Value = NEWTON_ITERS;
                             break;
                         }
 
-                        c -= z / dz;
+                        if (isPure)
+                        {
+                            c -= z / dz;
+                        }
+                        // To prevent Newton from getting stuck in attractors that correspond to
+                        // an orbit value dividing targetPeriod, we move c towards the initial guess
+                        else
+                        {
+                            c = (c + near) / new BigComplex(2, 0);
+                        }
+
                         task.Increment(1);
                     }
                 });
@@ -56,12 +62,13 @@ namespace fractalis.Core.Fractals
             return (c, zoom);
         }
 
-        private static (BigComplex, BigComplex) RunningDerivative(BigComplex c, int targetPeriod)
+        private static (BigComplex, BigComplex, bool) RunningDerivative(BigComplex c, int targetPeriod)
         {
             BigFloat zr = new(0);
             BigFloat zi = new(0);
             BigFloat dzr = new(0);
             BigFloat dzi = new(0);
+            bool isPurePeriod = true;
 
             for (int i = 0; i < targetPeriod; i++)
             {
@@ -78,9 +85,13 @@ namespace fractalis.Core.Fractals
                 zi = 2 * zrTemp * zi + c.Imaginary;
 
                 if (zr2 + zi2 > 100) break;
+
+                // If at any point we get below tolerance value, that means that the
+                // current orbit is not of the target period
+                if (i > 0 && i <= targetPeriod / 2 && zr2 + zi2 < TOLERANCE) isPurePeriod = false;
             }
 
-            return (new(zr, zi), new(dzr, dzi));
+            return (new(zr, zi), new(dzr, dzi), isPurePeriod);
         }
     }
 }

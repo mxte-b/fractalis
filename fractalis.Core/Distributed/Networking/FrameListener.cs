@@ -51,8 +51,8 @@ namespace fractalis.Core.Distributed.Networking
         {
             return NetworkInterface.GetAllNetworkInterfaces()
                 .Where(ni =>
-                    ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet &&
-                    ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 &&
+                    (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
+                    ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
                     ni.OperationalStatus == OperationalStatus.Up &&
                     ni.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork))
                 .Select(ni => ni.GetIPProperties())

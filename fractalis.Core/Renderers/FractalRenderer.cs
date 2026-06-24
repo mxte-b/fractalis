@@ -28,7 +28,7 @@ namespace fractalis.Core
 
         private const int                   AA_THRESHOLD            = 30;
         private static readonly FloatExp    HIGHPRECISION_THRESHOLD = new(1, -40);
-        private static readonly FloatExp    FLOATEXP_THRESHOLD      = new(1, -1070);
+        private static readonly FloatExp    FLOATEXP_THRESHOLD      = new(1, -1024);
 
         /// <summary>The fractal to render.</summary>
         public readonly IFractal            Fractal                 = config.Fractal;

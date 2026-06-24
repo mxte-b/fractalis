@@ -54,7 +54,7 @@ namespace fractalis.Core
     [JsonConverter(typeof(ColorPaletteJsonConverter))]
     public class ColorPalette
     {
-        public const int DefaultFrequency = 20;
+        public const int DefaultFrequency = 200;
         public const float DefaultOffset = 0.4f;
         public static Color DefaultInteriorColor = Color.Black;
 

@@ -1,4 +1,6 @@
-﻿namespace fractalis.Core.Numbers
+﻿using System.Runtime.CompilerServices;
+
+namespace fractalis.Core.Numbers
 {
     /// <summary>
     /// Represents a complex number using high-dynamic-range <see cref="FloatExp"/> components.
@@ -25,7 +27,7 @@
         /// <remarks>
         /// Useful for performance-sensitive comparisons or threshold checks.
         /// </remarks>
-        public FloatExp MagnitudeSquared
+        public readonly FloatExp MagnitudeSquared
         {
             get
             {
@@ -40,7 +42,7 @@
         /// Represents how large the number is in absolute terms. More expensive to compute
         /// than <see cref="MagnitudeSquared"/> because it calculates a square root.
         /// </remarks>
-        public FloatExp Magnitude
+        public readonly FloatExp Magnitude
         {
             get
             {

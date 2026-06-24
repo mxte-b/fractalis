@@ -14,6 +14,9 @@ namespace fractalis.Core.Numbers
     /// </remarks>
     public struct BigComplex
     {
+        public static readonly BigComplex Zero = new(0, 0);
+        public static readonly BigComplex One = new(1, 0);
+
         /// <summary>
         /// The real part of the complex number.
         /// </summary>
