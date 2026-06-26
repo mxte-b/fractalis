@@ -1,6 +1,7 @@
 ﻿using fractalis.Core.Compositor.Layers;
 using fractalis.Core.Compositor.Layers.Color;
 using fractalis.Core.Converters;
+using fractalis.Core.Renderers;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Buffers;
 using System.Numerics;
@@ -25,7 +26,7 @@ namespace fractalis.Core.Compositor
             return this;
         }
 
-        public void Apply(Rgba32[] buffer, int width, int height)
+        public void Apply(Rgba32[] buffer, int width, int height, RenderContext ctx)
         {
             if (_layers.Count == 0) return;
 
@@ -46,6 +47,9 @@ namespace fractalis.Core.Compositor
                 // Applying all layers in sequence
                 foreach (var layer in _layers)
                 {
+                    // Update render context for context-aware layers
+                    if (layer is IContextAwareLayer ctxLayer) ctxLayer.SetContext(ctx);
+                    
                     layer.Apply(src, dst, width, height);
                     (src, dst) = (dst, src);
                 }

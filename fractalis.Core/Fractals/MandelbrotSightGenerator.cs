@@ -59,6 +59,7 @@ namespace fractalis.Core.Fractals
                     }
                 });
 
+            Console.WriteLine($"Distance from original guess: {(c - near).Magnitude}");
             return (c, zoom);
         }
 

@@ -28,6 +28,7 @@ namespace fractalis.Core.Compositor.Layers
     [JsonDerivedType(typeof(ChromaticAberrationLayer), "chromaticAberration")]
     [JsonDerivedType(typeof(VignetteLayer), "vignette")]
     [JsonDerivedType(typeof(WatermarkLayer), "watermark")]
+    [JsonDerivedType(typeof(ZoomValueLayer), "zoomValue")]
     public abstract class CompositeLayer : ICompositeLayer
     {
         public abstract void Apply(Memory<Vector4> src, Memory<Vector4> dst, int width, int height);
@@ -45,6 +46,7 @@ namespace fractalis.Core.Compositor.Layers
             typeof(ChromaticAberrationLayer),
             typeof(VignetteLayer),
             typeof(WatermarkLayer),
+            typeof(ZoomValueLayer),
         ];
     }
 }

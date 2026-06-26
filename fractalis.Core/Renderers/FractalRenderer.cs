@@ -139,7 +139,15 @@ namespace fractalis.Core
             }
 
             // Apply post-processing if necessary
-            LayerCompositor?.Apply(colorBuffer, Width, Height);
+            if (LayerCompositor is not null)
+            {
+                RenderContext ctx = new()
+                {
+                    Zoom = Zoom,
+                };
+
+                LayerCompositor.Apply(colorBuffer, Width, Height, ctx);
+            }
 
             return Image.LoadPixelData<Rgba32>(colorBuffer, Width, Height);
         }

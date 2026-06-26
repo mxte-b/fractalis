@@ -197,10 +197,16 @@ namespace fractalis.Core.Numbers
             {
                 int eIdx = raw.IndexOfAny(['e', 'E']);
     
-                string mantissa = raw[..eIdx].TrimEnd('0').TrimEnd('.', ',');
-                string exponent = raw[(eIdx + 1)..].TrimStart('+');
+                float mantissa = MathF.Round(float.Parse(raw[..eIdx]), 2);
+                int exponent = int.Parse(raw[(eIdx + 1)..]);
 
-                return $"{mantissa}{(int.Parse(exponent) != 0 ? $"e{exponent}" : "")}";
+                if (mantissa >= 10)
+                {
+                    mantissa /= 10;
+                    exponent++;
+                }
+
+                return $"{mantissa:f2}{(exponent != 0 ? $"e{exponent}" : "")}";
             }
 
             //If the mantissa is a decimal in normal notation, then remove trailing zeros

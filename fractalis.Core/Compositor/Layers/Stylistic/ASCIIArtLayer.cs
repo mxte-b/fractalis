@@ -2,7 +2,6 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Numerics;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace fractalis.Core.Compositor.Layers.Stylistic
@@ -35,12 +34,8 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
             _scale = scale;
 
             // Loading the font atlas
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "fractalis.Core.Resources.fontatlas.png";
-
-            using Stream stream = assembly.GetManifestResourceStream(resourceName) ?? 
-                throw new Exception("Couldn't load font atlas.");
-
+            var resourceName = "fractalis.Core.Resources.fontatlas_ascii.png";
+            using var stream = ResourceManager.ReadEmbeddedResourceStream(resourceName);
             using Image<Rgba32> image = Image.Load<Rgba32>(stream);
 
             _atlas = new Vector4[image.Width * image.Height].AsMemory();

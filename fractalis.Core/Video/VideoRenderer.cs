@@ -27,10 +27,11 @@ namespace fractalis.Core.Video
             {
                 double pStop = Config.StopAnimation.Exponent;
                 double pStartAdjusted = 1 / Config.StartAnimation.Exponent - 1;
+                int lastFrameId = Config.FrameCount - 1;
 
-                return pStop * Config.FrameCount / 
+                return pStop * lastFrameId / 
                     (
-                        Config.FrameCount + 
+                        lastFrameId + 
                         (pStop - 1) * Config.StopAnimationStartFrame +
                         pStop * pStartAdjusted * Config.StartAnimationFrames
                     );
@@ -163,7 +164,7 @@ namespace fractalis.Core.Video
         /// <param name="frameId">Current frame index.</param>
         private BigFloat GetZoom(int frameId) 
         {
-            BigFloat zoom = (Config.ZoomEnd / Config.ZoomStart) ^ (Time(frameId) / Config.FrameCount);
+            BigFloat zoom = (Config.ZoomEnd / Config.ZoomStart) ^ (Time(frameId + 1) / Config.FrameCount);
             return Config.ZoomStart * zoom;
         }
     }

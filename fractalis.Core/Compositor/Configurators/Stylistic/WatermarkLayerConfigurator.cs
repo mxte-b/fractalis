@@ -2,7 +2,6 @@
 using fractalis.Core.Compositor.Layers.Stylistic;
 using fractalis.Core.Miscellaneous;
 using Spectre.Console;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace fractalis.Core.Compositor.Configurators.Stylistic
@@ -40,7 +39,7 @@ namespace fractalis.Core.Compositor.Configurators.Stylistic
             {
                 var position = Prompts.Selection(
                     $"[{ThemeColor.Accent}]Position[/] of the watermark?",
-                    Enum.GetValues<WatermarkPosition>(),
+                    Enum.GetValues<Alignment>(),
                     value => GetPositionName(value.ToString())
                 );
 

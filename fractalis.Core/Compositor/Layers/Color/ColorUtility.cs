@@ -77,7 +77,7 @@ namespace fractalis.Core.Compositor.Layers.Color
         /// <returns>The value in linear space.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float ConvertToLinear(byte c)
-            => c / 255.0f is var t && t < 0.04045 ? t / 12.92f : MathF.Pow((t + 0.055f) / 1.055f, 2.4f);
+            => c / 255.0f is var t && t < 0.04045f ? t / 12.92f : MathF.Pow((t + 0.055f) / 1.055f, 2.4f);
 
         /// <summary>
         /// Converts a single linear value to sRGB space.

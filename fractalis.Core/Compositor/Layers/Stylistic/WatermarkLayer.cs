@@ -2,45 +2,16 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Numerics;
-using System.Text.Json.Serialization;
 
 namespace fractalis.Core.Compositor.Layers.Stylistic
 {
-    /// <summary>
-    /// Specifies the position of a watermark on the image.
-    /// </summary>
-    public enum WatermarkPosition
-    {
-        TopLeft,
-        TopRight,
-        BottomLeft,
-        BottomRight
-    }
-
-    /// <summary>
-    /// Represents a margin used for watermark positioning.
-    /// </summary>
-    /// <param name="x">Horizontal offset in pixels.</param>
-    /// <param name="y">Vertical offset in pixels.</param>
-    [method: JsonConstructor]
-    public readonly struct Margin(int x, int y)
-    {
-        [JsonInclude]
-        public readonly int X = x;
-
-        [JsonInclude]
-        public readonly int Y = y;
-
-        public static readonly Margin Zero = new(0, 0);
-    }
-
     /// <summary>
     /// Configuration options for watermark rendering.
     /// </summary>
     public sealed record WatermarkOptions
     {
         /// <summary>The position of the watermark on the image.</summary>
-        public WatermarkPosition Position { get; init; } = WatermarkPosition.BottomRight;
+        public Alignment Position { get; init; } = Alignment.BottomRight;
 
         /// <summary>The opacity of the watermark.</summary>
         public float Opacity { get; init; } = 1f;
@@ -82,7 +53,6 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
         )
         {
             _imagePath = imagePath;
-            Console.WriteLine(options?.Margin.X);
             _options = options ?? new WatermarkOptions();
 
             // Loading watermark and converting to linear color space
@@ -103,9 +73,7 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
             if (path.StartsWith("resource:", StringComparison.Ordinal))
             {
                 string resourceName = path["resource:".Length..];
-                var stream = typeof(WatermarkLayer).Assembly
-                    .GetManifestResourceStream(resourceName)
-                    ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found.");
+                using var stream = ResourceManager.ReadEmbeddedResourceStream(resourceName);
 
                 return Image.Load<Rgba32>(stream);
             }
@@ -123,10 +91,10 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
 
             (int wmOffsetX, int wmOffsetY) = _options.Position switch
             {
-                WatermarkPosition.TopLeft => (mx, my),
-                WatermarkPosition.TopRight => (width - wmScaledWidth - mx, my),
-                WatermarkPosition.BottomLeft => (mx, height - wmScaledHeight - my),
-                WatermarkPosition.BottomRight => (
+                Alignment.TopLeft => (mx, my),
+                Alignment.TopRight => (width - wmScaledWidth - mx, my),
+                Alignment.BottomLeft => (mx, height - wmScaledHeight - my),
+                Alignment.BottomRight => (
                     width - wmScaledWidth - mx, 
                     height - wmScaledHeight - my
                 ),
