@@ -353,9 +353,9 @@ namespace fractalis.Core.Fractals
                 o.PointsI[i] = zc.Imaginary;
                 o.ScaledPoints[i] = z.ToScaledComplex();
 
-                BigFloat zrTemp = z.Real;
-                BigFloat zr2 = z.Real * z.Real;
-                BigFloat zi2 = z.Imaginary * z.Imaginary;
+                using BigFloat zrTemp = z.Real;
+                using BigFloat zr2 = z.Real * z.Real;
+                using BigFloat zi2 = z.Imaginary * z.Imaginary;
 
                 z.Real = zr2 - zi2 + center.Real;
                 z.Imaginary = 2 * zrTemp * z.Imaginary + center.Imaginary;

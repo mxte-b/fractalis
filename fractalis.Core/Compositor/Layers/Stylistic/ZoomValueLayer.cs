@@ -40,7 +40,7 @@ namespace fractalis.Core.Compositor.Layers.Stylistic
         /// <param name="backgroundOpacity">The opacity of the background of the overlay.</param>
         /// <param name="position">The position of the overlay on the image.</param>
         /// <exception cref="Exception">When the font atlas cannot be loaded.</exception>
-        public ZoomValueLayer(float scale = 1, float backgroundOpacity = 1, Alignment position = Alignment.TopLeft)
+        public ZoomValueLayer(float scale = 1, float backgroundOpacity = 0.5f, Alignment position = Alignment.TopLeft)
         {
             _scale = scale;
             _position = position;

@@ -17,12 +17,14 @@ namespace fractalis.Core.Numbers
     /// </remarks>
     [TypeConverter(typeof(BigFloatConverter))]
     [JsonConverter(typeof(BigFloatJsonConverter))]
-    public class BigFloat
+    public class BigFloat : IDisposable
     {
-        private readonly MpfrFloat _value;
         private static int _precision = 2048;
         private static readonly double LOG2_10 = Math.Log2(10);
         private static readonly double LOG10_2 = Math.Log10(2);
+        private readonly MpfrFloat _value;
+        private readonly long _nativeBytes = _precision / 8;
+        private bool _disposed = false;
 
         /// <summary>
         /// Gets or sets the global precision used for all <see cref="BigFloat"/> instances.
@@ -45,19 +47,31 @@ namespace fractalis.Core.Numbers
         /// Initializes a new <see cref="BigFloat"/> from a string representation.
         /// </summary>
         /// <param name="s">A string containing a numeric value.</param>
-        public BigFloat(string s) => _value = MpfrFloat.Parse(s, 10, _precision, MpfrRounding.ToEven);
+        public BigFloat(string s)
+        {
+            _value = MpfrFloat.Parse(s, 10, _precision, MpfrRounding.ToEven);
+            GC.AddMemoryPressure(_nativeBytes);
+        }
 
         /// <summary>
         /// Initializes a new <see cref="BigFloat"/> from a <see langword="double"/> value.
         /// </summary>
         /// <param name="d">The numeric value.</param>
-        public BigFloat(double d) => _value = MpfrFloat.From(d, _precision, MpfrRounding.ToEven);
+        public BigFloat(double d)
+        {
+            _value = MpfrFloat.From(d, _precision, MpfrRounding.ToEven);
+            
+        }
 
         /// <summary>
         /// Initializes a new <see cref="BigFloat"/> from an existing <see cref="MpfrFloat"/>.
         /// </summary>
         /// <param name="raw">The underlying high-precision value.</param>
-        public BigFloat(MpfrFloat raw) => _value = raw;
+        public BigFloat(MpfrFloat raw)
+        {
+             _value = raw;
+            GC.AddMemoryPressure(_nativeBytes);
+        }
 
         /// <summary>Indicates whether the value is exactly zero.</summary>
         public bool IsZero => _value.IsZero;
@@ -172,6 +186,7 @@ namespace fractalis.Core.Numbers
         public void FloorInPlace() => MpfrFloat.FloorInplace(_value, _value);
         public void CeilingInPlace() => MpfrFloat.CeilingInplace(_value, _value);
         public void TruncateInPlace() => MpfrFloat.TruncateInplace(_value, _value);
+        public void SetFrom(BigFloat other) => _value.Assign(other._value, MpfrRounding.ToEven);
         #endregion
 
         #region Conversions
@@ -224,5 +239,15 @@ namespace fractalis.Core.Numbers
         public override bool Equals(object? obj) => obj is BigFloat other && _value.Equals(other._value);
 
         public override int GetHashCode() => _value.GetHashCode();
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            GC.SuppressFinalize(this);
+            _value.Dispose();
+        }
+
+        public BigFloat Clone() => new(MpfrFloat.From(_value, _precision, MpfrRounding.ToEven));
     }
 }
