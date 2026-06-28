@@ -57,6 +57,10 @@ namespace fractalis.Core.Compositor
                 // Converting back to sRGB
                 ColorUtility.TosRGBSpace(src, buffer);
             }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error while applying layers: {e}");
+            }
             // Always return the rented array
             finally
             {

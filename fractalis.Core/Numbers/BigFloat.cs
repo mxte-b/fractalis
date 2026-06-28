@@ -221,7 +221,7 @@ namespace fractalis.Core.Numbers
                     exponent++;
                 }
 
-                return $"{mantissa:f2}{(exponent != 0 ? $"e{exponent}" : "")}";
+                return $"{mantissa.ToString("f2", CultureInfo.InvariantCulture)}{(exponent != 0 ? $"e{exponent}" : "")}";
             }
 
             //If the mantissa is a decimal in normal notation, then remove trailing zeros
