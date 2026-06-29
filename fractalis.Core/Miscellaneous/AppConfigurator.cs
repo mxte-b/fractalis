@@ -5,6 +5,7 @@ using fractalis.Core.Renderers;
 using Spectre.Console;
 using System.Text.Json;
 using SixLabors.ImageSharp;
+using fractalis.Core.Video;
 
 namespace fractalis.Core.Miscellaneous
 {
@@ -14,12 +15,13 @@ namespace fractalis.Core.Miscellaneous
         internal static readonly IEnumerable<string> VideoFormats = [".mp4", ".avi", ".mkv", ".mov", ".webm"];
         private static AppMode PromptAppMode() 
             => Prompts.Selection($"What would you like to [bold {ThemeColor.Accent}]do[/]?", 
-                ["Image rendering", "Video rendering", "Benchmarking"])
+                ["Image rendering", "Video rendering", "Benchmarking", "Video recovery"])
             .Convert(choice => choice switch
             {
                 "Image rendering" => AppMode.Image,
                 "Video rendering" => AppMode.Video,
                 "Benchmarking" => AppMode.Benchmark,
+                "Video recovery" => AppMode.VideoRecovery,
                 _ => AppMode.Image
             });
 
@@ -45,7 +47,6 @@ namespace fractalis.Core.Miscellaneous
                 }
             );
         }
-
 
         private static AppSettings? ParseConfig(string path) => JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path), FractalisJsonOptions.Default);
 
@@ -84,6 +85,28 @@ namespace fractalis.Core.Miscellaneous
             return null;
         }
 
+        private static AppSettings? TryRecoverVideo()
+        {
+            Prompts.Section("Recovery");
+            var recoveryPath = Prompts.FilePath(
+                title: $"[{ThemeColor.Accent}]Path[/] of the video recovery file?",
+                hint: "[grey]Recovery files are saved in the same folder as the frames of the video.[/]",
+                allowedFormats: [".json"]
+                );
+
+            try
+            {
+                return VideoRecovery.Recover(recoveryPath);
+            }
+            catch (Exception e)
+            {
+                Prompts.Warn($"An error occured while recovering the video ({e.Message}). Proceeding with normal configuration.");
+            }
+
+            Prompts.Done();
+            return null;
+        }
+
         public static AppSettings Configure(string[] args)
         {
             AppSettings? config = TryLoadConfig(args);
@@ -97,6 +120,12 @@ namespace fractalis.Core.Miscellaneous
             AnsiConsole.WriteLine();
 
             var mode = PromptAppMode();
+            if (mode == AppMode.VideoRecovery)
+            {
+                // Only return if the video was successfully recovered
+                if (TryRecoverVideo() is AppSettings t) return t;
+            }
+
             var video = mode == AppMode.Video ? ConfigureVideo() : null;
             var rendererConfig = ConfigureRenderer(mode, video?.VideoMode);
             var benchmarkConfig = mode == AppMode.Benchmark ? ConfigureBenchmark() : null;

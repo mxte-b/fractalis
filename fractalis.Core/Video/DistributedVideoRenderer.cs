@@ -51,6 +51,8 @@ namespace fractalis.Core.Video
 
                 CreateOutputDirectory();
 
+                if (RecoveryConfig is not null) VideoRecovery.Save(RecoveryConfig, ImageSequencePath);
+
                 // Sending render request to the orchestrator
                 await client.SendMessageToServerAsync(new VideoRenderRequest()
                 {

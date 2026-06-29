@@ -1,9 +1,12 @@
 ﻿using fractalis.Core.Miscellaneous;
+using System.Text.Json;
 
 namespace fractalis.Core.Video
 {
     public abstract class VideoRendererBase(VideoConfig config)
     {
+        private VideoRecoveryConfig? _recoveryConfig;
+
         /// <summary>
         /// Unique ID for this render session (can be overridden in <paramref name="config"/>).
         /// </summary>
@@ -17,7 +20,20 @@ namespace fractalis.Core.Video
         /// <summary>
         /// Path of the output directory for the frames.
         /// </summary>
-        protected string            ImageSequencePath   => $"render-{_renderId}";
+        protected string ImageSequencePath => $"render-{_renderId}";
+
+        /// <summary>
+        /// The recovery config associated with this video. It will be saved into the output directory
+        /// when not null.
+        /// </summary>
+        public VideoRecoveryConfig? RecoveryConfig
+        {
+            get => _recoveryConfig;
+            set => _recoveryConfig = value is not null ? value with
+            {
+                RenderId = _renderId,
+            } : null;
+        }
 
         /// <summary>
         /// Merges the rendered image sequence into an MP4 video file with ffmpeg, then removes the image sequence directory.

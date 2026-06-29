@@ -56,6 +56,8 @@ namespace fractalis.Core.Video
         {
             CreateOutputDirectory();
 
+            if (RecoveryConfig is not null) VideoRecovery.Save(RecoveryConfig, ImageSequencePath);
+
             // Start rendering each frame one by one
             AnsiConsole.Progress()
             .Columns([

@@ -13,7 +13,10 @@ namespace fractalis.Core.Miscellaneous
         Video,
 
         /// <summary>Runs renderer performance benchmarks.</summary>
-        Benchmark
+        Benchmark,
+        
+        /// <summary>Recovers video rendering progress. Allows splitting rendering into multiple sessions.</summary>
+        VideoRecovery,
     }
 
     /// <summary>Defines how video rendering is executed.</summary>

@@ -184,6 +184,11 @@ namespace fractalis.Core.Distributed.Orchestrator
 
             if (reason != ConnectionCloseReason.NormalClosure)
             {
+                if (connection.Role == ClientRole.Initiator)
+                {
+                    // TODO: Cancel job associated with this initiator
+                }
+
                 _dashboard.AddLog(connection, "Disconnected unexpectedly.");
             }
 

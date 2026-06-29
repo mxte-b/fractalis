@@ -7,7 +7,7 @@
     {
         private long                    _claimedAt      = 0;
 
-        private static readonly long    _leaseDuration  = TimeSpan.FromMinutes(2).Ticks;
+        private static readonly long    _leaseDuration  = TimeSpan.FromMinutes(5).Ticks;
 
         /// <summary>
         /// Unique identifier for this assignment.

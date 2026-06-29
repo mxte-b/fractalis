@@ -34,6 +34,16 @@ namespace fractalis
                 case AppMode.Video:
                     if (settings.VideoConfig is null) throw new Exception("VideoConfig is null.");
 
+                    var recovery = new VideoRecoveryConfig()
+                    {
+                        RenderId = string.Empty,
+                        VideoMode = VideoMode.Local,
+                        FractalRendererConfig = settings.FractalRendererConfig,
+                        VideoConfig = settings.VideoConfig,
+                        OutputPath = settings.OutputPath!,
+                        DistributedRendererConfig = settings.DistributedRendererSettings
+                    };
+
                     switch (settings.VideoMode)
                     {
                         // Distributed video rendering using network devices
@@ -41,15 +51,22 @@ namespace fractalis
                             var distributedSettings = settings.DistributedRendererSettings
                                 ?? throw new Exception("DistributedRendererConfig is null.");
 
-                            DistributedVideoRenderer distributed = new(settings.FractalRendererConfig, settings.VideoConfig);
-                            await distributed.Start(distributedSettings.OrchestratorUri, distributedSettings.FrameListenerPort);
+                            DistributedVideoRenderer distributed = new(settings.FractalRendererConfig, settings.VideoConfig)
+                            {
+                                RecoveryConfig = recovery with { VideoMode = VideoMode.Distributed }
+                            };
 
+                            await distributed.Start(distributedSettings.OrchestratorUri, distributedSettings.FrameListenerPort);
                             distributed.Save(settings.OutputPath!);
                             break;
 
                         // Local video rendering using local compute
                         case VideoMode.Local:
-                            VideoRenderer local = new(renderer, settings.VideoConfig);
+                            VideoRenderer local = new(renderer, settings.VideoConfig)
+                            {
+                                RecoveryConfig = recovery
+                            };
+
                             local.Start();
                             local.Save(settings.OutputPath!);
                             break;
