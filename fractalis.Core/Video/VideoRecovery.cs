@@ -9,6 +9,9 @@ namespace fractalis.Core.Video
     /// </summary>
     internal static class VideoRecovery
     {
+        private const int BATCH_SIZE = 5;
+        private const string FRAME_PREFIX = "frame";
+
         #region Public methods
         /// <summary>
         /// Saves the recovery config to the specified image sequence folder.
@@ -39,7 +42,7 @@ namespace fractalis.Core.Video
             return recoveryConfig.VideoMode switch
             {
                 VideoMode.Local => RecoverLocal(folderPath, recoveryConfig),
-                VideoMode.Distributed => RecoverDistrbibuted(folderPath, recoveryConfig),
+                VideoMode.Distributed => RecoverDistributed(folderPath, recoveryConfig),
                 _ => throw new Exception("Unknown video mode.")
             };
         }
@@ -62,57 +65,67 @@ namespace fractalis.Core.Video
         /// <param name="directoryPath">The path to the frame directory.</param>
         /// <param name="videoMode">The video mode for the video used to validate images.</param>
         /// <returns>The array of indices already rendered.</returns>
-        private static HashSet<int> ScanFrameDirectory(string directoryPath, VideoMode videoMode)
+        private static HashSet<FrameData> ScanFrameDirectory(string directoryPath)
         {
-            var files = Directory.GetFiles(directoryPath)
-                .Where(f => Path.GetExtension(f) == ".png");
-
-            Console.WriteLine($"Found {files.Count()} frames present.");
-
-            var validated = videoMode switch
-            {
-                VideoMode.Local => ValidateFramesLocal(files),
-                VideoMode.Distributed => ValidateFramesDistributed(files),
-                _ => files
-            };
-
-            Console.WriteLine($"After validation {validated.Count()} frames are present.");
-
-            return validated
-                .Select(Path.GetFileNameWithoutExtension)
-                .Select(name => name!.Replace("frame", ""))
-                .Select(int.Parse).ToHashSet();
+            return Directory.GetFiles(directoryPath)
+                .Where(f => Path.GetFileNameWithoutExtension(f).Contains(FRAME_PREFIX))
+                .Select(f => new FrameData(f))
+                .ToHashSet();
         }
 
         /// <summary>
         /// Validates a set of frames that were rendered locally, ensuring that they are not corrupted.
         /// </summary>
-        /// <param name="frames">The set of frame names already rendered.</param>
-        /// <returns>The validated set of frame paths.</returns>
-        private static IEnumerable<string> ValidateFramesLocal(IEnumerable<string> frames)
+        /// <param name="frames">The set of frames already rendered.</param>
+        private static void ValidateFramesLocal(HashSet<FrameData> frames)
         {
             // For locally rendered videos, the only frame that can be corrupted is the last one
             // (with the largest index), since rendering is sequential.
+            var last = frames.MaxBy(f => f.Index);
+            if (last is null) return;
+
             try
             {
-                Image.Identify(frames.Last());
-                return frames;
+                Image.Identify(last.FullPath);
             }
             catch
             {
                 Console.WriteLine("Last image was corrupted, skipping it.");
-                return frames.SkipLast(1);
+                frames.Remove(last);
             }
         }
 
         /// <summary>
         /// Validates a set of frames that were rendered distributed, ensuring that they are not corrupted.
         /// </summary>
-        /// <param name="indicies">The set of indicies already rendered.</param>
-        /// <returns>The validated set of frame paths.</returns>
-        private static IEnumerable<string> ValidateFramesDistributed(IEnumerable<string> indicies)
+        /// <param name="frames">The set of frames already rendered.</param>
+        private static void ValidateFramesDistributed(HashSet<FrameData> frames)
         {
-            throw new NotImplementedException();
+            var ordered = frames.OrderBy(f => f.Index).ToList();
+
+            for (int i = 0; i < ordered.Count; i++)
+            {
+                var frame = ordered[i];
+
+                // Corruption check needs to be performed only on
+                // batch boundaries or at the end of an incomplete batch. 
+                if (
+                    frame.Index % BATCH_SIZE == 0 ||
+                    (i + 1 < ordered.Count && ordered[i + 1].Index - frame.Index != 1)
+                )
+                {
+                    try
+                    {
+                        Console.WriteLine($"Checking {frame.Index}");
+                        Image.Identify(frame.FullPath);
+                    }
+                    catch
+                    {
+                        Console.WriteLine($"Found corrupted frame with index {frame.Index}");
+                        frames.Remove(frame);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -126,7 +139,8 @@ namespace fractalis.Core.Video
         /// <returns>The recovered app settings for the video rendering.</returns>
         private static AppSettings RecoverLocal(string folderPath, VideoRecoveryConfig config)
         {
-            HashSet<int> renderedFrames = ScanFrameDirectory(folderPath, VideoMode.Local);
+            HashSet<FrameData> renderedFrames = ScanFrameDirectory(folderPath);
+            ValidateFramesLocal(renderedFrames);
 
             return new()
             {
@@ -154,9 +168,32 @@ namespace fractalis.Core.Video
         /// </param>
         /// <returns>The recovered app settings for the video rendering.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        private static AppSettings RecoverDistrbibuted(string folderPath, VideoRecoveryConfig config)
+        private static AppSettings RecoverDistributed(string folderPath, VideoRecoveryConfig config)
         {
-            throw new NotImplementedException();
+            HashSet<FrameData> renderedFrames = ScanFrameDirectory(folderPath);
+
+            ValidateFramesDistributed(renderedFrames);
+
+            List<FrameRange> validated = FrameRange.FromIndicies(renderedFrames.Select(f => f.Index));
+            List<FrameRange> missing = FrameRange.Invert(validated, 1, config.VideoConfig.FrameCount);
+
+            Console.WriteLine("Missing ranges: ");
+            Console.WriteLine(String.Join("\n", missing));
+
+            return new()
+            {
+                Mode = AppMode.Video,
+                FractalRendererConfig = config.FractalRendererConfig,
+                VideoMode = VideoMode.Distributed,
+                VideoConfig = config.VideoConfig with
+                {
+                    RenderIdOverride = config.RenderId,
+                },
+                DistributedRendererSettings = config.DistributedRendererConfig is not null ? 
+                    config.DistributedRendererConfig with { FramesToRender = missing }
+                : null,
+                OutputPath = config.OutputPath
+            };
         }
         #endregion
     }
