@@ -140,7 +140,7 @@ namespace fractalis.Core.Miscellaneous
                 OutputPath = outputPath,
                 VideoMode = video?.VideoMode,
                 VideoConfig = video?.VideoConfig,
-                DistributedRendererSettings = video?.DistributedRendererSettings,
+                DistributedRendererConfig = video?.DistributedRendererSettings,
                 FractalBenchmarkConfig = benchmarkConfig,
             };
 

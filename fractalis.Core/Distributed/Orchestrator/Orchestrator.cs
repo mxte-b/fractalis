@@ -1,8 +1,10 @@
-﻿using fractalis.Core.Distributed.Clients;
+﻿using fractalis.Core.Compositor.Layers.Stylistic;
+using fractalis.Core.Distributed.Clients;
 using fractalis.Core.Distributed.Contexts;
 using fractalis.Core.Distributed.Networking;
 using fractalis.Core.Distributed.Networking.Messages;
 using fractalis.Core.Distributed.Runtimes;
+using fractalis.Core.Video;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 
@@ -17,6 +19,8 @@ namespace fractalis.Core.Distributed.Orchestrator
     /// </remarks>
     public class Orchestrator : IOrchestratorContext
     {
+        private const int BATCH_SIZE = 5;
+
         private readonly OrchestratorDashboard              _dashboard          = OrchestratorDashboard.Instance;
 
         /// <summary>
@@ -64,25 +68,52 @@ namespace fractalis.Core.Distributed.Orchestrator
         }
 
         /// <summary>
+        /// Sends a message to a specified recipient.
+        /// </summary>
+        /// <param name="message">The message to send to the recipient.</param>
+        /// <param name="recipientId">The unique identifier of the recipient.</param>
+        /// <returns><see langword="true"/> if the message was delivered, <see langword="false"/> if the recipient could not be found.</returns>
+        public async Task<bool> SendMessageAsync(Message message, Guid recipientId)
+        {
+            Clients.TryGetValue(recipientId, out var connection);
+            if (connection is null) return false;
+
+            await connection.SendMessageAsync(message);
+            return true;
+        }
+
+        /// <summary>
         /// Splits a <see cref="RenderJob"/> into smaller assignments.
         /// </summary>
         /// <param name="job">The job to split.</param>
-        /// <param name="size">Maximum number of frames per assignment.</param>
-        private void SplitJobIntoAssignments(RenderJob job, int size)
+        private void SplitJobIntoAssignments(RenderJob job)
         {
-            int start = job.VideoConfig.StartFrame;
-            int end = job.VideoConfig.FrameCount;
+            List<FrameRange> framesToRender = job.FramesToRender is not null
+                ? job.FramesToRender
+                : [new() {
+                    Start = job.VideoConfig.StartFrame,
+                    Count = job.VideoConfig.FrameCount
+                }];
 
-            for (int i = start; i < end; i += size)
+            foreach (var range in framesToRender)
             {
-                RenderAssignment assignment = new()
+                foreach (var assignment in ChunkFrameRange(job.Id, range))
                 {
-                    JobId = job.Id,
-                    StartFrameIndex = i,
-                    FrameCount = Math.Min(size, job.VideoConfig.FrameCount - i)
-                };
+                    Assignments.TryAdd(assignment.Id, assignment);
+                }
+            }
+        }
 
-                Assignments.TryAdd(assignment.Id, assignment);
+        private static IEnumerable<RenderAssignment> ChunkFrameRange(Guid jobId, FrameRange range)
+        {
+            for (int i = range.Start; i <= range.End; i += BATCH_SIZE)
+            {
+                yield return new RenderAssignment()
+                {
+                    JobId = jobId,
+                    StartFrameIndex = i,
+                    FrameCount = Math.Min(BATCH_SIZE, range.End - i + 1)
+                };
             }
         }
 
@@ -103,8 +134,19 @@ namespace fractalis.Core.Distributed.Orchestrator
         /// <inheritdoc/>
         public async Task AddJobAsync(RenderJob job)
         {
+            // If the list is empty, it means that the video is already rendered, so just skip
+            if (job.FramesToRender is not null && job.FramesToRender.Count == 0)
+            {
+                await SendMessageAsync(new RenderJobStatusMessage()
+                {
+                    JobId = job.Id,
+                    Status = RenderStatus.Finished
+                }, job.InitiatorId);
+                return;
+            }
+
             Jobs.TryAdd(job.Id, job);
-            SplitJobIntoAssignments(job, 5);
+            SplitJobIntoAssignments(job);
             await BroadcastMessageAsync(new RenderJobAnnouncementMessage() { Job = job }, ClientRole.Worker);
         }
 
@@ -179,20 +221,41 @@ namespace fractalis.Core.Distributed.Orchestrator
             }
 
             // Listen for incoming messages from the client
-            ClientSessionRuntime runtime = new ClientSessionRuntime(this, connection);
+            ClientSessionRuntime runtime = new(this, connection);
             ConnectionCloseReason reason = await connection.ListenAsync(runtime, CancellationToken.None);
 
+            // Handle connection closure
             if (reason != ConnectionCloseReason.NormalClosure)
             {
-                if (connection.Role == ClientRole.Initiator)
-                {
-                    // TODO: Cancel job associated with this initiator
-                }
-
                 _dashboard.AddLog(connection, "Disconnected unexpectedly.");
             }
 
+            // Cancel any render jobs that were associated with the disconnected initiator.
             Clients.TryRemove(connection.Id, out _);
+            if (connection.Role == ClientRole.Initiator)
+            {
+                var job = Jobs.FirstOrDefault(j => j.Value.InitiatorId == connection.Id);
+                if (job.Value is not null) 
+                {
+                    Jobs.TryRemove(job.Key, out _);
+
+                    var assignmentIdsToRemove = Assignments
+                        .Where(a => a.Value.JobId == job.Key)
+                        .Select(a => a.Key)
+                        .ToList();
+
+                    foreach (var assignmentId in assignmentIdsToRemove)
+                    {
+                        Assignments.TryRemove(assignmentId, out _);
+                    }
+
+                    await BroadcastMessageAsync(new RenderJobStatusMessage()
+                    {
+                        JobId = job.Value.Id,
+                        Status = RenderStatus.Cancelled
+                    }, ClientRole.Worker);
+                }
+            }
         }
     }
 }

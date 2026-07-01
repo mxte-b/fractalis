@@ -24,9 +24,11 @@ namespace fractalis.Core.Distributed.Runtimes
                 case VideoRenderRequest renderRequest:
                     await _context.AddJobAsync(new RenderJob()
                     {
+                        InitiatorId = _connection.Id,
                         UploadUri = renderRequest.UploadUri,
                         VideoConfig = renderRequest.VideoConfig,
                         FractalRendererConfig = renderRequest.FractalRendererConfig,
+                        FramesToRender = renderRequest.FramesToRender,
                     });
                     break;
 

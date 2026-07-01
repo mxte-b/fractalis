@@ -70,13 +70,14 @@ namespace fractalis.Core.Video
             ])
             .Start(ctx =>
             {
-                var task = ctx.AddTask($"<#> Rendering frames", maxValue: Config.FrameCount - Config.StartFrame);
+                var task = ctx.AddTask($"<#> Rendering frames", maxValue: Config.FrameCount);
+                task.Value = Config.StartFrame;
                 for (int i = Config.StartFrame; i < Config.FrameCount; i++)
                 {
                     Renderer.Zoom = GetZoom(i);
                     Image<Rgba32> image = Renderer.Render(false);
 
-                    image.Save(ImageSequencePath + $"/frame{(i + 1).ToString().PadLeft(5, '0')}.png");
+                    image.Save(ImageSequencePath + $"/frame{i.ToString().PadLeft(5, '0')}.png");
                     task.Increment(1);
                 }
             });

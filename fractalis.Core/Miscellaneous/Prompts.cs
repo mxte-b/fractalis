@@ -247,7 +247,8 @@ namespace fractalis.Core.Miscellaneous
                     new SelectionPrompt<string>()
                         .AddChoices(drives)
                         .Title($"Select [{ThemeColor.Accent}]drive[/]:")
-                        .HighlightStyle(Theme.Selection));
+                        .HighlightStyle(Theme.Selection)
+                        .EnableSearch());
             }
 
             var top = Console.CursorTop;
@@ -362,7 +363,8 @@ namespace fractalis.Core.Miscellaneous
                     new SelectionPrompt<string>()
                         .AddChoices(drives)
                         .Title($"Select [{ThemeColor.Accent}]drive[/]:")
-                        .HighlightStyle(Theme.Selection));
+                        .HighlightStyle(Theme.Selection)
+                        .EnableSearch());
             }
 
             var top = Console.CursorTop;

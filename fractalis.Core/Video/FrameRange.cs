@@ -1,4 +1,6 @@
-﻿namespace fractalis.Core.Video
+﻿using System.Text.Json.Serialization;
+
+namespace fractalis.Core.Video
 {
     /// <summary>
     /// Represents a range of frames.
@@ -7,6 +9,8 @@
     {
         public required int Start { get; init; }
         public required int Count { get; init; }
+
+        [JsonIgnore]
         public int End => Start + Count - 1;
 
         /// <summary>

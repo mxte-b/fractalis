@@ -48,10 +48,9 @@ namespace fractalis.Core.Distributed.Runtimes
                     break;
 
                 case RenderJobAnnouncementMessage announcementMessage:
-                    Console.WriteLine("New job available");
                     RenderJob announcedJob = announcementMessage.Job;
+                    Console.WriteLine($"New job available: {announcedJob.Id}");
                     
-
                     _jobs.Add(announcedJob);
                     _renderers.Add(announcedJob.Id, CreateRenderer(announcedJob.FractalRendererConfig, announcedJob.VideoConfig));
 
@@ -130,15 +129,22 @@ namespace fractalis.Core.Distributed.Runtimes
 
                     break;
 
+                // Regardless of the status message, we need to remove the render job.
                 case RenderJobStatusMessage jobStatusMessage:
-                    if (jobStatusMessage.Status == RenderStatus.Finished)
+                    if (jobStatusMessage.Status == RenderStatus.Cancelled)
+                    {
+                        Console.WriteLine($"{jobStatusMessage.JobId} has been cancelled.");
+                    }
+
                     {
                         RenderJob? job = _jobs.FirstOrDefault(x => x.Id == jobStatusMessage.JobId);
                         if (job is null) break;
 
                         _jobs.Remove(job);
                         _renderers.Remove(job.Id);
+                        _idle = true;
                     }
+
                     break;
 
                 case NoAssignmentMessage:

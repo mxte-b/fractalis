@@ -15,7 +15,7 @@
         /// <summary>The filename of the frame, without the extension.</summary>
         public string FileName => Path.GetFileNameWithoutExtension(FullPath);
 
-        /// <summary>The one-based index of the frame.</summary>
+        /// <summary>The zero-based index of the frame.</summary>
         public int Index => int.Parse(FileName.Replace("frame", ""));
     }
 }

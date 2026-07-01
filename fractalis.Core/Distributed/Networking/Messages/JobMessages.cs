@@ -23,6 +23,10 @@ namespace fractalis.Core.Distributed.Networking.Messages
         /// </summary>
         public required FractalRendererConfig   FractalRendererConfig   { get; init; }
 
+        /// <summary>
+        /// An optional list of frame ranges to render. Used for resuming distributed video rendering.
+        /// </summary>
+        public List<FrameRange>?                FramesToRender          { get; init; } = null;
     }
 
     /// <summary>

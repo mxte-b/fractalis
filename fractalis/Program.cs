@@ -41,22 +41,22 @@ namespace fractalis
                         FractalRendererConfig = settings.FractalRendererConfig,
                         VideoConfig = settings.VideoConfig,
                         OutputPath = settings.OutputPath!,
-                        DistributedRendererConfig = settings.DistributedRendererSettings
+                        DistributedRendererConfig = settings.DistributedRendererConfig
                     };
 
                     switch (settings.VideoMode)
                     {
                         // Distributed video rendering using network devices
                         case VideoMode.Distributed:
-                            var distributedSettings = settings.DistributedRendererSettings
+                            var distributedSettings = settings.DistributedRendererConfig
                                 ?? throw new Exception("DistributedRendererConfig is null.");
 
-                            DistributedVideoRenderer distributed = new(settings.FractalRendererConfig, settings.VideoConfig)
+                            DistributedVideoRenderer distributed = new(settings.FractalRendererConfig, settings.VideoConfig, distributedSettings)
                             {
                                 RecoveryConfig = recovery with { VideoMode = VideoMode.Distributed }
                             };
 
-                            await distributed.Start(distributedSettings.OrchestratorUri, distributedSettings.FrameListenerPort);
+                            await distributed.Start();
                             distributed.Save(settings.OutputPath!);
                             break;
 

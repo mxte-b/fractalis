@@ -83,7 +83,7 @@ namespace fractalis.Core.Distributed.Networking
         {
             RenderedImageMessage body = req.GetData<RenderedImageMessage>();
 
-            string path = $"{_imageSequencePath}/frame{(body.FrameIndex + 1).ToString().PadLeft(5, '0')}.png";
+            string path = $"{_imageSequencePath}/frame{body.FrameIndex.ToString().PadLeft(5, '0')}.png";
 
             if (!File.Exists(path))
             {

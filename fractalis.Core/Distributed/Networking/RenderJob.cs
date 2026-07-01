@@ -11,6 +11,11 @@ namespace fractalis.Core.Distributed.Networking
         /// Unique identifier of the job.
         /// </summary>
         public Guid Id { get; init; } = Guid.NewGuid();
+
+        /// <summary>
+        /// The unique identifier of the initiator associated with this job.
+        /// </summary>
+        public required Guid InitiatorId { get; init; }
     }
 
     /// <summary>

@@ -51,7 +51,7 @@ namespace fractalis.Core.Miscellaneous
         public VideoMode?                       VideoMode                   { get; init; }
 
         /// <summary>Distributed renderer settings.</summary>
-        public DistributedRendererConfig?       DistributedRendererSettings { get; init; }
+        public DistributedRendererConfig?       DistributedRendererConfig { get; init; }
 
         /// <summary>Fractal benchmark settings.</summary>
         public FractalBenchmarkConfig?          FractalBenchmarkConfig      { get; init; }

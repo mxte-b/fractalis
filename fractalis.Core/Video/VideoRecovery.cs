@@ -110,7 +110,7 @@ namespace fractalis.Core.Video
                 // Corruption check needs to be performed only on
                 // batch boundaries or at the end of an incomplete batch. 
                 if (
-                    frame.Index % BATCH_SIZE == 0 ||
+                    (frame.Index + 1) % BATCH_SIZE == 0 ||
                     (i + 1 < ordered.Count && ordered[i + 1].Index - frame.Index != 1)
                 )
                 {
@@ -175,7 +175,7 @@ namespace fractalis.Core.Video
             ValidateFramesDistributed(renderedFrames);
 
             List<FrameRange> validated = FrameRange.FromIndicies(renderedFrames.Select(f => f.Index));
-            List<FrameRange> missing = FrameRange.Invert(validated, 1, config.VideoConfig.FrameCount);
+            List<FrameRange> missing = FrameRange.Invert(validated, 0, config.VideoConfig.FrameCount - 1);
 
             Console.WriteLine("Missing ranges: ");
             Console.WriteLine(String.Join("\n", missing));
@@ -189,7 +189,7 @@ namespace fractalis.Core.Video
                 {
                     RenderIdOverride = config.RenderId,
                 },
-                DistributedRendererSettings = config.DistributedRendererConfig is not null ? 
+                DistributedRendererConfig = config.DistributedRendererConfig is not null ? 
                     config.DistributedRendererConfig with { FramesToRender = missing }
                 : null,
                 OutputPath = config.OutputPath
